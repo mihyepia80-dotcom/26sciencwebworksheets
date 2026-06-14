@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
 
 const PUBLIC_PATHS = ["/login"];
@@ -10,9 +11,15 @@ export function AuthGate({ children }: { children: ReactNode }) {
   const { user, role, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const firebaseReady = isFirebaseConfigured();
 
   useEffect(() => {
     if (loading) return;
+
+    if (!firebaseReady) {
+      if (pathname !== "/login") router.replace("/login");
+      return;
+    }
 
     const isPublic = PUBLIC_PATHS.includes(pathname);
 
@@ -29,7 +36,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (pathname === "/my" && role !== "student") {
       router.replace(role === "teacher" ? "/teacher" : "/login");
     }
-  }, [user, role, loading, pathname, router]);
+  }, [user, role, loading, pathname, router, firebaseReady]);
 
   if (loading) {
     return (
@@ -37,6 +44,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
         로딩 중...
       </div>
     );
+  }
+
+  if (!firebaseReady) {
+    return pathname === "/login" ? children : null;
   }
 
   if (!user && !PUBLIC_PATHS.includes(pathname)) {

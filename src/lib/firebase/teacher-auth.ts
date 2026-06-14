@@ -8,6 +8,7 @@ import {
   type User,
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { isFirebaseConfigured } from "./config";
 import { getClientAuth, getClientDb } from "./client";
 
 export async function signInTeacherWithGoogle(): Promise<User> {
@@ -35,6 +36,11 @@ export interface AppAuthState {
 }
 
 export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
+  if (!isFirebaseConfigured()) {
+    onChange({ user: null, role: null, loading: false });
+    return () => {};
+  }
+
   const auth = getClientAuth();
   let active = true;
 

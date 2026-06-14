@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { User } from "firebase/auth";
 import {
   getStudentProfile,
+  isFirebaseConfigured,
   subscribeAppAuth,
   type AuthRole,
   type StudentProfile,
@@ -41,17 +42,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    return subscribeAppAuth(async (state) => {
+    if (!isFirebaseConfigured()) {
+      setLoading(false);
+      return;
+    }
+
+    return subscribeAppAuth((state) => {
       setUser(state.user);
       setRole(state.role);
       setLoading(state.loading);
 
-      if (state.user && state.role === "student") {
-        const profile = await getStudentProfile(state.user.uid);
-        setStudentProfile(profile);
-      } else {
+      if (!state.user || state.role !== "student") {
         setStudentProfile(null);
+        return;
       }
+
+      getStudentProfile(state.user.uid)
+        .then(setStudentProfile)
+        .catch(() => setStudentProfile(null));
     });
   }, []);
 
