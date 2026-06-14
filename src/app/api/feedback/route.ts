@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 
-const MODEL = "gemini-2.0-flash-lite";
+const MODEL = "gemini-2.5-flash-lite";
 const MAX_FEEDBACK_CHARS = 200;
 
 type AiRating = "잘함" | "보통" | "노력요함";
@@ -22,7 +22,15 @@ function parseGeminiJson(text: string): { rating: AiRating; feedback: string } {
     .replace(/```json\s*/gi, "")
     .replace(/```/g, "")
     .trim();
-  const parsed = JSON.parse(cleaned) as { rating?: string; feedback?: string };
+
+  let parsed: { rating?: string; feedback?: string };
+  try {
+    parsed = JSON.parse(cleaned) as { rating?: string; feedback?: string };
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*"feedback"[\s\S]*\}/);
+    if (!match) throw new Error("AI 응답 형식을 해석하지 못했습니다.");
+    parsed = JSON.parse(match[0]) as { rating?: string; feedback?: string };
+  }
 
   const rating =
     parsed.rating === "잘함" || parsed.rating === "보통" || parsed.rating === "노력요함"
@@ -89,19 +97,25 @@ feedback는 공백 포함 200자 이내로 작성하세요.`;
       },
     );
 
-    if (!geminiRes.ok) {
-      return NextResponse.json({ error: "AI 응답을 받지 못했습니다." }, { status: 502 });
-    }
-
     const geminiData = (await geminiRes.json()) as {
       candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
+      error?: { message?: string; code?: number };
     };
 
-    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    const result = parseGeminiJson(rawText);
+    if (!geminiRes.ok) {
+      const msg = geminiData.error?.message ?? "AI 응답을 받지 못했습니다.";
+      return NextResponse.json({ error: msg }, { status: 502 });
+    }
 
+    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+    if (!rawText) {
+      return NextResponse.json({ error: "AI가 빈 응답을 반환했습니다." }, { status: 502 });
+    }
+
+    const result = parseGeminiJson(rawText);
     return NextResponse.json(result);
-  } catch {
-    return NextResponse.json({ error: "AI 피드백을 생성하지 못했습니다." }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "AI 피드백을 생성하지 못했습니다.";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
