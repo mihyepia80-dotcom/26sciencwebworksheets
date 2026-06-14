@@ -1,0 +1,47 @@
+"use client";
+
+import { useEffect, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+
+const PUBLIC_PATHS = ["/login"];
+
+export function AuthGate({ children }: { children: ReactNode }) {
+  const { user, role, loading } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+
+    const isPublic = PUBLIC_PATHS.includes(pathname);
+
+    if (!user && !isPublic) {
+      router.replace("/login");
+      return;
+    }
+
+    if (user && pathname === "/login") {
+      router.replace(role === "teacher" ? "/teacher" : "/");
+      return;
+    }
+
+    if (pathname === "/my" && role !== "student") {
+      router.replace(role === "teacher" ? "/teacher" : "/login");
+    }
+  }, [user, role, loading, pathname, router]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">
+        로딩 중...
+      </div>
+    );
+  }
+
+  if (!user && !PUBLIC_PATHS.includes(pathname)) {
+    return null;
+  }
+
+  return children;
+}

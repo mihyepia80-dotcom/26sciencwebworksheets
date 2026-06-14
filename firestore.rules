@@ -1,0 +1,49 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isTeacher() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/teachers/$(request.auth.uid));
+    }
+
+    function isStudent() {
+      return request.auth != null
+        && request.auth.token.email.matches('.*@sagodogu-student\\.app$');
+    }
+
+    function isValidSubmission(data) {
+      return data.keys().hasAll(['templateId', 'templateName', 'meta', 'values', 'studentUid', 'submittedAt'])
+        && data.templateId is string
+        && data.templateId.size() > 0
+        && data.templateId.size() <= 64
+        && data.templateName is string
+        && data.templateName.size() <= 120
+        && data.meta is map
+        && data.meta.size() <= 20
+        && data.values is map
+        && data.values.size() <= 200
+        && data.studentUid is string
+        && data.studentUid == request.auth.uid
+        && data.submittedAt == request.time;
+    }
+
+    match /teachers/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    match /students/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if request.auth != null && request.auth.uid == uid && isStudent();
+      allow delete: if false;
+    }
+
+    match /submissions/{submissionId} {
+      allow create: if isStudent() && isValidSubmission(request.resource.data);
+      allow read: if isTeacher()
+        || (request.auth != null && resource.data.studentUid == request.auth.uid);
+      allow update, delete: if false;
+    }
+  }
+}
