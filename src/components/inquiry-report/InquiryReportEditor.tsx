@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { DrawingCanvas } from "@/components/inquiry-report/DrawingCanvas";
 import { useAuth } from "@/components/AuthProvider";
 import {
   createInquiryReportDraft,
@@ -73,6 +74,7 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
           mostCurious: doc.mostCurious,
           resultOrganized: doc.resultOrganized,
           realLifeStory: doc.realLifeStory,
+          visualDrawing: doc.visualDrawing,
           visualDescription: doc.visualDescription,
         });
         setReportId(doc.id ?? initialReportId);
@@ -385,15 +387,23 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
               <textarea className={TEXTAREA} rows={4} value={form.realLifeStory} disabled={readOnly} onChange={(e) => patch("realLifeStory", e.target.value)} />
             </SectionCard>
 
-            <SectionCard id="visual" num={12} title="그림으로 나타내어 봅시다" subtitle="그림 대신 글로 설명해도 됩니다">
-              <textarea
-                className={`${TEXTAREA} min-h-[10rem]`}
-                rows={6}
-                placeholder="그림으로 표현하고 싶은 내용을 글로 설명하거나, 그림을 그린 뒤 무엇을 그렸는지 설명하세요."
-                value={form.visualDescription}
-                disabled={readOnly}
-                onChange={(e) => patch("visualDescription", e.target.value)}
+            <SectionCard id="visual" num={12} title="그림으로 나타내어 봅시다">
+              <DrawingCanvas
+                value={form.visualDrawing}
+                readOnly={readOnly}
+                onChange={(dataUrl) => patch("visualDrawing", dataUrl)}
               />
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-medium text-slate-700">그림 설명 (선택)</p>
+                <textarea
+                  className={TEXTAREA}
+                  rows={3}
+                  placeholder="그린 그림에 대해 간단히 설명해도 됩니다."
+                  value={form.visualDescription}
+                  disabled={readOnly}
+                  onChange={(e) => patch("visualDescription", e.target.value)}
+                />
+              </div>
             </SectionCard>
 
             {!submitted && (

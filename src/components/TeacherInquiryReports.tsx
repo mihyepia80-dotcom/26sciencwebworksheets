@@ -28,7 +28,7 @@ const REPORT_FIELDS: { label: string; key: keyof InquiryReportDoc }[] = [
   { label: "가장 궁금했던 내용", key: "mostCurious" },
   { label: "탐구 결과 정리", key: "resultOrganized" },
   { label: "생활 속 이야기", key: "realLifeStory" },
-  { label: "그림으로 설명", key: "visualDescription" },
+  { label: "그림 설명", key: "visualDescription" },
 ];
 
 export function TeacherInquiryReports() {
@@ -141,6 +141,14 @@ export function TeacherInquiryReports() {
                       <p className="mt-1 whitespace-pre-wrap text-slate-800">{processSteps}</p>
                     </div>
                   )}
+                  {report.visualDrawing && (
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <p className="mb-2 text-xs font-semibold text-slate-500">그림으로 나타내기</p>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={report.visualDrawing} alt="학생 그림" className="max-h-80 rounded border border-slate-200 bg-white" />
+                    </div>
+                  )}
+                  <ReportField label="그림 설명" value={report.visualDescription} />
                   <div className="flex justify-end border-t border-slate-100 pt-4">
                     <button
                       type="button"

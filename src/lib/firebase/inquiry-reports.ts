@@ -78,6 +78,7 @@ function mapDoc(id: string, data: Record<string, unknown>): InquiryReportDoc {
     mostCurious: str(data, "mostCurious"),
     resultOrganized: legacy?.resultOrganized ?? str(data, "resultOrganized"),
     realLifeStory: str(data, "realLifeStory"),
+    visualDrawing: str(data, "visualDrawing"),
     visualDescription: str(data, "visualDescription"),
     submittedAt: (data.submittedAt as Timestamp | null) ?? null,
     updatedAt: (data.updatedAt as Timestamp | null) ?? null,

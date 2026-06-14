@@ -19,6 +19,7 @@ export interface InquiryReportForm {
   mostCurious: string;
   resultOrganized: string;
   realLifeStory: string;
+  visualDrawing: string;
   visualDescription: string;
 }
 
@@ -43,6 +44,7 @@ export const EMPTY_INQUIRY_REPORT: InquiryReportForm = {
   mostCurious: "",
   resultOrganized: "",
   realLifeStory: "",
+  visualDrawing: "",
   visualDescription: "",
 };
 
@@ -58,7 +60,7 @@ export const INQUIRY_SECTIONS = [
   { id: "mostCurious", num: 9, label: "가장 궁금했던 내용", field: "mostCurious" as const },
   { id: "organized", num: 10, label: "탐구 결과 정리", field: "resultOrganized" as const },
   { id: "realLife", num: 11, label: "생활 속 이야기", field: "realLifeStory" as const },
-  { id: "visual", num: 12, label: "그림으로 설명하기", field: "visualDescription" as const },
+  { id: "visual", num: 12, label: "그림으로 나타내기", field: "visualDrawing" as const },
 ] as const;
 
 const REQUIRED_TEXT_FIELDS: (keyof InquiryReportForm)[] = [
@@ -75,7 +77,6 @@ const REQUIRED_TEXT_FIELDS: (keyof InquiryReportForm)[] = [
   "mostCurious",
   "resultOrganized",
   "realLifeStory",
-  "visualDescription",
 ];
 
 const FIELD_LABELS: Partial<Record<keyof InquiryReportForm, string>> = {
@@ -92,7 +93,7 @@ const FIELD_LABELS: Partial<Record<keyof InquiryReportForm, string>> = {
   mostCurious: "가장 궁금했던 내용",
   resultOrganized: "탐구 결과 정리",
   realLifeStory: "생활 속 이야기",
-  visualDescription: "그림으로 설명하기",
+  visualDescription: "그림 설명",
 };
 
 export function validateInquiryReport(form: InquiryReportForm): string[] {
@@ -111,6 +112,7 @@ export function validateInquiryReport(form: InquiryReportForm): string[] {
     (s) => s.trim(),
   ).length;
   if (processFilled < 2) errors.push("탐구 과정을 2단계 이상 입력하세요.");
+  if (!form.visualDrawing.trim()) errors.push("그림으로 나타내기 칸에 그림을 그려주세요.");
 
   return errors;
 }
