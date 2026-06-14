@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { isFirebaseConfigured, signInStudent, signInTeacherWithGoogle } from "@/lib/firebase";
+import { isFirebaseConfigured, signInStudent, signInTeacherWithGoogle, getFirebaseErrorMessage } from "@/lib/firebase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,7 +25,7 @@ export default function LoginPage() {
       await signInStudent({ grade, classNo, studentNo, studentName }, password);
       router.replace("/");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "로그인에 실패했습니다.");
+      setError(getFirebaseErrorMessage(err, "로그인에 실패했습니다."));
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,7 @@ export default function LoginPage() {
       await signInTeacherWithGoogle();
       router.replace("/teacher");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Google 로그인에 실패했습니다.");
+      setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
     } finally {
       setGoogleLoading(false);
     }

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
-import { isFirebaseConfigured, listSubmissions, signInTeacherWithGoogle, signOutUser } from "@/lib/firebase";
+import { isFirebaseConfigured, listSubmissions, signInTeacherWithGoogle, signOutUser, getFirebaseErrorMessage } from "@/lib/firebase";
 import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 
 function formatSubmittedAt(submission: WorksheetSubmission): string {
@@ -54,7 +54,7 @@ export function TeacherDashboard() {
       })
       .catch((error: unknown) => {
         if (!cancelled) {
-          setListError(error instanceof Error ? error.message : "제출 목록을 불러오지 못했습니다.");
+          setListError(getFirebaseErrorMessage(error, "제출 목록을 불러오지 못했습니다."));
         }
       })
       .finally(() => {
@@ -72,7 +72,7 @@ export function TeacherDashboard() {
     try {
       await signInTeacherWithGoogle();
     } catch (error: unknown) {
-      setAuthError(error instanceof Error ? error.message : "Google 로그인에 실패했습니다.");
+      setAuthError(getFirebaseErrorMessage(error, "Google 로그인에 실패했습니다."));
     } finally {
       setGoogleLoading(false);
     }

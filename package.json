@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy:firestore": "firebase deploy --only firestore --project scienceworksheets-3ae8e"
+    "firebase:login": "npx firebase-tools login",
+    "deploy:firestore": "node scripts/deploy-firestore.mjs"
   },
   "dependencies": {
     "firebase": "^11.9.0",
-    "next": "^15.3.3",
+    "next": "^15.5.19",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
@@ -24,7 +25,6 @@
     "eslint-config-next": "^15.3.3",
     "postcss": "^8.5.4",
     "tailwindcss": "^4.1.8",
-    "typescript": "^5.8.3",
-    "firebase-tools": "^15.20.0"
+    "typescript": "^5.8.3"
   }
 }

@@ -17,13 +17,24 @@ npm run dev
    - Google (교사 로그인)
 ## Firestore 규칙·인덱스 배포
 
+### 방법 A — 서비스 계정 (권장, 로그인 불필요)
+
+1. [Firebase Console → 서비스 계정](https://console.firebase.google.com/project/scienceworksheets-3ae8e/settings/serviceaccounts/adminsdk)
+2. **새 비공개 키 생성** → JSON 다운로드
+3. 파일명을 `firebase-service-account.json`으로 바꿔 프로젝트 루트에 저장  
+   (계정: `firebase-adminsdk-fbsvc@scienceworksheets-3ae8e.iam.gserviceaccount.com`)
+4. 실행:
+
 ```bash
-npx firebase login
 npm run deploy:firestore
 ```
 
-또는 Firebase Console → Firestore → **규칙** 탭에 `firestore.rules` 내용 붙여넣기 후 게시.
-인덱스는 **색인** 탭에서 `studentUid` + `submittedAt` 복합 색인을 추가하세요.
+### 방법 B — Google 로그인
+
+```bash
+npm run firebase:login
+npx firebase-tools deploy --only firestore --project scienceworksheets-3ae8e
+```
 3. **교사 등록** — Firestore `teachers/{교사 UID}` 문서 생성 (Google 로그인 후 UID 확인)
 4. **Authorized domains** — Vercel 배포 URL 추가
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { useAuth } from "@/components/AuthProvider";
+import { getFirebaseErrorMessage } from "@/lib/firebase";
 import { listStudentSubmissions, type WorksheetSubmission } from "@/lib/firebase/submissions";
 
 const META_LABELS: Record<string, string> = {
@@ -43,7 +44,7 @@ export default function MyWorksheetsPage() {
         if (!cancelled) setSubmissions(items);
       })
       .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "불러오기 실패");
+        if (!cancelled) setError(getFirebaseErrorMessage(err, "불러오기 실패"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);

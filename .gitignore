@@ -16,6 +16,10 @@
 .env
 .env.local
 
+# firebase (비밀키 — 절대 커밋 금지)
+firebase-service-account.json
+*-firebase-adminsdk-*.json
+
 # vercel
 .vercel
 

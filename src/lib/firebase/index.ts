@@ -16,3 +16,4 @@ export {
   buildStudentEmail,
   type StudentProfile,
 } from "./student-auth";
+export { getFirebaseErrorMessage } from "./errors";

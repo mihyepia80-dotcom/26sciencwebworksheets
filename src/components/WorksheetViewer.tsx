@@ -5,7 +5,7 @@ import Link from "next/link";
 import { WorksheetHeader } from "@/components/common/WorksheetHeader";
 import { TemplateRenderer } from "@/components/templates";
 import { useAuth } from "@/components/AuthProvider";
-import { isFirebaseConfigured, saveSubmission } from "@/lib/firebase";
+import { isFirebaseConfigured, saveSubmission, getFirebaseErrorMessage } from "@/lib/firebase";
 import { getTemplateById } from "@/lib/templates/registry";
 import { DEFAULT_META, type WorksheetMeta } from "@/lib/types";
 import { useWorksheetState } from "@/lib/useWorksheetState";
@@ -59,7 +59,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       });
       setSubmitted(true);
     } catch (error: unknown) {
-      setSubmitError(error instanceof Error ? error.message : "제출에 실패했습니다. 다시 시도해 주세요.");
+      setSubmitError(getFirebaseErrorMessage(error, "제출에 실패했습니다. 다시 시도해 주세요."));
     } finally {
       setSubmitting(false);
     }
