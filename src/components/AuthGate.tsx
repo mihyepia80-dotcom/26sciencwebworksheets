@@ -28,8 +28,14 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (user && role === "teacher-pending" && pathname !== "/teacher" && pathname !== "/login") {
+      router.replace("/teacher");
+      return;
+    }
+
     if (user && pathname === "/login") {
-      router.replace(role === "teacher" ? "/teacher" : "/");
+      if (role === "teacher") router.replace("/teacher");
+      else if (role === "student") router.replace("/");
       return;
     }
 

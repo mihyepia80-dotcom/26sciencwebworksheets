@@ -5,6 +5,7 @@ export {
   signInTeacherWithGoogle,
   signOutUser,
   checkIsTeacher,
+  verifyTeacherPassword,
   subscribeAppAuth,
   type AppAuthState,
   type AuthRole,

@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
 import { useAuth } from "@/components/AuthProvider";
-import { isFirebaseConfigured, listSubmissions, signInTeacherWithGoogle, signOutUser, getFirebaseErrorMessage } from "@/lib/firebase";
+import { isFirebaseConfigured, listSubmissions, signOutUser, getFirebaseErrorMessage } from "@/lib/firebase";
 import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 
 function formatSubmittedAt(submission: WorksheetSubmission): string {
@@ -31,8 +32,6 @@ const META_LABELS: Record<string, string> = {
 
 export function TeacherDashboard() {
   const { user, role, loading: authLoading } = useAuth();
-  const [authError, setAuthError] = useState("");
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [submissions, setSubmissions] = useState<WorksheetSubmission[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [listError, setListError] = useState("");
@@ -66,18 +65,6 @@ export function TeacherDashboard() {
     };
   }, [user, role]);
 
-  const handleGoogleLogin = async () => {
-    setAuthError("");
-    setGoogleLoading(true);
-    try {
-      await signInTeacherWithGoogle();
-    } catch (error: unknown) {
-      setAuthError(getFirebaseErrorMessage(error, "Google 로그인에 실패했습니다."));
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
   const handleLogout = async () => {
     await signOutUser();
     window.location.href = "/login";
@@ -103,23 +90,10 @@ export function TeacherDashboard() {
           ← 로그인
         </Link>
         <h1 className="mt-4 text-2xl font-bold text-slate-900">교사 로그인</h1>
-        <p className="mt-2 text-sm text-slate-600">Google 계정으로 로그인하면 제출된 활동지를 조회할 수 있습니다.</p>
+        <p className="mt-2 text-sm text-slate-600">Google 계정과 암호로 로그인하면 제출된 활동지를 조회할 수 있습니다.</p>
 
-        <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <button
-            type="button"
-            disabled={googleLoading}
-            onClick={handleGoogleLogin}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-          >
-            {googleLoading ? "연결 중..." : "Google로 로그인"}
-          </button>
-          {authError && <p className="mt-3 text-sm text-red-600">{authError}</p>}
-          {user && role !== "teacher" && (
-            <p className="mt-3 text-sm text-amber-700">
-              Google 계정으로 로그인해 주세요.
-            </p>
-          )}
+        <div className="mt-8">
+          <TeacherLoginPanel />
         </div>
       </div>
     );

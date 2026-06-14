@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { isFirebaseConfigured, signInStudent, signInTeacherWithGoogle, getFirebaseErrorMessage } from "@/lib/firebase";
+import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
+import { isFirebaseConfigured, signInStudent, getFirebaseErrorMessage } from "@/lib/firebase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,7 +14,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   const handleStudentLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -28,20 +27,6 @@ export default function LoginPage() {
       setError(getFirebaseErrorMessage(err, "로그인에 실패했습니다."));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setError("");
-    setGoogleLoading(true);
-
-    try {
-      await signInTeacherWithGoogle();
-      router.replace("/teacher");
-    } catch (err: unknown) {
-      setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -113,17 +98,9 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-sm font-bold text-slate-800">교사 로그인</h2>
-        <p className="mt-1 text-xs text-slate-500">Google 계정으로 로그인하면 제출 활동지를 조회할 수 있습니다.</p>
-        <button
-          type="button"
-          disabled={googleLoading}
-          onClick={handleGoogleLogin}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-        >
-          {googleLoading ? "연결 중..." : "Google로 로그인"}
-        </button>
+      <div className="mt-6">
+        <h2 className="mb-3 text-sm font-bold text-slate-800">교사 로그인</h2>
+        <TeacherLoginPanel onSuccess={() => router.replace("/teacher")} />
       </div>
 
       {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
