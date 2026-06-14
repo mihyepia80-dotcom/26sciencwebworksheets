@@ -3,8 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
+import { TeacherDailyTable } from "@/components/TeacherDailyTable";
+import { AiFeedbackCard } from "@/components/AiFeedbackCard";
 import { useAuth } from "@/components/AuthProvider";
-import { isFirebaseConfigured, listSubmissions, signOutUser, getFirebaseErrorMessage } from "@/lib/firebase";
+import {
+  deleteSubmission,
+  getFirebaseErrorMessage,
+  isFirebaseConfigured,
+  listSubmissions,
+  signOutUser,
+} from "@/lib/firebase";
 import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 
 function formatSubmittedAt(submission: WorksheetSubmission): string {
@@ -36,6 +44,7 @@ export function TeacherDashboard() {
   const [listLoading, setListLoading] = useState(false);
   const [listError, setListError] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || role !== "teacher") {
@@ -68,6 +77,24 @@ export function TeacherDashboard() {
   const handleLogout = async () => {
     await signOutUser();
     window.location.href = "/login";
+  };
+
+  const handleDelete = async (submission: WorksheetSubmission) => {
+    if (!submission.id) return;
+    if (!window.confirm("이 학생 활동지를 삭제할까요? 삭제 후에는 복구할 수 없습니다.")) return;
+
+    setDeletingId(submission.id);
+    setListError("");
+
+    try {
+      await deleteSubmission(submission.id);
+      setSubmissions((prev) => prev.filter((item) => item.id !== submission.id));
+      if (expandedId === submission.id) setExpandedId(null);
+    } catch (error: unknown) {
+      setListError(getFirebaseErrorMessage(error, "삭제에 실패했습니다."));
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   if (!isFirebaseConfigured()) {
@@ -127,6 +154,14 @@ export function TeacherDashboard() {
         </p>
       )}
 
+      {!listLoading && !listError && submissions.length > 0 && (
+        <TeacherDailyTable submissions={submissions} />
+      )}
+
+      {!listLoading && !listError && submissions.length > 0 && (
+        <h2 className="mt-10 text-lg font-bold text-slate-800">활동지 상세</h2>
+      )}
+
       <div className="mt-6 space-y-3">
         {submissions.map((submission) => {
           const open = expandedId === submission.id;
@@ -175,6 +210,23 @@ export function TeacherDashboard() {
                       ))}
                     </div>
                   )}
+
+                  {submission.aiRating && submission.aiFeedback && (
+                    <div className="mt-4">
+                      <AiFeedbackCard rating={submission.aiRating} feedback={submission.aiFeedback} />
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
+                    <button
+                      type="button"
+                      disabled={deletingId === submission.id}
+                      onClick={() => handleDelete(submission)}
+                      className="rounded-lg border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
+                    >
+                      {deletingId === submission.id ? "삭제 중..." : "삭제"}
+                    </button>
+                  </div>
                 </div>
               )}
             </article>

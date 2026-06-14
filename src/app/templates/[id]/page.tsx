@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { WorksheetViewer } from "@/components/WorksheetViewer";
 import { getTemplateById } from "@/lib/templates/registry";
@@ -16,5 +17,9 @@ export default async function TemplatePage({ params }: PageProps) {
   const template = getTemplateById(id);
   if (!template) notFound();
 
-  return <WorksheetViewer templateId={id} />;
+  return (
+    <Suspense fallback={<div className="px-4 py-16 text-center text-sm text-slate-500">로딩 중...</div>}>
+      <WorksheetViewer templateId={id} />
+    </Suspense>
+  );
 }

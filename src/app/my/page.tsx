@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { AiFeedbackCard } from "@/components/AiFeedbackCard";
 import { AppHeader } from "@/components/AppHeader";
 import { useAuth } from "@/components/AuthProvider";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
@@ -91,12 +92,27 @@ export default function MyWorksheetsPage() {
                   </div>
                   <div className="shrink-0 text-right text-xs text-slate-500">
                     <p>{formatDate(submission)}</p>
+                    <Link
+                      href={`/templates/${submission.templateId}?submission=${submission.id}`}
+                      className="mt-2 inline-block rounded border border-blue-200 px-2 py-1 text-blue-700 hover:bg-blue-50"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      수정
+                    </Link>
                     <p className="mt-1">{open ? "접기" : "펼치기"}</p>
                   </div>
                 </button>
 
                 {open && (
                   <div className="border-t border-slate-100 px-4 py-4 text-sm">
+                    <div className="mb-4 flex justify-end">
+                      <Link
+                        href={`/templates/${submission.templateId}?submission=${submission.id}`}
+                        className="rounded-lg border border-blue-200 px-4 py-2 text-sm text-blue-700 hover:bg-blue-50"
+                      >
+                        수정
+                      </Link>
+                    </div>
                     <dl className="grid gap-2 sm:grid-cols-2">
                       {Object.entries(submission.meta)
                         .filter(([, v]) => v && String(v).trim())
@@ -115,6 +131,11 @@ export default function MyWorksheetsPage() {
                             <p className="mt-1 whitespace-pre-wrap text-slate-800">{value}</p>
                           </div>
                         ))}
+                      </div>
+                    )}
+                    {submission.aiRating && submission.aiFeedback && (
+                      <div className="mt-4">
+                        <AiFeedbackCard rating={submission.aiRating} feedback={submission.aiFeedback} />
                       </div>
                     )}
                   </div>

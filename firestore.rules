@@ -12,7 +12,7 @@ service cloud.firestore {
         && request.auth.token.email.matches('.*@sagodogu-student\\.app$');
     }
 
-    function isValidSubmission(data) {
+    function isValidSubmissionData(data) {
       return data.keys().hasAll(['templateId', 'templateName', 'meta', 'values', 'studentUid', 'submittedAt'])
         && data.templateId is string
         && data.templateId.size() > 0
@@ -24,8 +24,22 @@ service cloud.firestore {
         && data.values is map
         && data.values.size() <= 200
         && data.studentUid is string
+        && (!('aiFeedback' in data) || (data.aiFeedback is string && data.aiFeedback.size() <= 300))
+        && (!('aiRating' in data) || data.aiRating in ['잘함', '보통', '노력요함']);
+    }
+
+    function isValidSubmissionCreate(data) {
+      return isValidSubmissionData(data)
         && data.studentUid == request.auth.uid
         && data.submittedAt == request.time;
+    }
+
+    function isValidSubmissionUpdate() {
+      return isValidSubmissionData(request.resource.data)
+        && resource.data.studentUid == request.auth.uid
+        && request.resource.data.studentUid == resource.data.studentUid
+        && request.resource.data.templateId == resource.data.templateId
+        && request.resource.data.submittedAt == request.time;
     }
 
     match /teachers/{uid} {
@@ -40,10 +54,13 @@ service cloud.firestore {
     }
 
     match /submissions/{submissionId} {
-      allow create: if isStudent() && isValidSubmission(request.resource.data);
+      allow create: if isStudent() && isValidSubmissionCreate(request.resource.data);
       allow read: if isTeacher()
         || (request.auth != null && resource.data.studentUid == request.auth.uid);
-      allow update, delete: if false;
+      allow update: if isStudent()
+        && resource.data.studentUid == request.auth.uid
+        && isValidSubmissionUpdate();
+      allow delete: if isTeacher();
     }
   }
 }
