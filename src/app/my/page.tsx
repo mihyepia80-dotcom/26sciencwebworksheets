@@ -12,6 +12,7 @@ import {
   listStudentInquiryReports,
   type InquiryReportDoc,
 } from "@/lib/firebase/inquiry-reports";
+import { inquiryReportTitle } from "@/lib/inquiry-report/types";
 
 const META_LABELS: Record<string, string> = {
   grade: "학년/반",
@@ -119,9 +120,9 @@ export default function MyWorksheetsPage() {
                     onClick={() => setExpandedReportId(open ? null : report.id ?? null)}
                   >
                     <div>
-                      <p className="font-semibold text-slate-800">{report.title || "제목 없음"}</p>
+                      <p className="font-semibold text-slate-800">{inquiryReportTitle(report)}</p>
                       <p className="mt-1 text-sm text-slate-600">
-                        {report.groupNo ? `${report.groupNo}모둠` : "모둠 미입력"} · 기록자 {report.recorder || "-"}
+                        {report.unitName || "단원 미입력"} · {report.groupNo ? `${report.groupNo}모둠` : "모둠 미입력"}
                       </p>
                     </div>
                     <div className="shrink-0 text-right text-xs text-slate-500">

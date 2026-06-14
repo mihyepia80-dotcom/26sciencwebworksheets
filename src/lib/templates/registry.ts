@@ -2,6 +2,7 @@ import type { TemplateDefinition } from "@/lib/types";
 
 export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   { id: "see-think-wonder", order: 0, name: "See/Think/Wonder", nameEn: "SEE/THINK/WONDER", category: "thinking-routine", description: "관찰·생각·궁금증 기록", headerFields: ["unit", "period", "inquiryQuestion", "writingContext"] },
+  { id: "three-two-one-reflection", order: 1, name: "3-2-1 성찰하기", nameEn: "3-2-1 Reflection", category: "reflection", description: "배운 것 3·궁금한 점 2·어려운 점 1 성찰", headerFields: ["unit", "inquiryQuestion"] },
   { id: "circle-tree-map", order: 1, name: "써클맵·트리맵", category: "thinking-map", description: "브레인스토밍과 분류", headerFields: ["writingContext"] },
   { id: "double-bubble-map", order: 2, name: "더블 버블 맵", category: "thinking-map", description: "두 대상 비교·대조", headerFields: ["writingContext"] },
   { id: "multi-flow-map", order: 3, name: "멀티플로우맵", category: "thinking-map", description: "원인·사건·결과 분석", headerFields: ["writingContext"] },

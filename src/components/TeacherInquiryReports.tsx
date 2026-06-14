@@ -7,12 +7,29 @@ import {
   listAllInquiryReports,
   type InquiryReportDoc,
 } from "@/lib/firebase";
+import { inquiryReportTitle } from "@/lib/inquiry-report/types";
 
 function formatDate(report: InquiryReportDoc): string {
   const ts = report.submittedAt ?? report.updatedAt;
   if (!ts) return "-";
   return ts.toDate().toLocaleString("ko-KR");
 }
+
+const REPORT_FIELDS: { label: string; key: keyof InquiryReportDoc }[] = [
+  { label: "단원명", key: "unitName" },
+  { label: "차시명", key: "lessonName" },
+  { label: "궁금한 내용", key: "curiousContent" },
+  { label: "탐구 문제", key: "inquiryProblem" },
+  { label: "알고 있는 것", key: "priorKnowledge" },
+  { label: "탐구 결과", key: "inquiryResult" },
+  { label: "알게 된 점", key: "learnedAfter" },
+  { label: "더 알고 싶은 점", key: "wantToKnowMore" },
+  { label: "이번 시간 배운 내용", key: "classLearned" },
+  { label: "가장 궁금했던 내용", key: "mostCurious" },
+  { label: "탐구 결과 정리", key: "resultOrganized" },
+  { label: "생활 속 이야기", key: "realLifeStory" },
+  { label: "그림으로 설명", key: "visualDescription" },
+];
 
 export function TeacherInquiryReports() {
   const [reports, setReports] = useState<InquiryReportDoc[]>([]);
@@ -78,6 +95,9 @@ export function TeacherInquiryReports() {
         {reports.map((report) => {
           const open = expandedId === report.id;
           const members = report.members.filter((m) => m.trim()).join(", ");
+          const processSteps = [report.processStep1, report.processStep2, report.processStep3, report.processStep4, report.processStep5]
+            .filter((s) => s.trim())
+            .join("\n");
 
           return (
             <article key={report.id} className="overflow-hidden rounded-xl border border-violet-100 bg-white shadow-sm">
@@ -87,9 +107,9 @@ export function TeacherInquiryReports() {
                 onClick={() => setExpandedId(open ? null : report.id ?? null)}
               >
                 <div>
-                  <p className="font-semibold text-slate-800">{report.title || "제목 없음"}</p>
+                  <p className="font-semibold text-slate-800">{inquiryReportTitle(report)}</p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {report.groupNo ? `${report.groupNo}모둠` : "모둠 미입력"} · 기록자 {report.recorder || "-"}
+                    {report.unitName || "단원 미입력"} · {report.groupNo ? `${report.groupNo}모둠` : "모둠 미입력"} · 기록자 {report.recorder || "-"}
                   </p>
                 </div>
                 <div className="shrink-0 text-right text-xs text-slate-500">
@@ -112,12 +132,15 @@ export function TeacherInquiryReports() {
                       <span className="font-medium text-slate-600">모둠원:</span> {members}
                     </p>
                   )}
-                  <ReportField label="준비물" value={report.materials} />
-                  <ReportField label="내용" value={report.content} />
-                  <ReportField label="실험 과정 정리" value={report.processSummary} />
-                  <ReportField label="실험 모습" value={report.sceneDescription} />
-                  <ReportField label="실험 결과" value={report.resultSummary} />
-                  <ReportField label="알게 된 사실 및 결론" value={report.conclusion} />
+                  {REPORT_FIELDS.map(({ label, key }) => (
+                    <ReportField key={key} label={label} value={String(report[key] ?? "")} />
+                  ))}
+                  {processSteps && (
+                    <div className="rounded-lg bg-slate-50 p-3">
+                      <p className="text-xs font-semibold text-slate-500">탐구 과정</p>
+                      <p className="mt-1 whitespace-pre-wrap text-slate-800">{processSteps}</p>
+                    </div>
+                  )}
                   <div className="flex justify-end border-t border-slate-100 pt-4">
                     <button
                       type="button"

@@ -129,7 +129,7 @@ export function TeacherDashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <Link href="/" className="text-sm text-blue-600 hover:underline">
             ← 홈으로
@@ -137,13 +137,21 @@ export function TeacherDashboard() {
           <h1 className="mt-2 text-2xl font-bold text-slate-900">제출 활동지 (교사)</h1>
           <p className="mt-1 text-sm text-slate-600">{user.email}</p>
         </div>
-        <button
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/teacher/lesson-plans"
+            className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+          >
+            수업지도안 설계
+          </Link>
+          <button
           type="button"
           onClick={handleLogout}
           className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
         >
           로그아웃
         </button>
+        </div>
       </div>
 
       {listLoading && <p className="mt-8 text-sm text-slate-500">불러오는 중...</p>}

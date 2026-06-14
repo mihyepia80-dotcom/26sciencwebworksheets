@@ -6,33 +6,168 @@ import { GuideChips, SectionBox, TextAreaField, GridInput } from "@/components/c
 const v = (values: Record<string, string>, key: string) => values[key] ?? "";
 
 /* ── See/Think/Wonder ── */
-const STW_GUIDES = {
-  see: ["~이 보인다.", "~가 변하는 것이 보인다.", "~의 모양·특징이 보인다.", "~의 기호를 알 수 있다.", "~의 특정 부분을 발견했다.", "~의 제스처·감정이 보인다.", "대상 간 공통점·차이점이 보인다."],
-  think: ["내 생각에는 ~을 의미하는 것 같다.", "내가 추측하기에는 ~인 것 같다.", "내가 이해하기에는 ~인 것 같다.", "내가 해석하기에는 ~을 의미한다.", "가장 인상 깊었던 점은 ~이다."],
-  wonder: ["왜 이럴까?", "만약 ~한다면?", "왜 이렇게 했을까?", "~에 대해 궁금하다.", "두 가지의 관계는?", "어떤 의미가 담겨 있을까?", "어떤 영향을 줄까?", "왜 ~이 가능할까?"],
-};
+const STW_SECTIONS = {
+  see: {
+    icon: "👁",
+    title: "SEE",
+    subtitle: "자료를 관찰한 토대로 글쓰기",
+    placeholder: "관찰한 내용을 적어보세요",
+    guides: [
+      "(무엇)이 보인다.",
+      "(변화나 특정한 규칙)이 보인다.",
+      "(물체의 생김새나 특징)이 보인다.",
+      "(어떤 성질을 가지고 있는지) 알 수 있다.",
+      "(특정한 부분들) 발견하였다.",
+      "(인물의 제스처나 감정)이 보인다.",
+      "(대상들끼리의 공통점/차이점)이 보인다.",
+    ],
+  },
+  think: {
+    icon: "💡",
+    title: "THINK",
+    subtitle: "자료를 본 후 나의 생각(주관적) 쓰기",
+    placeholder: "생각과 느낌을 적어보세요",
+    guides: [
+      "내 생각에 이것은 ~ 의미일 것 같다.",
+      "내가 추측하기로는 ~ 것 같다.",
+      "내가 이해하기로는 ~ 것 같다.",
+      "내가 해석하기에는 ~ 의미일 것 같다.",
+      "가장 인상깊었던 점은 ~ 이었다.",
+    ],
+  },
+  wonder: {
+    icon: "❓",
+    title: "WONDER",
+    subtitle: "나의 생각(상상)이 담긴 궁금한 점을 쓰기",
+    placeholder: "궁금한 점을 적어보세요",
+    guides: [
+      "왜 이런지 궁금하다.",
+      "만약 ~ 한다면?",
+      "왜 이렇게 했을까?",
+      "나는 ~점이 궁금하다.",
+      "이 둘은 어떤 관련이 있을까?",
+      "어떤 의미가 담겼을까?",
+      "어떤 영향을 미칠까?",
+      "~가 가능한 이유는 무엇일까?",
+    ],
+  },
+} as const;
 
 export function SeeThinkWonderTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
     <SectionBox title="See / Think / Wonder" color="blue">
       <div className="grid gap-4 lg:grid-cols-3">
-        {(["see", "think", "wonder"] as const).map((key) => (
-          <div key={key} className="rounded-lg border border-slate-200 bg-white p-3">
-            <h3 className="mb-2 text-sm font-bold uppercase text-slate-700">{key}</h3>
-            {!readOnly && (
-              <div className="mb-2">
-                <GuideChips chips={STW_GUIDES[key]} onSelect={(t) => onChange(key, v(values, key) ? `${v(values, key)}\n${t}` : t)} />
+        {(Object.keys(STW_SECTIONS) as Array<keyof typeof STW_SECTIONS>).map((key) => {
+          const section = STW_SECTIONS[key];
+          return (
+            <div key={key} className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-xl">{section.icon}</span>
+                <div>
+                  <h3 className="text-sm font-bold uppercase text-slate-800">{section.title}</h3>
+                  <p className="text-xs text-slate-500">{section.subtitle}</p>
+                </div>
               </div>
-            )}
-            <TextAreaField
-              value={v(values, key)}
-              onChange={(val) => onChange(key, val)}
-              placeholder={key === "see" ? "관찰한 내용을 적어보세요" : key === "think" ? "생각과 느낌을 적어보세요" : "궁금한 점을 적어보세요"}
-              rows={6}
-              readOnly={readOnly}
-            />
+              {!readOnly && (
+                <ol className="mb-3 space-y-1 text-xs text-slate-500">
+                  {section.guides.map((g, i) => (
+                    <li key={i} className="flex gap-1">
+                      <span className="shrink-0 text-slate-400">{i + 1}.</span>
+                      <button
+                        type="button"
+                        className="text-left hover:text-blue-600"
+                        onClick={() => onChange(key, v(values, key) ? `${v(values, key)}\n${g}` : g)}
+                      >
+                        {g}
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              )}
+              <TextAreaField
+                value={v(values, key)}
+                onChange={(val) => onChange(key, val)}
+                placeholder={section.placeholder}
+                rows={6}
+                readOnly={readOnly}
+              />
+            </div>
+          );
+        })}
+      </div>
+    </SectionBox>
+  );
+}
+
+/* ── 3-2-1 성찰하기 ── */
+export function ThreeTwoOneReflectionTemplate({ values, onChange, readOnly }: TemplateProps) {
+  const sections = [
+    {
+      key: "learned",
+      title: "배운 것 3가지",
+      icon: "💡",
+      count: 3,
+      color: "border-amber-200 bg-amber-50",
+      placeholder: "이번 수업에서 배운 내용을 적어보세요",
+    },
+    {
+      key: "curious",
+      title: "궁금한 점 2가지",
+      icon: "❤️",
+      count: 2,
+      color: "border-rose-200 bg-rose-50",
+      placeholder: "더 알고 싶은 점을 적어보세요",
+    },
+    {
+      key: "difficult",
+      title: "어려웠던 점 1가지",
+      icon: "💬",
+      count: 1,
+      color: "border-sky-200 bg-sky-50",
+      placeholder: "어려웠던 점을 적어보세요",
+    },
+  ] as const;
+
+  return (
+    <SectionBox title="3-2-1 성찰하기" color="yellow">
+      <div className="space-y-4">
+        {sections.map(({ key, title, icon, count, color, placeholder }) => (
+          <div key={key} className={`rounded-xl border p-4 ${color}`}>
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-800">
+              <span>{icon}</span>
+              {title}
+            </h3>
+            <div className="space-y-2">
+              {Array.from({ length: count }, (_, i) => {
+                const fieldKey = `${key}${i + 1}`;
+                return (
+                  <label key={fieldKey} className="flex items-start gap-2 text-sm">
+                    <span className="mt-2 w-5 shrink-0 font-medium text-slate-500">{i + 1}.</span>
+                    <TextAreaField
+                      value={v(values, fieldKey)}
+                      onChange={(val) => onChange(fieldKey, val)}
+                      placeholder={placeholder}
+                      rows={2}
+                      readOnly={readOnly}
+                      className="flex-1"
+                    />
+                  </label>
+                );
+              })}
+            </div>
           </div>
         ))}
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <h3 className="mb-2 text-sm font-bold text-slate-800">스스로 생각하기</h3>
+          <TextAreaField
+            value={v(values, "selfReflection")}
+            onChange={(val) => onChange("selfReflection", val)}
+            placeholder="오늘 수업을 돌아보며 스스로 생각한 내용을 자유롭게 적어보세요"
+            rows={5}
+            readOnly={readOnly}
+            className="bg-[linear-gradient(transparent_1.4rem,#e2e8f0_1.45rem)] bg-[length:100%_1.5rem]"
+          />
+        </div>
       </div>
     </SectionBox>
   );

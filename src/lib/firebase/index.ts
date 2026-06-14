@@ -36,3 +36,11 @@ export {
   deleteInquiryReport,
   type InquiryReportDoc,
 } from "./inquiry-reports";
+export {
+  createLessonPlan,
+  updateLessonPlan,
+  getLessonPlan,
+  listTeacherLessonPlans,
+  deleteLessonPlan,
+  type LessonPlanDoc,
+} from "./lesson-plans";

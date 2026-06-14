@@ -28,9 +28,31 @@ export interface InquiryReportDoc extends InquiryReportForm {
   updatedAt: Timestamp | null;
 }
 
+function str(data: Record<string, unknown>, key: string, fallback = ""): string {
+  return String(data[key] ?? fallback);
+}
+
+function mapLegacyReport(data: Record<string, unknown>) {
+  const hasNew = Boolean(data.unitName || data.curiousContent || data.inquiryProblem);
+  if (hasNew) return null;
+  return {
+    unitName: str(data, "title"),
+    lessonName: "",
+    curiousContent: str(data, "content"),
+    inquiryProblem: str(data, "title"),
+    priorKnowledge: str(data, "materials"),
+    processStep1: str(data, "processSummary"),
+    inquiryResult: str(data, "resultSummary"),
+    learnedAfter: str(data, "conclusion"),
+    classLearned: str(data, "sceneDescription"),
+    resultOrganized: str(data, "resultSummary"),
+  };
+}
+
 function mapDoc(id: string, data: Record<string, unknown>): InquiryReportDoc {
   const members = Array.isArray(data.members) ? data.members.map(String) : ["", "", "", "", "", ""];
   while (members.length < 6) members.push("");
+  const legacy = mapLegacyReport(data);
 
   return {
     id,
@@ -39,13 +61,24 @@ function mapDoc(id: string, data: Record<string, unknown>): InquiryReportDoc {
     groupNo: String(data.groupNo ?? ""),
     members: members.slice(0, 6),
     recorder: String(data.recorder ?? ""),
-    title: String(data.title ?? ""),
-    materials: String(data.materials ?? ""),
-    content: String(data.content ?? ""),
-    processSummary: String(data.processSummary ?? ""),
-    sceneDescription: String(data.sceneDescription ?? ""),
-    resultSummary: String(data.resultSummary ?? ""),
-    conclusion: String(data.conclusion ?? ""),
+    unitName: legacy?.unitName ?? str(data, "unitName"),
+    lessonName: legacy?.lessonName ?? str(data, "lessonName"),
+    curiousContent: legacy?.curiousContent ?? str(data, "curiousContent"),
+    inquiryProblem: legacy?.inquiryProblem ?? str(data, "inquiryProblem"),
+    priorKnowledge: legacy?.priorKnowledge ?? str(data, "priorKnowledge"),
+    processStep1: legacy?.processStep1 ?? str(data, "processStep1"),
+    processStep2: str(data, "processStep2"),
+    processStep3: str(data, "processStep3"),
+    processStep4: str(data, "processStep4"),
+    processStep5: str(data, "processStep5"),
+    inquiryResult: legacy?.inquiryResult ?? str(data, "inquiryResult"),
+    learnedAfter: legacy?.learnedAfter ?? str(data, "learnedAfter"),
+    wantToKnowMore: str(data, "wantToKnowMore"),
+    classLearned: legacy?.classLearned ?? str(data, "classLearned"),
+    mostCurious: str(data, "mostCurious"),
+    resultOrganized: legacy?.resultOrganized ?? str(data, "resultOrganized"),
+    realLifeStory: str(data, "realLifeStory"),
+    visualDescription: str(data, "visualDescription"),
     submittedAt: (data.submittedAt as Timestamp | null) ?? null,
     updatedAt: (data.updatedAt as Timestamp | null) ?? null,
   };

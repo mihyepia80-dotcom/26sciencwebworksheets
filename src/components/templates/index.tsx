@@ -4,6 +4,7 @@ import type { ComponentType } from "react";
 import type { TemplateProps } from "@/lib/types";
 import {
   SeeThinkWonderTemplate,
+  ThreeTwoOneReflectionTemplate,
   ThinkPuzzleExploreTemplate,
   ClaimSupportQuestionTemplate,
   FourCsTemplate,
@@ -48,6 +49,7 @@ import {
 
 export const TEMPLATE_COMPONENTS: Record<string, ComponentType<TemplateProps>> = {
   "see-think-wonder": SeeThinkWonderTemplate,
+  "three-two-one-reflection": ThreeTwoOneReflectionTemplate,
   "circle-tree-map": CircleTreeMapTemplate,
   "double-bubble-map": DoubleBubbleMapTemplate,
   "multi-flow-map": MultiFlowMapTemplate,

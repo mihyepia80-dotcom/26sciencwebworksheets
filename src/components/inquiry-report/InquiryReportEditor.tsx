@@ -16,6 +16,9 @@ import {
   type InquiryReportForm,
 } from "@/lib/inquiry-report/types";
 
+const TEXTAREA =
+  "w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-400 focus:outline-none";
+
 type ViewMode = "write" | "preview";
 type ZoomLevel = 100 | 125 | 150;
 
@@ -28,7 +31,7 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
   const [reportId, setReportId] = useState<string | null>(initialReportId ?? null);
   const [mode, setMode] = useState<ViewMode>("write");
   const [zoom, setZoom] = useState<ZoomLevel>(100);
-  const [activeSection, setActiveSection] = useState("title");
+  const [activeSection, setActiveSection] = useState("curious");
   const [loading, setLoading] = useState(Boolean(initialReportId));
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,13 +56,24 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
           groupNo: doc.groupNo,
           members: doc.members,
           recorder: doc.recorder,
-          title: doc.title,
-          materials: doc.materials,
-          content: doc.content,
-          processSummary: doc.processSummary,
-          sceneDescription: doc.sceneDescription,
-          resultSummary: doc.resultSummary,
-          conclusion: doc.conclusion,
+          unitName: doc.unitName,
+          lessonName: doc.lessonName,
+          curiousContent: doc.curiousContent,
+          inquiryProblem: doc.inquiryProblem,
+          priorKnowledge: doc.priorKnowledge,
+          processStep1: doc.processStep1,
+          processStep2: doc.processStep2,
+          processStep3: doc.processStep3,
+          processStep4: doc.processStep4,
+          processStep5: doc.processStep5,
+          inquiryResult: doc.inquiryResult,
+          learnedAfter: doc.learnedAfter,
+          wantToKnowMore: doc.wantToKnowMore,
+          classLearned: doc.classLearned,
+          mostCurious: doc.mostCurious,
+          resultOrganized: doc.resultOrganized,
+          realLifeStory: doc.realLifeStory,
+          visualDescription: doc.visualDescription,
         });
         setReportId(doc.id ?? initialReportId);
         setSubmitted(doc.status === "submitted");
@@ -80,7 +94,7 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
         if (visible[0]?.target) {
-          setActiveSection(visible[0].target.getAttribute("data-section") ?? "title");
+          setActiveSection(visible[0].target.getAttribute("data-section") ?? "curious");
         }
       },
       { rootMargin: "-20% 0px -60% 0px", threshold: [0, 0.25, 0.5] },
@@ -238,9 +252,31 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
           style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}
         >
           <div className="mx-auto max-w-3xl space-y-5 pb-24">
-            {/* 모둠 정보 */}
+            {/* 단원·차시·모둠 정보 */}
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm print:shadow-none">
-              <div className="flex flex-wrap items-center gap-3 text-sm">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="text-sm">
+                  <span className="mb-1 block font-medium text-slate-700">단원명</span>
+                  <input
+                    className="w-full rounded border border-slate-200 px-3 py-2"
+                    placeholder="예: 3. 용해와 용액"
+                    value={form.unitName}
+                    disabled={readOnly}
+                    onChange={(e) => patch("unitName", e.target.value)}
+                  />
+                </label>
+                <label className="text-sm">
+                  <span className="mb-1 block font-medium text-slate-700">차시명</span>
+                  <input
+                    className="w-full rounded border border-slate-200 px-3 py-2"
+                    placeholder="예: 4~5차시"
+                    value={form.lessonName}
+                    disabled={readOnly}
+                    onChange={(e) => patch("lessonName", e.target.value)}
+                  />
+                </label>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
                 <label className="flex items-center gap-2">
                   <span className="font-medium text-slate-700">(</span>
                   <input
@@ -284,87 +320,79 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
               </div>
             </section>
 
-            {/* 1. 제목 */}
-            <SectionCard id="title" num={1} title="제목" subtitle="">
-              <textarea
-                className="w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-400 focus:outline-none"
-                rows={3}
-                placeholder="실험 제목과 목적을 입력하세요..."
-                value={form.title}
-                disabled={readOnly}
-                onChange={(e) => patch("title", e.target.value)}
-              />
+            <p className="text-center text-xs font-medium text-slate-500">탐구 활동 기록</p>
+
+            <SectionCard id="curious" num={1} title="궁금한 내용을 적으세요" marker="◆">
+              <textarea className={TEXTAREA} rows={4} value={form.curiousContent} disabled={readOnly} onChange={(e) => patch("curiousContent", e.target.value)} />
             </SectionCard>
 
-            {/* 2. 준비물 */}
-            <SectionCard id="materials" num={2} title="준비물">
-              <textarea
-                className="w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-400 focus:outline-none"
-                rows={4}
-                placeholder="사용한 재료와 장비를 목록으로 입력하세요..."
-                value={form.materials}
-                disabled={readOnly}
-                onChange={(e) => patch("materials", e.target.value)}
-              />
+            <SectionCard id="problem" num={2} title="탐구 문제는 무엇인가요?" marker="◆">
+              <textarea className={TEXTAREA} rows={3} value={form.inquiryProblem} disabled={readOnly} onChange={(e) => patch("inquiryProblem", e.target.value)} />
             </SectionCard>
 
-            {/* 3. 내용 */}
-            <SectionCard id="content" num={3} title="내용" subtitle="설계 / 과정 / 방법 등">
+            <SectionCard id="prior" num={3} title="탐구 내용과 관련하여 내가 알고 있는 것을 적으세요" marker="◆">
+              <textarea className={TEXTAREA} rows={4} value={form.priorKnowledge} disabled={readOnly} onChange={(e) => patch("priorKnowledge", e.target.value)} />
+            </SectionCard>
+
+            <SectionCard id="process" num={4} title="탐구 과정을 적어보세요" marker="◆">
+              <div className="space-y-2">
+                {[1, 2, 3, 4, 5].map((n) => {
+                  const key = `processStep${n}` as keyof InquiryReportForm;
+                  return (
+                    <label key={n} className="flex items-start gap-2 text-sm">
+                      <span className="mt-3 w-4 shrink-0 text-slate-400">-</span>
+                      <textarea
+                        className={TEXTAREA}
+                        rows={2}
+                        placeholder={`${n}단계`}
+                        value={form[key] as string}
+                        disabled={readOnly}
+                        onChange={(e) => patch(key, e.target.value as InquiryReportForm[typeof key])}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </SectionCard>
+
+            <SectionCard id="result" num={5} title="탐구 결과를 적으세요" marker="◆">
+              <textarea className={TEXTAREA} rows={4} value={form.inquiryResult} disabled={readOnly} onChange={(e) => patch("inquiryResult", e.target.value)} />
+            </SectionCard>
+
+            <SectionCard id="learned" num={6} title="탐구 후 알게 된 점을 적으세요" marker="◆">
+              <textarea className={TEXTAREA} rows={4} value={form.learnedAfter} disabled={readOnly} onChange={(e) => patch("learnedAfter", e.target.value)} />
+            </SectionCard>
+
+            <SectionCard id="more" num={7} title="더 알고 싶은 점을 적으세요" marker="◆">
+              <textarea className={TEXTAREA} rows={3} value={form.wantToKnowMore} disabled={readOnly} onChange={(e) => patch("wantToKnowMore", e.target.value)} />
+            </SectionCard>
+
+            <p className="text-center text-xs font-medium text-slate-500">성찰 및 정리</p>
+
+            <SectionCard id="classLearned" num={8} title="이번 시간에 배운 내용을 적어보세요">
+              <textarea className={TEXTAREA} rows={4} value={form.classLearned} disabled={readOnly} onChange={(e) => patch("classLearned", e.target.value)} />
+            </SectionCard>
+
+            <SectionCard id="mostCurious" num={9} title="이번 시간 탐구를 통해 가장 궁금했던 내용을 적으세요">
+              <textarea className={TEXTAREA} rows={3} value={form.mostCurious} disabled={readOnly} onChange={(e) => patch("mostCurious", e.target.value)} />
+            </SectionCard>
+
+            <SectionCard id="organized" num={10} title="탐구 결과를 바탕으로 탐구 내용을 정리해봅시다">
+              <textarea className={TEXTAREA} rows={4} value={form.resultOrganized} disabled={readOnly} onChange={(e) => patch("resultOrganized", e.target.value)} />
+            </SectionCard>
+
+            <SectionCard id="realLife" num={11} title="생활 속 이야기를 이번 탐구 활동과 관련하여 정리해봅시다">
+              <textarea className={TEXTAREA} rows={4} value={form.realLifeStory} disabled={readOnly} onChange={(e) => patch("realLifeStory", e.target.value)} />
+            </SectionCard>
+
+            <SectionCard id="visual" num={12} title="그림으로 나타내어 봅시다" subtitle="그림 대신 글로 설명해도 됩니다">
               <textarea
-                className="w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-400 focus:outline-none"
+                className={`${TEXTAREA} min-h-[10rem]`}
                 rows={6}
-                placeholder="실험 내용을 입력하세요..."
-                value={form.content}
+                placeholder="그림으로 표현하고 싶은 내용을 글로 설명하거나, 그림을 그린 뒤 무엇을 그렸는지 설명하세요."
+                value={form.visualDescription}
                 disabled={readOnly}
-                onChange={(e) => patch("content", e.target.value)}
-              />
-            </SectionCard>
-
-            {/* 4. 실험 과정 정리 */}
-            <SectionCard id="process" num={4} title="실험 과정 정리">
-              <textarea
-                className="w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-400 focus:outline-none"
-                rows={5}
-                placeholder="실험 과정을 순서대로 정리하세요..."
-                value={form.processSummary}
-                disabled={readOnly}
-                onChange={(e) => patch("processSummary", e.target.value)}
-              />
-            </SectionCard>
-
-            {/* 5. 실험 모습 */}
-            <SectionCard id="scene" num={5} title="실험 모습">
-              <textarea
-                className="w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-400 focus:outline-none"
-                rows={5}
-                placeholder="실험하는 모습을 글로 설명하세요..."
-                value={form.sceneDescription}
-                disabled={readOnly}
-                onChange={(e) => patch("sceneDescription", e.target.value)}
-              />
-            </SectionCard>
-
-            {/* 6. 실험 결과 */}
-            <SectionCard id="result" num={6} title="실험 결과">
-              <textarea
-                className="w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-400 focus:outline-none"
-                rows={5}
-                placeholder="실험 결과를 정리하세요..."
-                value={form.resultSummary}
-                disabled={readOnly}
-                onChange={(e) => patch("resultSummary", e.target.value)}
-              />
-            </SectionCard>
-
-            {/* 7. 알게 된 사실 및 결론 */}
-            <SectionCard id="conclusion" num={7} title="알게 된 사실 및 결론">
-              <textarea
-                className="w-full resize-y rounded-lg border border-slate-200 p-3 text-sm focus:border-blue-400 focus:outline-none"
-                rows={6}
-                placeholder="알게 된 사실과 결론을 입력하세요..."
-                value={form.conclusion}
-                disabled={readOnly}
-                onChange={(e) => patch("conclusion", e.target.value)}
+                onChange={(e) => patch("visualDescription", e.target.value)}
               />
             </SectionCard>
 
@@ -395,12 +423,14 @@ function SectionCard({
   num,
   title,
   subtitle,
+  marker,
   children,
 }: {
   id: string;
   num: number;
   title: string;
   subtitle?: string;
+  marker?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -410,9 +440,11 @@ function SectionCard({
       className="scroll-mt-24 rounded-xl border border-slate-200 bg-white p-5 shadow-sm print:break-inside-avoid print:shadow-none"
     >
       <h2 className="mb-4 text-base font-bold text-slate-800">
-        <span className="mr-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-100 text-sm text-blue-800">
-          {num}
-        </span>
+        {marker ? (
+          <span className="mr-2 text-blue-700">{marker}</span>
+        ) : (
+          <span className="mr-2 text-blue-800">{num}.</span>
+        )}
         {title}
         {subtitle && <span className="ml-2 text-sm font-normal text-slate-500">({subtitle})</span>}
       </h2>

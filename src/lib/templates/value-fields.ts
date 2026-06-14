@@ -27,6 +27,15 @@ const LINK_LETTERS = "ABCDEFGHIJKL".split("").map((l) => `link_${l}`);
 
 export const TEMPLATE_VALUE_FIELDS: Record<string, string[]> = {
   "see-think-wonder": ["see", "think", "wonder"],
+  "three-two-one-reflection": [
+    "learned1",
+    "learned2",
+    "learned3",
+    "curious1",
+    "curious2",
+    "difficult1",
+    "selfReflection",
+  ],
   "circle-tree-map": [
     "circleCenter",
     "circleOuter",
