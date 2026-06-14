@@ -27,3 +27,12 @@ export {
 } from "./student-auth";
 export { getFirebaseErrorMessage } from "./errors";
 export { createShareLink, getShareByToken, type ShareRecord } from "./shares";
+export {
+  createInquiryReportDraft,
+  updateInquiryReport,
+  getInquiryReport,
+  listStudentInquiryReports,
+  listAllInquiryReports,
+  deleteInquiryReport,
+  type InquiryReportDoc,
+} from "./inquiry-reports";

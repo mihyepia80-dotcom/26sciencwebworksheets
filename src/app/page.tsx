@@ -14,6 +14,18 @@ export default function HomePage() {
       />
 
       <main className="mx-auto max-w-6xl px-4 py-8">
+        <section className="mb-10">
+          <Link
+            href="/inquiry-report"
+            className="block rounded-xl border-2 border-violet-200 bg-gradient-to-r from-violet-50 to-blue-50 p-6 shadow-sm transition hover:border-violet-300 hover:shadow-md"
+          >
+            <h2 className="text-xl font-bold text-violet-900">학생용 탐구보고서</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              실험 제목·준비물·과정·결과·결론을 작성해 제출하세요.
+            </p>
+          </Link>
+        </section>
+
         {categories.map((cat) => {
           const items = templates.filter((t) => t.category === cat);
           return (

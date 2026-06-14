@@ -98,5 +98,16 @@ service cloud.firestore {
         allow read, write: if false;
       }
     }
+
+    match /inquiryReports/{reportId} {
+      allow create: if isStudent()
+        && request.resource.data.studentUid == request.auth.uid;
+      allow read: if isTeacher()
+        || (request.auth != null && resource.data.studentUid == request.auth.uid);
+      allow update: if isStudent()
+        && resource.data.studentUid == request.auth.uid
+        && request.resource.data.studentUid == request.auth.uid;
+      allow delete: if isTeacher();
+    }
   }
 }
