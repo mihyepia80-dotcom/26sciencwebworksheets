@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AiFeedbackCard } from "@/components/AiFeedbackCard";
 import { ShareButton } from "@/components/ShareButton";
+import { PeerFeedbackSection } from "@/components/peer-feedback/PeerFeedbackSection";
 import { WorksheetHeader } from "@/components/common/WorksheetHeader";
 import { TemplateRenderer } from "@/components/templates";
 import { useAuth } from "@/components/AuthProvider";
@@ -308,6 +309,14 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
           제출 완료! {aiRating ? "AI 피드백을 확인하고 " : ""}공유 링크로 활동지를 보여줄 수 있습니다.
         </p>
       )}
+
+      <PeerFeedbackSection
+        targetType="worksheet"
+        templateId={templateId}
+        templateName={template.name}
+        ownDocId={submissionId}
+        enabled={submitted && Boolean(submissionId) && role === "student"}
+      />
     </div>
   );
 }

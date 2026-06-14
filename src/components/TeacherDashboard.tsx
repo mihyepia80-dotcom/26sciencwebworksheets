@@ -5,6 +5,7 @@ import Link from "next/link";
 import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
 import { TeacherDailyTable } from "@/components/TeacherDailyTable";
 import { TeacherInquiryReports } from "@/components/TeacherInquiryReports";
+import { TeacherPeerFeedbacks } from "@/components/TeacherPeerFeedbacks";
 import { AiFeedbackCard } from "@/components/AiFeedbackCard";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -244,6 +245,8 @@ export function TeacherDashboard() {
       </div>
 
       <TeacherInquiryReports />
+
+      <TeacherPeerFeedbacks />
     </div>
   );
 }

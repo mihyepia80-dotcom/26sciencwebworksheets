@@ -20,3 +20,16 @@ export function getFirebaseErrorMessage(error: unknown, fallback = "요청에 �
   }
   return fallback;
 }
+
+/** 학생 화면용 — Firebase 기술 메시지를 숨깁니다. */
+export function getStudentFirebaseErrorMessage(error: unknown, fallback = "잠시 후 다시 시도해 주세요."): string {
+  if (error instanceof Error) {
+    const code = (error as Error & { code?: string }).code;
+    if (code === "failed-precondition" || code === "permission-denied") return fallback;
+  }
+  const msg = getFirebaseErrorMessage(error, fallback);
+  if (msg.includes("Firestore") || msg.includes("deploy:") || msg.includes("Firebase Console")) {
+    return fallback;
+  }
+  return msg;
+}

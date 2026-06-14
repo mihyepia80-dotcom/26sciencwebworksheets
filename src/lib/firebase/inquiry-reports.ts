@@ -85,11 +85,13 @@ function mapDoc(id: string, data: Record<string, unknown>): InquiryReportDoc {
   };
 }
 
-function toFirestorePayload(form: InquiryReportForm, studentUid: string, status: InquiryReportStatus) {
+function toFirestorePayload(form: InquiryReportForm, studentUid: string, status: InquiryReportStatus, grade = "", classNo = "") {
   return {
     ...form,
     members: form.members.slice(0, 6),
     studentUid,
+    grade,
+    classNo,
     status,
     updatedAt: serverTimestamp(),
     ...(status === "submitted" ? { submittedAt: serverTimestamp() } : {}),
@@ -99,9 +101,11 @@ function toFirestorePayload(form: InquiryReportForm, studentUid: string, status:
 export async function createInquiryReportDraft(
   form: InquiryReportForm,
   studentUid: string,
+  grade = "",
+  classNo = "",
 ): Promise<string> {
   const ref = await addDoc(collection(getClientDb(), "inquiryReports"), {
-    ...toFirestorePayload(form, studentUid, "draft"),
+    ...toFirestorePayload(form, studentUid, "draft", grade, classNo),
     submittedAt: null,
   });
   return ref.id;
@@ -112,8 +116,13 @@ export async function updateInquiryReport(
   form: InquiryReportForm,
   studentUid: string,
   status: InquiryReportStatus,
+  grade = "",
+  classNo = "",
 ): Promise<void> {
-  await updateDoc(doc(getClientDb(), "inquiryReports", reportId), toFirestorePayload(form, studentUid, status));
+  await updateDoc(
+    doc(getClientDb(), "inquiryReports", reportId),
+    toFirestorePayload(form, studentUid, status, grade, classNo),
+  );
 }
 
 export async function getInquiryReport(reportId: string): Promise<InquiryReportDoc | null> {

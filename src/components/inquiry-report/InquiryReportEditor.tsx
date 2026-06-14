@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { DrawingCanvas } from "@/components/inquiry-report/DrawingCanvas";
+import { PeerFeedbackSection } from "@/components/peer-feedback/PeerFeedbackSection";
 import { useAuth } from "@/components/AuthProvider";
 import {
   createInquiryReportDraft,
@@ -27,7 +28,7 @@ const TOOL_BUTTON =
   "flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-100";
 
 export function InquiryReportEditor({ initialReportId }: { initialReportId?: string | null }) {
-  const { user, role } = useAuth();
+  const { user, role, studentProfile } = useAuth();
   const [form, setForm] = useState<InquiryReportForm>(EMPTY_INQUIRY_REPORT);
   const [reportId, setReportId] = useState<string | null>(initialReportId ?? null);
   const [mode, setMode] = useState<ViewMode>("write");
@@ -109,10 +110,15 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
   const ensureReportId = useCallback(async (): Promise<string> => {
     if (reportId) return reportId;
     if (!user) throw new Error("로그인이 필요합니다.");
-    const id = await createInquiryReportDraft(form, user.uid);
+    const id = await createInquiryReportDraft(
+      form,
+      user.uid,
+      studentProfile?.grade ?? "",
+      studentProfile?.classNo ?? "",
+    );
     setReportId(id);
     return id;
-  }, [form, reportId, user]);
+  }, [form, reportId, studentProfile?.classNo, studentProfile?.grade, user]);
 
   const patch = <K extends keyof InquiryReportForm>(key: K, value: InquiryReportForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -128,7 +134,14 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
     setMessage("");
     try {
       const id = await ensureReportId();
-      await updateInquiryReport(id, form, user.uid, submitted ? "submitted" : "draft");
+      await updateInquiryReport(
+        id,
+        form,
+        user.uid,
+        submitted ? "submitted" : "draft",
+        studentProfile?.grade ?? "",
+        studentProfile?.classNo ?? "",
+      );
       setMessage("저장되었습니다.");
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "저장에 실패했습니다."));
@@ -152,7 +165,14 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
     setMessage("");
     try {
       const id = await ensureReportId();
-      await updateInquiryReport(id, form, user.uid, "submitted");
+      await updateInquiryReport(
+        id,
+        form,
+        user.uid,
+        "submitted",
+        studentProfile?.grade ?? "",
+        studentProfile?.classNo ?? "",
+      );
       setSubmitted(true);
       setMode("preview");
       setMessage("제출이 완료되었습니다!");
@@ -421,6 +441,14 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
 
             {message && <p className="text-center text-sm text-green-600">{message}</p>}
             {error && <p className="whitespace-pre-line text-center text-sm text-red-600">{error}</p>}
+
+            <PeerFeedbackSection
+              targetType="inquiry-report"
+              templateId="inquiry-report"
+              templateName="탐구보고서"
+              ownDocId={reportId}
+              enabled={submitted && Boolean(reportId) && role === "student"}
+            />
           </div>
         </main>
       </div>

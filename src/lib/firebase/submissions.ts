@@ -67,6 +67,8 @@ function buildSubmissionDoc(input: SaveSubmissionInput) {
     meta: input.meta,
     values: input.values,
     studentUid: input.studentUid,
+    grade: String(input.meta.grade ?? ""),
+    classNo: String(input.meta.classNo ?? ""),
     submittedAt: serverTimestamp(),
   };
   if (input.aiFeedback) doc.aiFeedback = input.aiFeedback;

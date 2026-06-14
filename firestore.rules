@@ -12,6 +12,31 @@ service cloud.firestore {
         && request.auth.token.email.matches('.*@sagodogu-student\\.app$');
     }
 
+    function studentData(uid) {
+      return get(/databases/$(database)/documents/students/$(uid)).data;
+    }
+
+    function isSameClass(studentUid) {
+      return studentData(request.auth.uid).grade == studentData(studentUid).grade
+        && studentData(request.auth.uid).classNo == studentData(studentUid).classNo;
+    }
+
+    function isValidPeerFeedback(data) {
+      return data.keys().hasAll([
+          'authorUid', 'authorName', 'targetUid', 'targetName', 'grade', 'classNo',
+          'targetType', 'targetDocId', 'templateId', 'templateName',
+          'differentPoint', 'goodPoint', 'curiousPoint'
+        ])
+        && data.authorUid is string
+        && data.targetUid is string
+        && data.authorUid == request.auth.uid
+        && data.targetUid != request.auth.uid
+        && data.targetType in ['worksheet', 'inquiry-report']
+        && data.differentPoint is string && data.differentPoint.size() <= 2000
+        && data.goodPoint is string && data.goodPoint.size() <= 2000
+        && data.curiousPoint is string && data.curiousPoint.size() <= 2000;
+    }
+
     function isValidSubmissionData(data) {
       return data.keys().hasAll(['templateId', 'templateName', 'meta', 'values', 'studentUid', 'submittedAt'])
         && data.templateId is string
@@ -65,7 +90,10 @@ service cloud.firestore {
     }
 
     match /students/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && (
+        request.auth.uid == uid
+        || (isStudent() && isSameClass(uid))
+      );
       allow create, update: if request.auth != null && request.auth.uid == uid && isStudent();
       allow delete: if false;
     }
@@ -73,7 +101,10 @@ service cloud.firestore {
     match /submissions/{submissionId} {
       allow create: if isStudent() && isValidSubmissionCreate(request.resource.data);
       allow read: if isTeacher()
-        || (request.auth != null && resource.data.studentUid == request.auth.uid);
+        || (request.auth != null && resource.data.studentUid == request.auth.uid)
+        || (isStudent()
+          && resource.data.studentUid != request.auth.uid
+          && isSameClass(resource.data.studentUid));
       allow update: if isStudent()
         && resource.data.studentUid == request.auth.uid
         && isValidSubmissionUpdate();
@@ -103,7 +134,11 @@ service cloud.firestore {
       allow create: if isStudent()
         && request.resource.data.studentUid == request.auth.uid;
       allow read: if isTeacher()
-        || (request.auth != null && resource.data.studentUid == request.auth.uid);
+        || (request.auth != null && resource.data.studentUid == request.auth.uid)
+        || (isStudent()
+          && resource.data.status == 'submitted'
+          && resource.data.studentUid != request.auth.uid
+          && isSameClass(resource.data.studentUid));
       allow update: if isStudent()
         && resource.data.studentUid == request.auth.uid
         && request.resource.data.studentUid == request.auth.uid;
@@ -115,6 +150,17 @@ service cloud.firestore {
         && request.resource.data.teacherUid == request.auth.uid;
       allow read, update, delete: if isTeacher()
         && resource.data.teacherUid == request.auth.uid;
+    }
+
+    match /peerFeedbacks/{feedbackId} {
+      allow create: if isStudent() && isValidPeerFeedback(request.resource.data);
+      allow read: if isTeacher()
+        || (request.auth != null && (
+          resource.data.authorUid == request.auth.uid
+          || resource.data.targetUid == request.auth.uid
+        ));
+      allow delete: if isTeacher();
+      allow update: if false;
     }
   }
 }

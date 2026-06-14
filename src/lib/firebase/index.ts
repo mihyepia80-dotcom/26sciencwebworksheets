@@ -25,7 +25,7 @@ export {
   buildStudentEmail,
   type StudentProfile,
 } from "./student-auth";
-export { getFirebaseErrorMessage } from "./errors";
+export { getFirebaseErrorMessage, getStudentFirebaseErrorMessage } from "./errors";
 export { createShareLink, getShareByToken, type ShareRecord } from "./shares";
 export {
   createInquiryReportDraft,
@@ -44,3 +44,14 @@ export {
   deleteLessonPlan,
   type LessonPlanDoc,
 } from "./lesson-plans";
+export {
+  listClassmates,
+  listAuthorPeerFeedbacks,
+  listReceivedPeerFeedbacks,
+  listAllPeerFeedbacks,
+  deletePeerFeedback,
+  findClassmateWorkDocId,
+  hasAuthorSubmittedSameKind,
+  createPeerFeedback,
+  type PeerFeedbackDoc,
+} from "./peer-feedbacks";
