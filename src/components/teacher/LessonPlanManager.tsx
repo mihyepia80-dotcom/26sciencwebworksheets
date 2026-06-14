@@ -183,8 +183,8 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="mx-auto max-w-6xl px-4 py-8 print:max-w-none print:px-2">
+      <div className="flex flex-wrap items-start justify-between gap-3 print:hidden">
         <div>
           <Link href="/teacher" className="text-sm text-blue-600 hover:underline">
             ← 교사 대시보드
@@ -195,6 +195,13 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={handleNew} className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50">
             새 지도안
+          </button>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50"
+          >
+            🖨 인쇄
           </button>
           <button
             type="button"
@@ -217,11 +224,11 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
         </div>
       </div>
 
-      {message && <p className="mt-4 text-sm text-green-600">{message}</p>}
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+      {message && <p className="mt-4 text-sm text-green-600 print:hidden">{message}</p>}
+      {error && <p className="mt-4 text-sm text-red-600 print:hidden">{error}</p>}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr]">
-        <aside className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr] print:mt-0 print:block">
+        <aside className="rounded-xl border border-slate-200 bg-white p-4 print:hidden">
           <h2 className="text-sm font-bold text-slate-800">내 지도안</h2>
           {listLoading && <p className="mt-3 text-xs text-slate-500">불러오는 중...</p>}
           <ul className="mt-3 space-y-2">
@@ -241,8 +248,8 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
           </ul>
         </aside>
 
-        <div className="space-y-4">
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div id="lesson-plan-print" className="space-y-4 print:space-y-0">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 print:rounded-none print:border-0 print:p-0 print:shadow-none">
             <h2 className="mb-4 text-center text-base font-bold text-slate-900">
               개념기반탐구수업 사고촉진 전략 글쓰기 수업 설계
             </h2>
@@ -371,9 +378,9 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
             </div>
 
             <div className="mt-4 border border-slate-200">
-              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-3 py-2 print:bg-white">
                 <span className="text-sm font-bold text-slate-700">교수·학습 과정</span>
-                <button type="button" onClick={addRow} className="text-xs text-blue-600 hover:underline">
+                <button type="button" onClick={addRow} className="text-xs text-blue-600 hover:underline print:hidden">
                   + 행 추가
                 </button>
               </div>
@@ -384,13 +391,13 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
                       <th className="p-2 w-24">단계(시간)</th>
                       <th className="p-2 w-32">학습내용</th>
                       <th className="p-2">교수·학습 활동</th>
-                      <th className="p-2 w-36">자료·유의점</th>
-                      <th className="p-2 w-12" />
+                      <th className="w-36 p-2">자료·유의점</th>
+                      <th className="w-12 p-2 print:hidden" />
                     </tr>
                   </thead>
                   <tbody>
                     {form.processRows.map((row, i) => (
-                      <tr key={i} className="border-b border-slate-100 align-top">
+                      <tr key={i} className="border-b border-slate-100 align-top print:break-inside-avoid">
                         <td className="p-2">
                           <input className={INPUT} value={row.stage} onChange={(e) => patchRow(i, "stage", e.target.value)} placeholder="도입" />
                           <input className={`${INPUT} mt-1`} value={row.time} onChange={(e) => patchRow(i, "time", e.target.value)} placeholder="10분" />
@@ -404,7 +411,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
                         <td className="p-2">
                           <textarea className={TEXTAREA} rows={3} value={row.materials} onChange={(e) => patchRow(i, "materials", e.target.value)} />
                         </td>
-                        <td className="p-2">
+                        <td className="p-2 print:hidden">
                           <button type="button" onClick={() => removeRow(i)} className="text-xs text-red-500 hover:underline">
                             삭제
                           </button>

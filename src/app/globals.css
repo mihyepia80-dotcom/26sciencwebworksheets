@@ -27,4 +27,17 @@ body {
   body {
     background: white;
   }
+
+  #lesson-plan-print input,
+  #lesson-plan-print textarea {
+    border-color: #cbd5e1;
+    background: white;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  #lesson-plan-print textarea {
+    overflow: visible !important;
+    resize: none;
+  }
 }
