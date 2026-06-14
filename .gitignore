@@ -15,6 +15,7 @@
 # env
 .env
 .env.local
+.env.production.local
 
 # firebase (비밀키 — 절대 커밋 금지)
 firebase-service-account.json
