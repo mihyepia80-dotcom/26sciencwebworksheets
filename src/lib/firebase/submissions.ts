@@ -18,6 +18,7 @@ import {
 import type { AiRating } from "@/lib/ai/feedback";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 import { getClientDb } from "./client";
+import { deleteSharesForSubmission } from "./shares";
 
 export interface WorksheetSubmission {
   id?: string;
@@ -92,6 +93,7 @@ export async function updateSubmission(
 }
 
 export async function deleteSubmission(submissionId: string): Promise<void> {
+  await deleteSharesForSubmission(submissionId);
   await deleteDoc(doc(getClientDb(), "submissions", submissionId));
 }
 

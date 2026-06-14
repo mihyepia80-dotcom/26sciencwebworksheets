@@ -7,7 +7,36 @@ export interface AiFeedbackResult {
   feedback: string;
 }
 
+export interface AiQuotaStatus {
+  available: boolean;
+  studentUsed: number;
+  studentLimit: number;
+  studentRemaining: number;
+  globalUsed: number;
+  globalLimit: number;
+  globalRemaining: number;
+  reason?: "student" | "global" | null;
+}
+
+const EMPTY_QUOTA: AiQuotaStatus = {
+  available: false,
+  studentUsed: 1,
+  studentLimit: 1,
+  studentRemaining: 0,
+  globalUsed: 100,
+  globalLimit: 100,
+  globalRemaining: 0,
+  reason: "student",
+};
+
+export async function fetchAiQuotaStatus(studentUid: string): Promise<AiQuotaStatus> {
+  const res = await fetch(`/api/ai-status?studentUid=${encodeURIComponent(studentUid)}`);
+  if (!res.ok) return EMPTY_QUOTA;
+  return (await res.json()) as AiQuotaStatus;
+}
+
 export async function requestAiFeedback(input: {
+  studentUid: string;
   templateName: string;
   meta: WorksheetMeta;
   values: Answers;
@@ -18,8 +47,11 @@ export async function requestAiFeedback(input: {
     body: JSON.stringify(input),
   });
 
-  const data = (await res.json()) as AiFeedbackResult & { error?: string };
+  const data = (await res.json()) as AiFeedbackResult & { error?: string; quotaExceeded?: boolean };
   if (!res.ok) {
+    if (res.status === 429 && data.quotaExceeded) {
+      throw new Error("QUOTA_EXCEEDED");
+    }
     throw new Error(data.error ?? "AI 피드백 생성에 실패했습니다.");
   }
 

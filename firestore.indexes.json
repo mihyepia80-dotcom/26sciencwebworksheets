@@ -7,6 +7,14 @@
         { "fieldPath": "studentUid", "order": "ASCENDING" },
         { "fieldPath": "submittedAt", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "shares",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "submissionId", "order": "ASCENDING" },
+        { "fieldPath": "studentUid", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

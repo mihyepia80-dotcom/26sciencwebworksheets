@@ -26,3 +26,4 @@ export {
   type StudentProfile,
 } from "./student-auth";
 export { getFirebaseErrorMessage } from "./errors";
+export { createShareLink, getShareByToken, type ShareRecord } from "./shares";

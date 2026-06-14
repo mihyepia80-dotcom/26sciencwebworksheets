@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { Answers, WorksheetMeta } from "@/lib/types";
+import { consumeAiQuota, getAiQuotaStatus } from "@/lib/ai/quota";
 
 const MODEL = "gemini-2.5-flash-lite";
 const MAX_FEEDBACK_CHARS = 200;
@@ -7,6 +8,7 @@ const MAX_FEEDBACK_CHARS = 200;
 type AiRating = "잘함" | "보통" | "노력요함";
 
 interface FeedbackRequest {
+  studentUid: string;
   templateName: string;
   meta: WorksheetMeta;
   values: Answers;
@@ -56,6 +58,19 @@ export async function POST(request: Request) {
     body = (await request.json()) as FeedbackRequest;
   } catch {
     return NextResponse.json({ error: "요청 형식이 올바르지 않습니다." }, { status: 400 });
+  }
+
+  if (!body.studentUid?.trim()) {
+    return NextResponse.json({ error: "학생 정보가 없습니다." }, { status: 400 });
+  }
+
+  const quotaBefore = await getAiQuotaStatus(body.studentUid);
+  if (!quotaBefore.available) {
+    const message =
+      quotaBefore.reason === "student"
+        ? "오늘 AI 피드백은 학생 1인당 1회만 이용할 수 있습니다. 제출은 가능하지만 AI 피드백은 제공되지 않습니다."
+        : "오늘 AI 무료 사용량(전체 100회)을 모두 사용했습니다. 내일 다시 이용해 주세요.";
+    return NextResponse.json({ error: message, quotaExceeded: true }, { status: 429 });
   }
 
   const entries = Object.entries(body.values ?? {}).filter(([, value]) => value.trim().length > 0);
@@ -113,6 +128,7 @@ feedback는 공백 포함 200자 이내로 작성하세요.`;
     }
 
     const result = parseGeminiJson(rawText);
+    await consumeAiQuota(body.studentUid);
     return NextResponse.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "AI 피드백을 생성하지 못했습니다.";

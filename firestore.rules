@@ -42,6 +42,23 @@ service cloud.firestore {
         && request.resource.data.submittedAt == request.time;
     }
 
+    function isValidShareData(data) {
+      return data.keys().hasAll(['submissionId', 'studentUid', 'templateId', 'templateName', 'meta', 'values'])
+        && data.submissionId is string
+        && data.studentUid is string
+        && data.templateId is string
+        && data.templateName is string
+        && data.meta is map
+        && data.values is map;
+    }
+
+    function isValidShareUpdate() {
+      return isValidShareData(request.resource.data)
+        && resource.data.studentUid == request.auth.uid
+        && request.resource.data.studentUid == resource.data.studentUid
+        && request.resource.data.submissionId == resource.data.submissionId;
+    }
+
     match /teachers/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
       allow write: if false;
@@ -61,6 +78,25 @@ service cloud.firestore {
         && resource.data.studentUid == request.auth.uid
         && isValidSubmissionUpdate();
       allow delete: if isTeacher();
+    }
+
+    match /shares/{shareId} {
+      allow read: if true;
+      allow create: if isStudent()
+        && isValidShareData(request.resource.data)
+        && request.resource.data.studentUid == request.auth.uid;
+      allow update: if isStudent()
+        && resource.data.studentUid == request.auth.uid
+        && isValidShareUpdate();
+      allow delete: if isTeacher();
+    }
+
+    match /apiQuota/{docId} {
+      allow read, write: if false;
+
+      match /students/{studentUid} {
+        allow read, write: if false;
+      }
     }
   }
 }

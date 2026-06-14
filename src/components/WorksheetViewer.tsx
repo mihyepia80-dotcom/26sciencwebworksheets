@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AiFeedbackCard } from "@/components/AiFeedbackCard";
+import { ShareButton } from "@/components/ShareButton";
 import { WorksheetHeader } from "@/components/common/WorksheetHeader";
 import { TemplateRenderer } from "@/components/templates";
 import { useAuth } from "@/components/AuthProvider";
 import type { AiRating } from "@/lib/ai/feedback";
-import { requestAiFeedback } from "@/lib/ai/feedback";
+import { fetchAiQuotaStatus, requestAiFeedback, type AiQuotaStatus } from "@/lib/ai/feedback";
 import {
   getSubmission,
   isFirebaseConfigured,
@@ -47,6 +48,23 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
   const [submitError, setSubmitError] = useState("");
   const [aiFeedback, setAiFeedback] = useState("");
   const [aiRating, setAiRating] = useState<AiRating | null>(null);
+  const [aiQuota, setAiQuota] = useState<AiQuotaStatus | null>(null);
+
+  useEffect(() => {
+    if (!user || role !== "student") return;
+    fetchAiQuotaStatus(user.uid).then(setAiQuota).catch(() => {
+      setAiQuota({
+        available: false,
+        studentUsed: 1,
+        studentLimit: 1,
+        studentRemaining: 0,
+        globalUsed: 100,
+        globalLimit: 100,
+        globalRemaining: 0,
+        reason: "student",
+      });
+    });
+  }, [user, role]);
 
   useEffect(() => {
     if (!editSubmissionId || !user || role !== "student") {
@@ -121,32 +139,52 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
     setSubmitting(true);
     setSubmitError("");
 
-    try {
-      const ai = await requestAiFeedback({
-        templateName: template.name,
-        meta,
-        values,
-      });
+    const payload = {
+      templateId,
+      templateName: template.name,
+      meta,
+      values,
+      studentUid: user.uid,
+    };
 
-      const payload = {
-        templateId,
-        templateName: template.name,
-        meta,
-        values,
-        studentUid: user.uid,
-        aiFeedback: ai.feedback,
-        aiRating: ai.rating,
+    try {
+      let feedback = aiFeedback;
+      let rating = aiRating;
+
+      if (aiQuota?.available !== false) {
+        try {
+          const ai = await requestAiFeedback({
+            studentUid: user.uid,
+            templateName: template.name,
+            meta,
+            values,
+          });
+          feedback = ai.feedback;
+          rating = ai.rating;
+          setAiQuota(await fetchAiQuotaStatus(user.uid));
+        } catch (error: unknown) {
+          if (error instanceof Error && error.message === "QUOTA_EXCEEDED") {
+            setAiQuota(await fetchAiQuotaStatus(user.uid));
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      const savePayload = {
+        ...payload,
+        ...(feedback && rating ? { aiFeedback: feedback, aiRating: rating } : {}),
       };
 
       if (submissionId) {
-        await updateSubmission(submissionId, payload);
+        await updateSubmission(submissionId, savePayload);
       } else {
-        const id = await saveSubmission(payload);
+        const id = await saveSubmission(savePayload);
         setSubmissionId(id);
       }
 
-      setAiFeedback(ai.feedback);
-      setAiRating(ai.rating);
+      if (feedback) setAiFeedback(feedback);
+      if (rating) setAiRating(rating);
       setSubmitted(true);
     } catch (error: unknown) {
       setSubmitError(getFirebaseErrorMessage(error, "제출에 실패했습니다. 다시 시도해 주세요."));
@@ -180,7 +218,19 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       </div>
 
       <p className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-xs text-blue-800">
-        각 항목을 <strong>{MIN_FIELD_CHARS}자 이상 한글</strong>로 작성한 뒤 제출하면 AI 총평을 받을 수 있습니다.
+        각 항목을 <strong>{MIN_FIELD_CHARS}자 이상 한글</strong>로 작성한 뒤 제출하세요.
+        {aiQuota?.available === false ? (
+          <span className="mt-1 block text-amber-700">
+            {aiQuota.reason === "student"
+              ? "오늘 AI 피드백은 학생 1인당 1회만 이용할 수 있습니다. 제출은 가능하지만 AI 피드백은 제공되지 않습니다."
+              : `오늘 AI 무료 사용량(전체 ${aiQuota.globalLimit}회)을 모두 사용했습니다. 제출은 가능하지만 AI 피드백은 제공되지 않습니다.`}
+          </span>
+        ) : aiQuota ? (
+          <span className="mt-1 block text-slate-600">
+            AI 피드백: 오늘 내 남은 횟수 {aiQuota.studentRemaining}/{aiQuota.studentLimit}
+            (전체 {aiQuota.globalRemaining}/{aiQuota.globalLimit})
+          </span>
+        ) : null}
       </p>
 
       {loadError && <p className="text-sm text-red-600">{loadError}</p>}
@@ -197,6 +247,23 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
 
       {submitted && aiRating && aiFeedback && (
         <AiFeedbackCard rating={aiRating} feedback={aiFeedback} />
+      )}
+
+      {submitted && submissionId && user && (
+        <ShareButton
+          submission={{
+            id: submissionId,
+            templateId,
+            templateName: template.name,
+            meta,
+            values,
+            studentUid: user.uid,
+            submittedAt: null,
+            aiFeedback: aiFeedback || undefined,
+            aiRating: aiRating ?? undefined,
+          }}
+          studentUid={user.uid}
+        />
       )}
 
       <div className="flex flex-wrap justify-end gap-3 pt-4">
@@ -222,7 +289,13 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
           onClick={handleSubmit}
           disabled={submitting || submitted}
         >
-          {submitting ? "AI 피드백 생성 중..." : submissionId ? "다시 제출" : "제출하기"}
+          {submitting
+            ? aiQuota?.available === false
+              ? "제출 중..."
+              : "AI 피드백 생성 중..."
+            : submissionId
+              ? "다시 제출"
+              : "제출하기"}
         </button>
       </div>
 
@@ -232,7 +305,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
 
       {submitted && (
         <p className="text-center text-sm text-green-600">
-          제출 완료! AI 피드백을 확인하고 내 활동지에서 다시 볼 수 있습니다.
+          제출 완료! {aiRating ? "AI 피드백을 확인하고 " : ""}공유 링크로 활동지를 보여줄 수 있습니다.
         </p>
       )}
     </div>

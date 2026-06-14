@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AiFeedbackCard } from "@/components/AiFeedbackCard";
+import { ShareButton } from "@/components/ShareButton";
 import { AppHeader } from "@/components/AppHeader";
 import { useAuth } from "@/components/AuthProvider";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
@@ -136,6 +137,11 @@ export default function MyWorksheetsPage() {
                     {submission.aiRating && submission.aiFeedback && (
                       <div className="mt-4">
                         <AiFeedbackCard rating={submission.aiRating} feedback={submission.aiFeedback} />
+                      </div>
+                    )}
+                    {user && submission.id && (
+                      <div className="mt-4 border-t border-slate-100 pt-4">
+                        <ShareButton submission={submission} studentUid={user.uid} />
                       </div>
                     )}
                   </div>

@@ -7,6 +7,10 @@ import { useAuth } from "@/components/AuthProvider";
 
 const PUBLIC_PATHS = ["/login"];
 
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.includes(pathname) || pathname.startsWith("/share/");
+}
+
 export function AuthGate({ children }: { children: ReactNode }) {
   const { user, role, loading } = useAuth();
   const pathname = usePathname();
@@ -21,7 +25,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    const isPublic = PUBLIC_PATHS.includes(pathname);
+    const isPublic = isPublicPath(pathname);
 
     if (!user && !isPublic) {
       router.replace("/login");
@@ -56,7 +60,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return pathname === "/login" ? children : null;
   }
 
-  if (!user && !PUBLIC_PATHS.includes(pathname)) {
+  if (!user && !isPublicPath(pathname)) {
     return null;
   }
 

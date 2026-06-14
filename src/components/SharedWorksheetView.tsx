@@ -1,0 +1,43 @@
+"use client";
+
+import { AiFeedbackCard } from "@/components/AiFeedbackCard";
+import { WorksheetHeader } from "@/components/common/WorksheetHeader";
+import { TemplateRenderer } from "@/components/templates";
+import { getTemplateById } from "@/lib/templates/registry";
+import type { ShareRecord } from "@/lib/firebase/shares";
+
+export function SharedWorksheetView({ share }: { share: ShareRecord }) {
+  const template = getTemplateById(share.templateId);
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
+      <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-xs text-amber-800">
+        보기 전용 공유 페이지입니다. 수정할 수 없습니다.
+      </div>
+
+      <h1 className="text-xl font-bold text-slate-900">{share.templateName}</h1>
+
+      {template && (
+        <>
+          <WorksheetHeader
+            toolName={template.name}
+            meta={share.meta}
+            onMetaChange={() => {}}
+            extraFields={template.headerFields}
+            readOnly
+          />
+          <TemplateRenderer
+            templateId={share.templateId}
+            values={share.values}
+            onChange={() => {}}
+            readOnly
+          />
+        </>
+      )}
+
+      {share.aiRating && share.aiFeedback && (
+        <AiFeedbackCard rating={share.aiRating} feedback={share.aiFeedback} />
+      )}
+    </div>
+  );
+}
