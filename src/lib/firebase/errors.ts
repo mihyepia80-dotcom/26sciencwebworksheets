@@ -1,6 +1,7 @@
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   "auth/invalid-credential": "학번 또는 암호가 올바르지 않습니다.",
-  "auth/wrong-password": "암호가 올바르지 않습니다. (2600)",
+  "auth/wrong-password": "암호가 올바르지 않습니다.",
+  "auth/weak-password": "암호 형식이 올바르지 않습니다. 선생님께 문의하세요.",
   "auth/user-not-found": "계정을 찾을 수 없습니다. 정보를 확인해 주세요.",
   "auth/email-already-in-use": "이미 등록된 학생입니다. 다시 로그인해 주세요.",
   "auth/operation-not-allowed": "Firebase에서 이메일/비밀번호 또는 Google 로그인을 활성화해 주세요.",

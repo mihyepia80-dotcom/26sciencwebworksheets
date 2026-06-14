@@ -99,7 +99,7 @@ export default function LoginPage() {
         <input
           type="password"
           className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-          placeholder="암호 (2600)"
+          placeholder="암호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -115,7 +115,7 @@ export default function LoginPage() {
 
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-sm font-bold text-slate-800">교사 로그인</h2>
-        <p className="mt-1 text-xs text-slate-500">등록된 Google 계정으로 로그인합니다.</p>
+        <p className="mt-1 text-xs text-slate-500">Google 계정으로 로그인하면 제출 활동지를 조회할 수 있습니다.</p>
         <button
           type="button"
           disabled={googleLoading}

@@ -7,9 +7,13 @@ import {
   signOut,
   type User,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { STUDENT_EMAIL_DOMAIN } from "@/lib/constants";
 import { isFirebaseConfigured } from "./config";
-import { getClientAuth, getClientDb } from "./client";
+import { getClientAuth } from "./client";
+
+function isGoogleUser(user: User): boolean {
+  return user.providerData.some((provider) => provider.providerId === "google.com");
+}
 
 export async function signInTeacherWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
@@ -23,8 +27,7 @@ export async function signOutUser(): Promise<void> {
 }
 
 export async function checkIsTeacher(user: User): Promise<boolean> {
-  const teacherDoc = await getDoc(doc(getClientDb(), "teachers", user.uid));
-  return teacherDoc.exists();
+  return isGoogleUser(user);
 }
 
 export type AuthRole = "student" | "teacher" | null;
@@ -53,13 +56,12 @@ export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
     }
 
     try {
-      const isTeacher = await checkIsTeacher(user);
-      if (isTeacher) {
+      if (isGoogleUser(user)) {
         if (active) onChange({ user, role: "teacher", loading: false });
         return;
       }
 
-      const isStudent = user.email?.endsWith("@sagodogu-student.app") ?? false;
+      const isStudent = user.email?.endsWith(`@${STUDENT_EMAIL_DOMAIN}`) ?? false;
       if (active) onChange({ user, role: isStudent ? "student" : null, loading: false });
     } catch {
       if (active) onChange({ user, role: null, loading: false });

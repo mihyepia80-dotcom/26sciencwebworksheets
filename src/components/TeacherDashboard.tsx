@@ -117,7 +117,7 @@ export function TeacherDashboard() {
           {authError && <p className="mt-3 text-sm text-red-600">{authError}</p>}
           {user && role !== "teacher" && (
             <p className="mt-3 text-sm text-amber-700">
-              로그인되었지만 교사 권한이 없습니다. Firebase `teachers` 컬렉션에 UID를 등록하세요.
+              Google 계정으로 로그인해 주세요.
             </p>
           )}
         </div>
