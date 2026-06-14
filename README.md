@@ -15,7 +15,15 @@ npm run dev
 1. **Authentication**
    - 이메일/비밀번호 (학생 계정 자동 생성)
    - Google (교사 로그인)
-2. **Firestore** — `firestore.rules`, `firestore.indexes.json` 배포
+## Firestore 규칙·인덱스 배포
+
+```bash
+npx firebase login
+npm run deploy:firestore
+```
+
+또는 Firebase Console → Firestore → **규칙** 탭에 `firestore.rules` 내용 붙여넣기 후 게시.
+인덱스는 **색인** 탭에서 `studentUid` + `submittedAt` 복합 색인을 추가하세요.
 3. **교사 등록** — Firestore `teachers/{교사 UID}` 문서 생성 (Google 로그인 후 UID 확인)
 4. **Authorized domains** — Vercel 배포 URL 추가
 
