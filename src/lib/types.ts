@@ -1,9 +1,10 @@
 export type ToolCategory =
-  | "thinking-routine"
-  | "thinking-map"
-  | "strategy"
-  | "reflection"
-  | "collaboration";
+  | "concept-exploration"
+  | "concept-synthesis"
+  | "concept-deepening"
+  | "feedback-support"
+  | "self-reflection"
+  | "student-exchange";
 
 export interface WorksheetMeta {
   grade: string;
