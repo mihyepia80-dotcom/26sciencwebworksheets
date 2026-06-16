@@ -87,7 +87,7 @@ export const TEMPLATE_VALUE_FIELDS: Record<string, string[]> = {
   "honeycomb-questions": ["left1", "left2", "center", "right1", "right2", "summary"],
   "compass-points": ["needToKnow", "excited", "worries", "steps", "notes"],
   "plus-one": ["workspace", "reflect"],
-  "stop-light": [...unders("problem", 6), ...unders("affect", 6), ...unders("solution", 6), "notes"],
+  "stop-light": ["draft", "greenLights", "yellowLights", "redLights", "revisionPlan"],
   "y-chart": ["looks", "sounds", "feels", "notes"],
   "t-chart": ["know", "want"],
   "four-cs": ["connections", "challenge", "concepts", "changes"],
@@ -101,6 +101,19 @@ export const TEMPLATE_VALUE_FIELDS: Record<string, string[]> = {
   "brainwriting-635": ["issue", ...unders("cell", 18), "connect", "cluster", "evaluate"],
   exaggeration: ["content"],
   starbursting: ["who", "what", "when", "where", "why", "how"],
+  "what-makes-you-say-that": ["claim", "evidence", "reasoning"],
+  e3: ["estimate", "exploreData", "gapAnalysis", "explain"],
+  fishbone: ["phenomenon", "cause1", "cause2", "cause3", "cause4", "summary"],
+  "color-symbol-image": ["summary", "color", "symbol", "imageDesc"],
+  "inquiry-classroom-rules": ["objectiveData", "avoidGuess", "citeEvidence", "selfCheck"],
+  scamper: ["conclusion", "substitute", "combine", "adapt", "modify", "putToOtherUse", "eliminate", "reverse"],
+  "traffic-light-reflection": ["green", "yellow", "red", "plan"],
+  "show-of-thumbs-reflection": ["difficulty", "engagement", "notes"],
+  "four-cs-reflection": ["connections", "challenge", "concepts", "changes"],
+  "give-one-get-one": ["give", "get", "notes"],
+  "think-talk-open-exchange": ["think", "talk", "exchange"],
+  "leaderless-discussion": ["dataPoint", "opinion", "counter", "summary"],
+  "making-meaning": ["contribution", "classInsight", "wordCloud"],
 };
 
 export function getTemplateValueFields(templateId: string): string[] {

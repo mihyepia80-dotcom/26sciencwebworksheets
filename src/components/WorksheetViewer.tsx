@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AiFeedbackCard } from "@/components/AiFeedbackCard";
+import { AiFeaturePanel } from "@/components/AiFeaturePanel";
 import { ShareButton } from "@/components/ShareButton";
 import { PeerFeedbackSection } from "@/components/peer-feedback/PeerFeedbackSection";
 import { WorksheetHeader } from "@/components/common/WorksheetHeader";
@@ -243,6 +244,8 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
         extraFields={template.headerFields}
         readOnly={submitted}
       />
+
+      {template.aiFeature && <AiFeaturePanel template={template} />}
 
       <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
 

@@ -1,7 +1,8 @@
 "use client";
 
 import type { TemplateProps } from "@/lib/types";
-import { SectionBox, TextAreaField, TextField } from "@/components/common/Fields";
+import { FRAYER_FIELD_GUIDES, FRAYER_NONEXAMPLE_CHIPS } from "@/lib/templates/ai-guides";
+import { GuideChips, SectionBox, TextAreaField, TextField } from "@/components/common/Fields";
 
 const v = (values: Record<string, string>, key: string) => values[key] ?? "";
 
@@ -168,24 +169,60 @@ export function SwotTemplate({ values, onChange, readOnly }: TemplateProps) {
 
 /* ── Frayer Model ── */
 export function FrayerModelTemplate({ values, onChange, readOnly }: TemplateProps) {
-  const q = [
-    { key: "definition", label: "정의", pos: "top-left" },
-    { key: "characteristics", label: "속성", pos: "top-right" },
-    { key: "examples", label: "예", pos: "bottom-left" },
-    { key: "nonExamples", label: "예가 아닌 것", pos: "bottom-right" },
-  ];
+  const quadrants = [
+    { key: "definition", label: "1. 정의", pos: "top-left" },
+    { key: "characteristics", label: "2. 특징", pos: "top-right" },
+    { key: "examples", label: "3. 예시", pos: "bottom-left" },
+    { key: "nonExamples", label: "4. 비예시", pos: "bottom-right" },
+  ] as const;
+
   return (
-    <SectionBox title="프레이어 모델" color="pink">
+    <SectionBox title="프레이어 모델 — 과학 개념 정의기" color="pink">
+      <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50 p-3 text-xs text-violet-900">
+        <p className="font-bold">중심 개념</p>
+        <p className="mt-1 text-violet-800">{FRAYER_FIELD_GUIDES.concept.student}</p>
+        <p className="mt-2 text-violet-600">AI: {FRAYER_FIELD_GUIDES.concept.aiRole}</p>
+      </div>
       <div className="relative grid grid-cols-2 gap-0 rounded border-2 border-orange-200 bg-orange-50">
-        {q.map(({ key, label }) => (
-          <div key={key} className="border border-orange-200 p-2 pt-6">
-            <span className="text-xs font-bold text-slate-600">{label}</span>
-            <TextAreaField value={v(values, key)} onChange={(val) => onChange(key, val)} rows={4} readOnly={readOnly} className="mt-1" />
-          </div>
-        ))}
+        {quadrants.map(({ key, label }) => {
+          const guide = FRAYER_FIELD_GUIDES[key];
+          return (
+            <div key={key} className="border border-orange-200 p-2 pt-6">
+              <span className="text-xs font-bold text-slate-600">{label}</span>
+              <p className="mt-1 text-[11px] leading-snug text-slate-500">{guide.student}</p>
+              <p className="mt-1 text-[10px] text-violet-600">AI: {guide.aiRole}</p>
+              <TextAreaField
+                value={v(values, key)}
+                onChange={(val) => onChange(key, val)}
+                rows={4}
+                readOnly={readOnly}
+                className="mt-2"
+              />
+              {key === "nonExamples" && !readOnly && (
+                <div className="mt-2">
+                  <p className="mb-1 text-[10px] font-medium text-blue-700">AI 추천 칩</p>
+                  <GuideChips
+                    chips={FRAYER_NONEXAMPLE_CHIPS}
+                    onSelect={(text) => {
+                      const prev = v(values, key);
+                      onChange(key, prev ? `${prev}\n${text}` : text);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+          );
+        })}
         <div className="absolute left-1/2 top-1/2 z-10 w-28 -translate-x-1/2 -translate-y-1/2 rounded border-2 border-slate-400 bg-white p-2 text-center">
-          <span className="text-xs font-bold">개념</span>
-          <textarea className="mt-1 w-full resize-none text-xs focus:outline-none" rows={2} value={v(values, "concept")} disabled={readOnly} onChange={(e) => onChange("concept", e.target.value)} />
+          <span className="text-xs font-bold">중심 개념</span>
+          <textarea
+            className="mt-1 w-full resize-none text-xs focus:outline-none"
+            rows={2}
+            placeholder="용해, 산화…"
+            value={v(values, "concept")}
+            disabled={readOnly}
+            onChange={(e) => onChange("concept", e.target.value)}
+          />
         </div>
       </div>
     </SectionBox>

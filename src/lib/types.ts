@@ -1,10 +1,9 @@
 export type ToolCategory =
-  | "concept-exploration"
-  | "concept-synthesis"
-  | "concept-deepening"
-  | "feedback-support"
-  | "self-reflection"
-  | "student-exchange";
+  | "questioning"
+  | "inquiring"
+  | "generalizing"
+  | "transfer"
+  | "reflection-exchange";
 
 export interface WorksheetMeta {
   grade: string;
@@ -34,6 +33,8 @@ export interface TemplateDefinition {
   nameEn?: string;
   category: ToolCategory;
   description: string;
+  aiFeatureLabel?: string;
+  aiFeature?: string;
   headerFields?: ("unit" | "period" | "inquiryQuestion" | "writingContext" | "description")[];
 }
 

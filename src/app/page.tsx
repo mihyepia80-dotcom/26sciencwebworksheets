@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
+import { AiFeaturePanel } from "@/components/AiFeaturePanel";
 import { getCategoryGroups, getSortedTemplates } from "@/lib/templates/registry";
 
 export default function HomePage() {
@@ -10,7 +11,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       <AppHeader
         title="사고도구 톡톡"
-        subtitle={`사고 전략 기법 활동지 · ${templates.length}개 템플릿`}
+        subtitle={`과학 탐구 글쓰기 학습지 · ${templates.length}개 사고도구`}
       />
 
       <main className="mx-auto max-w-6xl px-4 py-8">
@@ -39,11 +40,14 @@ export default function HomePage() {
                 <Link
                   key={t.id}
                   href={`/templates/${t.id}`}
-                  className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+                  className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
                 >
                   <h3 className="font-semibold text-slate-800 group-hover:text-blue-700">{t.name}</h3>
                   {t.nameEn && <p className="mt-0.5 text-xs text-slate-400">{t.nameEn}</p>}
                   <p className="mt-1 text-sm text-slate-500">{t.description}</p>
+                  {t.aiFeatureLabel && (
+                    <p className="mt-2 text-xs font-medium text-violet-700">[{t.aiFeatureLabel}]</p>
+                  )}
                 </Link>
               ))}
             </div>
