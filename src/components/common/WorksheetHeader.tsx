@@ -1,22 +1,13 @@
 "use client";
 
 import type { WorksheetMeta } from "@/lib/types";
-
-interface WorksheetHeaderProps {
+import { getMetaFieldLabel } from "@/lib/meta-labels";
   toolName: string;
   meta: WorksheetMeta;
   onMetaChange: (key: keyof WorksheetMeta, value: string) => void;
   extraFields?: ("unit" | "period" | "inquiryQuestion" | "writingContext" | "description")[];
   readOnly?: boolean;
 }
-
-const fieldLabels: Record<string, string> = {
-  unit: "단원",
-  period: "차시",
-  inquiryQuestion: "탐구질문",
-  writingContext: "글쓰기 상황",
-  description: "설명",
-};
 
 export function WorksheetHeader({
   toolName,
@@ -48,10 +39,10 @@ export function WorksheetHeader({
 
       {extraFields.map((field) => (
         <div key={field} className="grid grid-cols-1 border-b border-slate-200 last:border-b-0 md:grid-cols-[120px_1fr]">
-          <div className="bg-sky-50 px-3 py-2 text-xs font-semibold text-slate-600">{fieldLabels[field]}</div>
+          <div className="bg-sky-50 px-3 py-2 text-xs font-semibold text-slate-600">{getMetaFieldLabel(field)}</div>
           <textarea
             className="min-h-[48px] resize-y px-3 py-2 text-sm focus:outline-none"
-            placeholder={`${fieldLabels[field]}을(를) 입력하세요`}
+            placeholder={`${getMetaFieldLabel(field)}을(를) 입력하세요`}
             rows={field === "writingContext" || field === "description" ? 2 : 1}
             value={meta[field] ?? ""}
             disabled={readOnly}

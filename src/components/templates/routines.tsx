@@ -2,8 +2,7 @@
 
 import type { TemplateProps } from "@/lib/types";
 import { GuideChips, SectionBox, TextAreaField, GridInput } from "@/components/common/Fields";
-
-const v = (values: Record<string, string>, key: string) => values[key] ?? "";
+import { fieldValue as v } from "@/components/templates/utils";
 
 /* ── See/Think/Wonder ── */
 const STW_SECTIONS = {

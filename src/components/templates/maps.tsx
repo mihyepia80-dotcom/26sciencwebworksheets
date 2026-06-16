@@ -3,8 +3,7 @@
 import type { TemplateProps } from "@/lib/types";
 import { FRAYER_FIELD_GUIDES, FRAYER_NONEXAMPLE_CHIPS } from "@/lib/templates/ai-guides";
 import { GuideChips, SectionBox, TextAreaField, TextField } from "@/components/common/Fields";
-
-const v = (values: Record<string, string>, key: string) => values[key] ?? "";
+import { fieldValue as v } from "@/components/templates/utils";
 
 /* ── Circle & Tree Map ── */
 export function CircleTreeMapTemplate({ values, onChange, readOnly }: TemplateProps) {

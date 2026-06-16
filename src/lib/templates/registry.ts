@@ -1,8 +1,14 @@
-import type { TemplateDefinition, ToolCategory } from "@/lib/types";
+import type { TemplateDefinition } from "@/lib/types";
+import {
+  CATEGORY_LABELS,
+  CATEGORY_ORDER,
+  CATEGORY_SUBTITLES,
+  compareByCategory,
+} from "./categories";
 import { LEGACY_TEMPLATE_REGISTRY } from "./legacy-registry";
+import { resolveTemplate } from "./resolve-template";
 
 export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
-  // 1. 질문하기
   {
     id: "see-think-wonder",
     order: 1,
@@ -454,49 +460,31 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
 ];
 
 export function getTemplateById(id: string): TemplateDefinition | undefined {
-  return (
+  const raw =
     TEMPLATE_REGISTRY.find((t) => t.id === id) ??
-    LEGACY_TEMPLATE_REGISTRY.find((t) => t.id === id)
-  );
+    LEGACY_TEMPLATE_REGISTRY.find((t) => t.id === id);
+  return resolveTemplate(raw);
 }
 
 export function getSortedTemplates(): TemplateDefinition[] {
-  return [...TEMPLATE_REGISTRY].sort((a, b) => {
-    const catOrder = CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category);
-    if (catOrder !== 0) return catOrder;
-    return a.order - b.order;
-  });
+  return [...TEMPLATE_REGISTRY]
+    .map((t) => resolveTemplate(t)!)
+    .sort((a, b) => {
+      const catOrder = compareByCategory(a.category, b.category);
+      if (catOrder !== 0) return catOrder;
+      return a.order - b.order;
+    });
 }
-
-export const CATEGORY_ORDER: ToolCategory[] = [
-  "questioning",
-  "inquiring",
-  "generalizing",
-  "transfer",
-  "reflection-exchange",
-];
-
-export const CATEGORY_LABELS: Record<ToolCategory, string> = {
-  questioning: "1. 질문하기",
-  inquiring: "2. 탐구하기",
-  generalizing: "3. 일반화하기",
-  transfer: "4. 전이하기",
-  "reflection-exchange": "5. 자기 성찰 및 교류",
-};
-
-export const CATEGORY_SUBTITLES: Partial<Record<ToolCategory, string>> = {
-  questioning: "사고도구 기법 · AI 프로그램 구현 방식(입력 가이드·마이크로 러닝 등)",
-  inquiring: "탐구 과정에서 증거·관점·실험 설계를 심화합니다",
-  generalizing: "개념 정의·CER·인과관계로 일반화합니다",
-  transfer: "퇴고·피드백·가설 전이로 확장합니다",
-  "reflection-exchange": "성찰과 학급 지식 교류로 마무리합니다",
-};
 
 export function getCategoryGroups() {
   return CATEGORY_ORDER.map((id) => ({
     id,
     label: CATEGORY_LABELS[id],
     subtitle: CATEGORY_SUBTITLES[id],
-    templates: TEMPLATE_REGISTRY.filter((t) => t.category === id).sort((a, b) => a.order - b.order),
+    templates: TEMPLATE_REGISTRY.filter((t) => t.category === id)
+      .map((t) => resolveTemplate(t)!)
+      .sort((a, b) => a.order - b.order),
   })).filter((g) => g.templates.length > 0);
 }
+
+export { CATEGORY_LABELS, CATEGORY_ORDER, CATEGORY_SUBTITLES } from "./categories";

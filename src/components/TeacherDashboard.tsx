@@ -15,6 +15,7 @@ import {
   listSubmissions,
   signOutUser,
 } from "@/lib/firebase";
+import { getMetaFieldLabel } from "@/lib/meta-labels";
 import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 
 function formatSubmittedAt(submission: WorksheetSubmission): string {
@@ -39,6 +40,10 @@ const META_LABELS: Record<string, string> = {
   writingContext: "글쓰기 상황",
   description: "설명",
 };
+
+function metaLabel(key: string): string {
+  return META_LABELS[key] ?? getMetaFieldLabel(key);
+}
 
 export function TeacherDashboard() {
   const { user, role, loading: authLoading } = useAuth();
@@ -203,7 +208,7 @@ export function TeacherDashboard() {
                       .filter(([, value]) => value && String(value).trim().length > 0)
                       .map(([key, value]) => (
                         <div key={key}>
-                          <dt className="text-xs font-semibold text-slate-500">{META_LABELS[key] ?? key}</dt>
+                          <dt className="text-xs font-semibold text-slate-500">{metaLabel(key)}</dt>
                           <dd className="mt-0.5 whitespace-pre-wrap text-slate-800">{value}</dd>
                         </div>
                       ))}

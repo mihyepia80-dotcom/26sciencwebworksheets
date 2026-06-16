@@ -1,5 +1,5 @@
 import type { Answers } from "@/lib/types";
-import { getTemplateValueFields } from "@/lib/templates/value-fields";
+import { getTemplateById } from "@/lib/templates/registry";
 
 export const MIN_FIELD_CHARS = 150;
 
@@ -16,7 +16,7 @@ export function validateWorksheetValues(
   templateId: string,
   values: Answers,
 ): { ok: true } | { ok: false; errors: string[] } {
-  const fields = getTemplateValueFields(templateId);
+  const fields = getTemplateById(templateId)?.fields ?? [];
   if (fields.length === 0) {
     return { ok: false, errors: ["이 템플릿의 입력 항목을 확인할 수 없습니다."] };
   }

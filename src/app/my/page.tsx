@@ -12,20 +12,8 @@ import {
   listStudentInquiryReports,
   type InquiryReportDoc,
 } from "@/lib/firebase/inquiry-reports";
+import { getMetaFieldLabel } from "@/lib/meta-labels";
 import { inquiryReportTitle } from "@/lib/inquiry-report/types";
-
-const META_LABELS: Record<string, string> = {
-  grade: "학년/반",
-  classNo: "반",
-  studentNo: "번호",
-  studentName: "이름",
-  topic: "주제",
-  unit: "단원",
-  period: "차시",
-  inquiryQuestion: "탐구질문",
-  writingContext: "글쓰기 상황",
-  description: "설명",
-};
 
 function formatDate(submission: WorksheetSubmission) {
   if (!submission.submittedAt) return "-";
@@ -213,7 +201,7 @@ export default function MyWorksheetsPage() {
                         .filter(([, v]) => v && String(v).trim())
                         .map(([key, value]) => (
                           <div key={key}>
-                            <dt className="text-xs font-semibold text-slate-500">{META_LABELS[key] ?? key}</dt>
+                            <dt className="text-xs font-semibold text-slate-500">{getMetaFieldLabel(key)}</dt>
                             <dd className="mt-0.5 whitespace-pre-wrap text-slate-800">{value}</dd>
                           </div>
                         ))}

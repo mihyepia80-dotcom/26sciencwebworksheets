@@ -35,6 +35,10 @@ export interface TemplateDefinition {
   description: string;
   aiFeatureLabel?: string;
   aiFeature?: string;
+  /** 제출 검증용 value 필드 키 — 미지정 시 field-keys.ts에서 조회 */
+  fields?: string[];
+  /** 홈 목록에서 숨김(기존 제출 호환) */
+  legacy?: boolean;
   headerFields?: ("unit" | "period" | "inquiryQuestion" | "writingContext" | "description")[];
 }
 
