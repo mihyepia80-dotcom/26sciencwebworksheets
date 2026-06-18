@@ -145,6 +145,12 @@ export function TeacherDashboard() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
+            href="/teacher/guided-questions"
+            className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
+          >
+            유도 질문 관리
+          </Link>
+          <Link
             href="/teacher/lesson-plans"
             className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
           >
@@ -181,6 +187,8 @@ export function TeacherDashboard() {
         {submissions.map((submission) => {
           const open = expandedId === submission.id;
           const valueEntries = Object.entries(submission.values).filter(([, value]) => value.trim().length > 0);
+          const guidedEntries = valueEntries.filter(([key]) => key.startsWith("guided_q_"));
+          const activityEntries = valueEntries.filter(([key]) => !key.startsWith("guided_q_"));
 
           return (
             <article key={submission.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -214,10 +222,24 @@ export function TeacherDashboard() {
                       ))}
                   </dl>
 
-                  {valueEntries.length > 0 && (
+                  {guidedEntries.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-700">유도 질문</h3>
+                      {guidedEntries.map(([key, value]) => (
+                        <div key={key} className="rounded-lg bg-emerald-50 p-3">
+                          <p className="text-xs font-semibold text-emerald-800">
+                            질문 {Number(key.replace("guided_q_", "")) + 1}
+                          </p>
+                          <p className="mt-1 whitespace-pre-wrap text-slate-800">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {activityEntries.length > 0 && (
                     <div className="mt-4 space-y-3">
                       <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">활동지 내용</h3>
-                      {valueEntries.map(([key, value]) => (
+                      {activityEntries.map(([key, value]) => (
                         <div key={key} className="rounded-lg bg-slate-50 p-3">
                           <p className="text-xs font-semibold text-slate-500">{key}</p>
                           <p className="mt-1 whitespace-pre-wrap text-slate-800">{value}</p>

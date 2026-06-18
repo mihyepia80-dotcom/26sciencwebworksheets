@@ -162,5 +162,38 @@ service cloud.firestore {
       allow delete: if isTeacher();
       allow update: if false;
     }
+
+    function isValidGuidedQuestionSet(data) {
+      return data.keys().hasAll([
+          'teacherUid', 'templateId', 'templateName', 'topic', 'topicKey', 'questions', 'pinned', 'updatedAt'
+        ])
+        && data.teacherUid is string
+        && data.templateId is string
+        && data.templateId.size() > 0
+        && data.templateId.size() <= 64
+        && data.templateName is string
+        && data.topic is string
+        && data.topic.size() > 0
+        && data.topic.size() <= 200
+        && data.topicKey is string
+        && data.questions is list
+        && data.questions.size() >= 1
+        && data.questions.size() <= 8
+        && data.pinned is bool;
+    }
+
+    match /guidedQuestionSets/{setId} {
+      allow read: if isTeacher()
+        || (request.auth != null && resource.data.pinned == true);
+      allow create: if isTeacher()
+        && request.resource.data.teacherUid == request.auth.uid
+        && isValidGuidedQuestionSet(request.resource.data);
+      allow update: if isTeacher()
+        && resource.data.teacherUid == request.auth.uid
+        && request.resource.data.teacherUid == request.auth.uid
+        && isValidGuidedQuestionSet(request.resource.data);
+      allow delete: if isTeacher()
+        && resource.data.teacherUid == request.auth.uid;
+    }
   }
 }

@@ -45,6 +45,13 @@ export {
   type LessonPlanDoc,
 } from "./lesson-plans";
 export {
+  createGuidedQuestionSet,
+  updateGuidedQuestionSet,
+  deleteGuidedQuestionSet,
+  findPinnedGuidedQuestions,
+  listTeacherGuidedQuestionSets,
+} from "./guided-questions";
+export {
   listClassmates,
   listAuthorPeerFeedbacks,
   listReceivedPeerFeedbacks,

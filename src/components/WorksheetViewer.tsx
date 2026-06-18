@@ -9,10 +9,12 @@ import { ShareButton } from "@/components/ShareButton";
 import { PeerFeedbackSection } from "@/components/peer-feedback/PeerFeedbackSection";
 import { WorksheetHeader } from "@/components/common/WorksheetHeader";
 import { TemplateRenderer } from "@/components/templates";
+import { GuidedQuestionsPanel } from "@/components/worksheet/GuidedQuestionsPanel";
 import { WorksheetActionBar, WorksheetGuidanceBanner } from "@/components/worksheet/WorksheetChrome";
 import { useAuth } from "@/components/AuthProvider";
 import type { AiRating } from "@/lib/ai/feedback";
 import { useAiQuota } from "@/hooks/useAiQuota";
+import { useGuidedQuestions } from "@/hooks/useGuidedQuestions";
 import { useWorksheetLoader } from "@/hooks/useWorksheetLoader";
 import { useWorksheetSubmit } from "@/hooks/useWorksheetSubmit";
 import { getTemplateById } from "@/lib/templates/registry";
@@ -45,6 +47,15 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
   const [aiRating, setAiRating] = useState<AiRating | null>(null);
 
   const { aiQuota, setAiQuota } = useAiQuota(user?.uid, isStudent);
+
+  const guided = useGuidedQuestions({
+    templateId,
+    templateName: template?.name ?? "",
+    meta,
+    values,
+    onChange,
+    readOnly: submitted,
+  });
 
   const handleLoaded = useCallback(
     (data: {
@@ -161,6 +172,19 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       />
 
       {template.aiFeature && <AiFeaturePanel template={template} />}
+
+      {guided.visible && (
+        <GuidedQuestionsPanel
+          topic={meta.topic}
+          questions={guided.questions}
+          source={guided.source}
+          loading={guided.loading}
+          error={guided.error}
+          readOnly={submitted}
+          onQuestionChange={guided.updateQuestion}
+          onRegenerate={guided.regenerate}
+        />
+      )}
 
       <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
 
