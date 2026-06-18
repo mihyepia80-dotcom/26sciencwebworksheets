@@ -3,7 +3,7 @@ import type { WorksheetMeta } from "@/lib/types";
 export interface GenerateGuidedQuestionsInput {
   templateId: string;
   templateName: string;
-  meta: Pick<WorksheetMeta, "topic" | "unit" | "grade" | "inquiryQuestion">;
+  meta: Pick<WorksheetMeta, "topic" | "unit" | "grade" | "inquiryQuestion" | "writingContext">;
   count?: number;
 }
 
@@ -25,6 +25,7 @@ export async function requestGuidedQuestions(
       unit: input.meta.unit,
       grade: input.meta.grade,
       inquiryQuestion: input.meta.inquiryQuestion,
+      writingContext: input.meta.writingContext,
       count: input.count,
     }),
   });
