@@ -1,10 +1,11 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { User } from "firebase/auth";
 import {
   getStudentProfile,
   isFirebaseConfigured,
+  resolveAuthRole,
   subscribeAppAuth,
   verifyTeacherPassword,
   type AuthRole,
@@ -17,7 +18,7 @@ interface AuthContextValue {
   loading: boolean;
   studentProfile: StudentProfile | null;
   refreshProfile: () => Promise<void>;
-  confirmTeacherPin: (password: string) => boolean;
+  confirmTeacherPin: (password: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -26,7 +27,7 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   studentProfile: null,
   refreshProfile: async () => {},
-  confirmTeacherPin: () => false,
+  confirmTeacherPin: async () => false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -44,12 +45,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStudentProfile(profile);
   };
 
-  const confirmTeacherPin = (password: string): boolean => {
+  const confirmTeacherPin = useCallback(async (password: string): Promise<boolean> => {
     if (!user) return false;
-    const ok = verifyTeacherPassword(user, password);
-    if (ok) setRole("teacher");
-    return ok;
-  };
+    const ok = await verifyTeacherPassword(user, password);
+    if (!ok) return false;
+    const nextRole = await resolveAuthRole(user);
+    setRole(nextRole);
+    return nextRole === "teacher";
+  }, [user]);
 
   useEffect(() => {
     if (!isFirebaseConfigured()) {

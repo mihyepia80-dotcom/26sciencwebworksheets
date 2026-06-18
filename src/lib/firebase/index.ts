@@ -14,6 +14,7 @@ export {
   signOutUser,
   checkIsTeacher,
   verifyTeacherPassword,
+  resolveAuthRole,
   subscribeAppAuth,
   type AppAuthState,
   type AuthRole,

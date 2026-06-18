@@ -51,8 +51,9 @@ export function AuthGate({ children }: { children: ReactNode }) {
       router.replace(role === "teacher" ? "/teacher" : "/login");
     }
 
-    if (pathname.startsWith("/teacher/lesson-plans") && role !== "teacher") {
-      router.replace(role === "student" ? "/" : "/login");
+    if (pathname.startsWith("/teacher/") && role !== "teacher") {
+      router.replace(role === "student" ? "/" : "/teacher");
+      return;
     }
   }, [user, role, loading, pathname, router, firebaseReady]);
 

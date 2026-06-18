@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getFirebaseErrorMessage, signInTeacherWithGoogle } from "@/lib/firebase";
 
@@ -14,6 +14,13 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
   const [error, setError] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
   const [pinLoading, setPinLoading] = useState(false);
+  const [pinVerified, setPinVerified] = useState(false);
+
+  useEffect(() => {
+    if (!pinVerified || role !== "teacher") return;
+    setPinVerified(false);
+    onSuccess?.();
+  }, [pinVerified, role, onSuccess]);
 
   const handleGoogleLogin = async () => {
     setError("");
@@ -32,27 +39,29 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
     setError("");
     setPinLoading(true);
     try {
-      const ok = confirmTeacherPin(teacherPassword);
+      const ok = await confirmTeacherPin(teacherPassword);
       if (!ok) {
         setError("암호가 올바르지 않습니다.");
         return;
       }
       setTeacherPassword("");
-      onSuccess?.();
+      setPinVerified(true);
     } finally {
       setPinLoading(false);
     }
   };
 
-  if (user && role === "teacher-pending") {
+  const needsTeacherPin = Boolean(user && role !== "student" && role !== "teacher");
+
+  if (needsTeacherPin) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-600">{user.email}</p>
+        <p className="text-sm text-slate-600">{user?.email}</p>
         <form onSubmit={handlePinSubmit} className="mt-4 space-y-3">
           <input
             type="password"
             className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-            placeholder="암호"
+            placeholder="교사 암호"
             value={teacherPassword}
             onChange={(e) => setTeacherPassword(e.target.value)}
             required
