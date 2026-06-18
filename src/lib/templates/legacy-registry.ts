@@ -1,8 +1,8 @@
 import type { TemplateDefinition } from "@/lib/types";
-import { getFieldKeysForTemplate } from "./field-keys";
+import { resolveTemplates } from "./resolve-template";
 
 /** 기존 제출 호환용 — 홈 목록에는 표시하지 않음 */
-export const LEGACY_TEMPLATE_REGISTRY: TemplateDefinition[] = [
+export const LEGACY_TEMPLATE_REGISTRY: TemplateDefinition[] = resolveTemplates([
   { id: "hot-spots", order: 99, name: "Hot Spots", category: "questioning", description: "사진에서 눈에 띄는 부분", legacy: true, headerFields: ["writingContext"] },
   { id: "compass-points", order: 99, name: "Compass Points", category: "questioning", description: "Compass Points", legacy: true, headerFields: ["description"] },
   { id: "circle-tree-map", order: 99, name: "써클맵·트리맵", category: "generalizing", description: "브레인스토밍과 분류", legacy: true, headerFields: ["writingContext"] },
@@ -19,4 +19,4 @@ export const LEGACY_TEMPLATE_REGISTRY: TemplateDefinition[] = [
   { id: "question-types", order: 99, name: "질문의 종류", category: "questioning", description: "사실·개념·호기심 질문", legacy: true, headerFields: ["unit", "period", "inquiryQuestion", "writingContext"] },
   { id: "spectrum", order: 99, name: "스펙트럼 입장문", category: "reflection-exchange", description: "입장 스펙트럼 배치", legacy: true, headerFields: ["description"] },
   { id: "exaggeration", order: 99, name: "과장하기", nameEn: "Exaggeration", category: "transfer", description: "과장 질문 기법", legacy: true, headerFields: ["description"] },
-].map((t) => ({ ...t, fields: getFieldKeysForTemplate(t.id) }));
+]);
