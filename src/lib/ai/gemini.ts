@@ -1,8 +1,18 @@
+import { GeminiApiError, toGeminiApiError, withGeminiQuotaRetry } from "@/lib/ai/gemini-errors";
+
 const DEFAULT_MODEL = "gemini-2.5-flash-lite";
 
-export async function callGeminiText(
+export interface GeminiCallOptions {
+  temperature?: number;
+  maxOutputTokens?: number;
+  model?: string;
+  /** 분당 한도 등 일시 오류 시 1회 재시도 */
+  retryOnQuota?: boolean;
+}
+
+async function requestGeminiText(
   prompt: string,
-  options?: { temperature?: number; maxOutputTokens?: number; model?: string },
+  options?: GeminiCallOptions,
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -27,11 +37,11 @@ export async function callGeminiText(
 
   const data = (await res.json()) as {
     candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-    error?: { message?: string };
+    error?: { message?: string; code?: number };
   };
 
   if (!res.ok) {
-    throw new Error(data.error?.message ?? "AI 응답을 받지 못했습니다.");
+    throw toGeminiApiError(res.status, data.error?.message ?? "AI 응답을 받지 못했습니다.");
   }
 
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
@@ -40,6 +50,14 @@ export async function callGeminiText(
   }
 
   return text;
+}
+
+export async function callGeminiText(prompt: string, options?: GeminiCallOptions): Promise<string> {
+  if (options?.retryOnQuota === false) {
+    return requestGeminiText(prompt, options);
+  }
+
+  return withGeminiQuotaRetry(() => requestGeminiText(prompt, options), 1);
 }
 
 export function parseGeminiJsonObject<T>(text: string): T {
@@ -56,3 +74,5 @@ export function parseGeminiJsonObject<T>(text: string): T {
     return JSON.parse(match[0]) as T;
   }
 }
+
+export { GeminiApiError };

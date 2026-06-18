@@ -47,9 +47,13 @@ export async function requestAiFeedback(input: {
     body: JSON.stringify(input),
   });
 
-  const data = (await res.json()) as AiFeedbackResult & { error?: string; quotaExceeded?: boolean };
+  const data = (await res.json()) as AiFeedbackResult & {
+    error?: string;
+    quotaExceeded?: boolean;
+    geminiQuotaExceeded?: boolean;
+  };
   if (!res.ok) {
-    if (res.status === 429 && data.quotaExceeded) {
+    if (res.status === 429 && (data.quotaExceeded || data.geminiQuotaExceeded)) {
       throw new Error("QUOTA_EXCEEDED");
     }
     throw new Error(data.error ?? "AI 피드백 생성에 실패했습니다.");

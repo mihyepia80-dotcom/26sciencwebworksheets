@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
+import { GeminiApiError, callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
 import { GUIDED_QUESTION_DEFAULT_COUNT } from "@/lib/guided-questions/types";
 
 interface GenerateRequest {
@@ -73,6 +73,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ questions, source: "ai" as const });
   } catch (error: unknown) {
+    if (error instanceof GeminiApiError && error.isQuotaExceeded) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          geminiQuotaExceeded: true,
+          retryAfterSeconds: error.retryAfterSeconds,
+        },
+        { status: 429 },
+      );
+    }
     const message = error instanceof Error ? error.message : "유도 질문 생성에 실패했습니다.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

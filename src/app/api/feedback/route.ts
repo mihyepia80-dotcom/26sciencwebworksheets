@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type { Answers, WorksheetMeta } from "@/lib/types";
+import { GeminiApiError, callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
 import { consumeAiQuota, getAiQuotaStatus } from "@/lib/ai/quota";
 
-const MODEL = "gemini-2.5-flash-lite";
 const MAX_FEEDBACK_CHARS = 200;
 
 type AiRating = "잘함" | "보통" | "노력요함";
@@ -20,20 +20,7 @@ function truncateFeedback(text: string): string {
 }
 
 function parseGeminiJson(text: string): { rating: AiRating; feedback: string } {
-  const cleaned = text
-    .replace(/```json\s*/gi, "")
-    .replace(/```/g, "")
-    .trim();
-
-  let parsed: { rating?: string; feedback?: string };
-  try {
-    parsed = JSON.parse(cleaned) as { rating?: string; feedback?: string };
-  } catch {
-    const match = cleaned.match(/\{[\s\S]*"feedback"[\s\S]*\}/);
-    if (!match) throw new Error("AI 응답 형식을 해석하지 못했습니다.");
-    parsed = JSON.parse(match[0]) as { rating?: string; feedback?: string };
-  }
-
+  const parsed = parseGeminiJsonObject<{ rating?: string; feedback?: string }>(text);
   const rating =
     parsed.rating === "잘함" || parsed.rating === "보통" || parsed.rating === "노력요함"
       ? parsed.rating
@@ -97,40 +84,27 @@ ${contentSummary}
 feedback는 공백 포함 200자 이내로 작성하세요.`;
 
   try {
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 300,
-          },
-        }),
-      },
-    );
-
-    const geminiData = (await geminiRes.json()) as {
-      candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }>;
-      error?: { message?: string; code?: number };
-    };
-
-    if (!geminiRes.ok) {
-      const msg = geminiData.error?.message ?? "AI 응답을 받지 못했습니다.";
-      return NextResponse.json({ error: msg }, { status: 502 });
-    }
-
-    const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-    if (!rawText) {
-      return NextResponse.json({ error: "AI가 빈 응답을 반환했습니다." }, { status: 502 });
-    }
+    const rawText = await callGeminiText(prompt, {
+      temperature: 0.3,
+      maxOutputTokens: 300,
+    });
 
     const result = parseGeminiJson(rawText);
     await consumeAiQuota(body.studentUid);
     return NextResponse.json(result);
   } catch (error: unknown) {
+    if (error instanceof GeminiApiError && error.isQuotaExceeded) {
+      return NextResponse.json(
+        {
+          error:
+            "Gemini AI 무료 한도에 도달해 피드백을 만들지 못했습니다. 활동지는 제출할 수 있습니다. 잠시 후 다시 시도해 주세요.",
+          quotaExceeded: true,
+          geminiQuotaExceeded: true,
+          retryAfterSeconds: error.retryAfterSeconds,
+        },
+        { status: 429 },
+      );
+    }
     const message = error instanceof Error ? error.message : "AI 피드백을 생성하지 못했습니다.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
