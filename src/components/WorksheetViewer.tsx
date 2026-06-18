@@ -62,6 +62,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
     readOnly: submitted,
     studentMode: isStudent,
     skipTeacherPrefill: Boolean(editSubmissionId),
+    userUid: user?.uid,
   });
 
   const handleLoaded = useCallback(

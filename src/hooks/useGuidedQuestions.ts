@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestGuidedQuestions } from "@/lib/ai/guided-questions";
+import { getStudentFirebaseErrorMessage } from "@/lib/firebase/errors";
 import {
   findLatestPinnedGuidedQuestionsForTemplate,
   findPinnedGuidedQuestions,
@@ -28,6 +29,8 @@ interface UseGuidedQuestionsOptions {
   studentMode?: boolean;
   /** 기존 제출 불러오기 중이면 교사 설정으로 덮어쓰지 않음 */
   skipTeacherPrefill?: boolean;
+  /** 로그인 후에만 Firestore 조회 (미인증 permission-denied 방지) */
+  userUid?: string;
 }
 
 function padQuestions(list: string[]): string[] {
@@ -55,6 +58,7 @@ export function useGuidedQuestions({
   readOnly,
   studentMode = false,
   skipTeacherPrefill = false,
+  userUid,
 }: UseGuidedQuestionsOptions) {
   const [questions, setQuestions] = useState<string[]>(padQuestions([]));
   const [source, setSource] = useState<GuidedQuestionSource | null>(null);
@@ -158,7 +162,14 @@ export function useGuidedQuestions({
         setSource("manual");
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "가이드 질문을 불러오지 못했습니다.");
+      const code = e instanceof Error ? (e as Error & { code?: string }).code : undefined;
+      if (code === "permission-denied") {
+        setSource("manual");
+        return;
+      }
+      setError(
+        getStudentFirebaseErrorMessage(e, "가이드 질문을 불러오지 못했습니다. 학습지는 그대로 작성할 수 있습니다."),
+      );
     } finally {
       setLoading(false);
     }
@@ -182,9 +193,9 @@ export function useGuidedQuestions({
   }, [meta.topic, studentMode, values]);
 
   useEffect(() => {
-    if (readOnly || !studentMode) return;
+    if (readOnly || !studentMode || !userUid) return;
     void loadTeacherGuide();
-  }, [loadTeacherGuide, readOnly, studentMode]);
+  }, [loadTeacherGuide, readOnly, studentMode, userUid]);
 
   useEffect(() => {
     if (readOnly || studentMode) return;

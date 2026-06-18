@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import type { AiRating } from "@/lib/ai/feedback";
 import { fetchAiQuotaStatus, requestAiFeedback, type AiQuotaStatus } from "@/lib/ai/feedback";
 import {
-  getFirebaseErrorMessage,
+  getStudentFirebaseErrorMessage,
   isFirebaseConfigured,
   saveSubmission,
   updateSubmission,
@@ -85,7 +85,7 @@ export function useWorksheetSubmit({ aiQuota, setAiQuota, onSuccess }: UseWorksh
 
         onSuccess({ submissionId: id, aiFeedback: feedback, aiRating: rating });
       } catch (error: unknown) {
-        setSubmitError(getFirebaseErrorMessage(error, "제출에 실패했습니다. 다시 시도해 주세요."));
+        setSubmitError(getStudentFirebaseErrorMessage(error, "제출에 실패했습니다. 다시 시도해 주세요."));
       } finally {
         setSubmitting(false);
       }
