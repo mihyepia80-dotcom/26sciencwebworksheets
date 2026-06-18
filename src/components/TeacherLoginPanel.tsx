@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { getFirebaseErrorMessage, signInTeacherWithGoogle } from "@/lib/firebase";
+import { getFirebaseErrorMessage, isTeacherGoogleRedirectInProgress, signInTeacherWithGoogle } from "@/lib/firebase";
 
 interface TeacherLoginPanelProps {
   onSuccess?: () => void;
@@ -28,6 +28,10 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
     try {
       await signInTeacherWithGoogle();
     } catch (err: unknown) {
+      if (isTeacherGoogleRedirectInProgress(err)) {
+        setError("Google 로그인 페이지로 이동합니다…");
+        return;
+      }
       setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
     } finally {
       setGoogleLoading(false);

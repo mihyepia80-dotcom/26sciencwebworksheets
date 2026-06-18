@@ -15,6 +15,8 @@ export {
   checkIsTeacher,
   verifyTeacherPassword,
   resolveAuthRole,
+  completeTeacherGoogleRedirect,
+  isTeacherGoogleRedirectInProgress,
   subscribeAppAuth,
   type AppAuthState,
   type AuthRole,

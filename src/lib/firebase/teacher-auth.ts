@@ -2,8 +2,10 @@
 
 import {
   GoogleAuthProvider,
+  getRedirectResult,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
   signOut,
   type User,
 } from "firebase/auth";
@@ -11,6 +13,15 @@ import { STUDENT_EMAIL_DOMAIN, TEACHER_PASSWORD } from "@/lib/constants";
 import { isFirebaseConfigured } from "./config";
 import { getClientAuth } from "./client";
 import { clearTeacherPinVerified, isTeacherPinVerified, setTeacherPinVerified } from "./teacher-pin";
+
+const REDIRECT_IN_PROGRESS = "REDIRECT_IN_PROGRESS";
+
+const POPUP_FALLBACK_CODES = new Set([
+  "auth/popup-blocked",
+  "auth/popup-closed-by-user",
+  "auth/cancelled-popup-request",
+  "auth/operation-not-supported-in-this-environment",
+]);
 
 function hasGoogleProviderData(user: User): boolean {
   return user.providerData.some((provider) => provider.providerId === "google.com");
@@ -26,6 +37,26 @@ async function isGoogleSignIn(user: User): Promise<boolean> {
   }
 }
 
+async function refreshUserProfile(user: User): Promise<void> {
+  try {
+    await user.reload();
+  } catch {
+    // 로그인은 성공했으나 reload 실패 시에도 세션은 유지됩니다.
+  }
+}
+
+function isStudentAccount(user: User): boolean {
+  return Boolean(user.email?.endsWith(`@${STUDENT_EMAIL_DOMAIN}`));
+}
+
+async function ensureTeacherGoogleSignInReady(): Promise<void> {
+  const auth = getClientAuth();
+  const current = auth.currentUser;
+  if (current && isStudentAccount(current)) {
+    await signOut(auth);
+  }
+}
+
 export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
   if (!user) return null;
   if (await isGoogleSignIn(user)) {
@@ -35,12 +66,38 @@ export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
   return null;
 }
 
+/** Google 리다이렉트 로그인 복귀 처리 (앱 시작 시 1회) */
+export async function completeTeacherGoogleRedirect(): Promise<User | null> {
+  const auth = getClientAuth();
+  const result = await getRedirectResult(auth);
+  if (!result?.user) return null;
+  await refreshUserProfile(result.user);
+  return result.user;
+}
+
 export async function signInTeacherWithGoogle(): Promise<User> {
+  await ensureTeacherGoogleSignInReady();
+
+  const auth = getClientAuth();
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-  const result = await signInWithPopup(getClientAuth(), provider);
-  await result.user.reload();
-  return result.user;
+
+  try {
+    const result = await signInWithPopup(auth, provider);
+    await refreshUserProfile(result.user);
+    return result.user;
+  } catch (error: unknown) {
+    const code = (error as { code?: string }).code;
+    if (code && POPUP_FALLBACK_CODES.has(code)) {
+      await signInWithRedirect(auth, provider);
+      throw new Error(REDIRECT_IN_PROGRESS);
+    }
+    throw error;
+  }
+}
+
+export function isTeacherGoogleRedirectInProgress(error: unknown): boolean {
+  return error instanceof Error && error.message === REDIRECT_IN_PROGRESS;
 }
 
 export async function verifyTeacherPassword(user: User, password: string): Promise<boolean> {
@@ -77,6 +134,10 @@ export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
   let active = true;
 
   onChange({ user: null, role: null, loading: true });
+
+  void completeTeacherGoogleRedirect().catch(() => {
+    // 리다이렉트 복귀가 아니면 무시
+  });
 
   const unsubscribe = onAuthStateChanged(auth, (user) => {
     if (!user) {
