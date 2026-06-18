@@ -2,6 +2,8 @@
 
 import type { WorksheetMeta } from "@/lib/types";
 import { getMetaFieldLabel } from "@/lib/meta-labels";
+
+interface WorksheetHeaderProps {
   toolName: string;
   meta: WorksheetMeta;
   onMetaChange: (key: keyof WorksheetMeta, value: string) => void;
