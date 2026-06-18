@@ -49,6 +49,7 @@ export {
   updateGuidedQuestionSet,
   deleteGuidedQuestionSet,
   findPinnedGuidedQuestions,
+  findLatestPinnedGuidedQuestionsForTemplate,
   listTeacherGuidedQuestionSets,
 } from "./guided-questions";
 export {

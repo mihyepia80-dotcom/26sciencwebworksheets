@@ -48,13 +48,20 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
 
   const { aiQuota, setAiQuota } = useAiQuota(user?.uid, isStudent);
 
+  const handleTeacherMetaPrefill = useCallback((patch: Partial<WorksheetMeta>) => {
+    setMeta((prev) => ({ ...prev, ...patch }));
+  }, []);
+
   const guided = useGuidedQuestions({
     templateId,
     templateName: template?.name ?? "",
     meta,
     values,
     onChange,
+    onMetaPrefill: handleTeacherMetaPrefill,
     readOnly: submitted,
+    studentMode: isStudent,
+    skipTeacherPrefill: Boolean(editSubmissionId),
   });
 
   const handleLoaded = useCallback(
@@ -167,13 +174,12 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
         toolName={template.name}
         meta={meta}
         onMetaChange={onMetaChange}
-        extraFields={template.headerFields}
         readOnly={submitted}
       />
 
-      {template.aiFeature && <AiFeaturePanel template={template} />}
+      {!isStudent && template.aiFeature && <AiFeaturePanel template={template} />}
 
-      {guided.visible && (
+      {isStudent && guided.visible && (
         <GuidedQuestionsPanel
           topic={meta.topic}
           questions={guided.questions}
@@ -181,8 +187,9 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
           loading={guided.loading}
           error={guided.error}
           readOnly={submitted}
+          studentView={guided.studentMode}
           onQuestionChange={guided.updateQuestion}
-          onRegenerate={guided.regenerate}
+          onRegenerate={guided.studentMode ? undefined : guided.regenerate}
         />
       )}
 

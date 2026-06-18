@@ -20,7 +20,7 @@ export function writeGuidedQuestionsToValues(
   }
 }
 
-export type GuidedQuestionSource = "pinned" | "ai" | "saved";
+export type GuidedQuestionSource = "pinned" | "ai" | "saved" | "manual";
 
 export interface GuidedQuestionSet {
   id?: string;
@@ -31,6 +31,7 @@ export interface GuidedQuestionSet {
   topicKey: string;
   unit?: string;
   grade?: string;
+  writingContext?: string;
   questions: string[];
   pinned: boolean;
   updatedAt?: Date | null;

@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { requestGuidedQuestions } from "@/lib/ai/guided-questions";
-import { findPinnedGuidedQuestions } from "@/lib/firebase/guided-questions";
+import {
+  findLatestPinnedGuidedQuestionsForTemplate,
+  findPinnedGuidedQuestions,
+} from "@/lib/firebase/guided-questions";
 import {
   GUIDED_QUESTION_SLOTS,
   readGuidedQuestionsFromValues,
   writeGuidedQuestionsToValues,
+  type GuidedQuestionSet,
   type GuidedQuestionSource,
 } from "@/lib/guided-questions/types";
 import { isTopicReadyForGuidedQuestions, normalizeTopicKey } from "@/lib/guided-questions/topic-key";
@@ -18,7 +22,12 @@ interface UseGuidedQuestionsOptions {
   meta: WorksheetMeta;
   values: Record<string, string>;
   onChange: (key: string, value: string) => void;
+  onMetaPrefill?: (patch: Partial<WorksheetMeta>) => void;
   readOnly?: boolean;
+  /** 학생 모드: 교사 가이드 질문만 표시, AI 생성 없음 */
+  studentMode?: boolean;
+  /** 기존 제출 불러오기 중이면 교사 설정으로 덮어쓰지 않음 */
+  skipTeacherPrefill?: boolean;
 }
 
 function padQuestions(list: string[]): string[] {
@@ -27,13 +36,25 @@ function padQuestions(list: string[]): string[] {
   return next.slice(0, GUIDED_QUESTION_SLOTS);
 }
 
+function applyTeacherMeta(set: GuidedQuestionSet, onMetaPrefill?: (patch: Partial<WorksheetMeta>) => void) {
+  if (!onMetaPrefill) return;
+  const patch: Partial<WorksheetMeta> = {};
+  if (set.unit?.trim()) patch.unit = set.unit.trim();
+  if (set.topic?.trim()) patch.topic = set.topic.trim();
+  if (set.writingContext?.trim()) patch.writingContext = set.writingContext.trim();
+  if (Object.keys(patch).length > 0) onMetaPrefill(patch);
+}
+
 export function useGuidedQuestions({
   templateId,
   templateName,
   meta,
   values,
   onChange,
+  onMetaPrefill,
   readOnly,
+  studentMode = false,
+  skipTeacherPrefill = false,
 }: UseGuidedQuestionsOptions) {
   const [questions, setQuestions] = useState<string[]>(padQuestions([]));
   const [source, setSource] = useState<GuidedQuestionSource | null>(null);
@@ -41,6 +62,7 @@ export function useGuidedQuestions({
   const [error, setError] = useState("");
   const fetchedTopicKeyRef = useRef("");
   const hydratedFromSaveRef = useRef(false);
+  const teacherPrefillDoneRef = useRef(false);
 
   const applyQuestions = useCallback(
     (list: string[], nextSource: GuidedQuestionSource) => {
@@ -62,9 +84,9 @@ export function useGuidedQuestions({
         if (!readOnly) onChange(`guided_q_${index}`, text);
         return next;
       });
-      setSource("saved");
+      setSource(studentMode ? "manual" : "saved");
     },
-    [onChange, readOnly],
+    [onChange, readOnly, studentMode],
   );
 
   const loadForTopic = useCallback(
@@ -111,11 +133,42 @@ export function useGuidedQuestions({
     [applyQuestions, meta, templateId, templateName],
   );
 
+  const loadTeacherGuide = useCallback(async () => {
+    if (skipTeacherPrefill || teacherPrefillDoneRef.current) return;
+    if (hydratedFromSaveRef.current) {
+      teacherPrefillDoneRef.current = true;
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const pinned = await findLatestPinnedGuidedQuestionsForTemplate(templateId);
+      teacherPrefillDoneRef.current = true;
+      if (!pinned) {
+        setSource("manual");
+        return;
+      }
+
+      applyTeacherMeta(pinned, onMetaPrefill);
+      if (pinned.questions.length) {
+        applyQuestions(pinned.questions, "pinned");
+      } else {
+        setSource("manual");
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "가이드 질문을 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }, [applyQuestions, onMetaPrefill, skipTeacherPrefill, templateId]);
+
   const regenerate = useCallback(() => {
-    if (readOnly || source === "pinned") return;
+    if (readOnly || source === "pinned" || studentMode) return;
     fetchedTopicKeyRef.current = "";
     void loadForTopic(meta.topic, true);
-  }, [loadForTopic, meta.topic, readOnly, source]);
+  }, [loadForTopic, meta.topic, readOnly, source, studentMode]);
 
   useEffect(() => {
     if (hydratedFromSaveRef.current) return;
@@ -125,11 +178,16 @@ export function useGuidedQuestions({
     hydratedFromSaveRef.current = true;
     fetchedTopicKeyRef.current = normalizeTopicKey(meta.topic);
     setQuestions(padQuestions(saved));
-    setSource("saved");
-  }, [meta.topic, values]);
+    setSource(studentMode ? "manual" : "saved");
+  }, [meta.topic, studentMode, values]);
 
   useEffect(() => {
-    if (readOnly) return;
+    if (readOnly || !studentMode) return;
+    void loadTeacherGuide();
+  }, [loadTeacherGuide, readOnly, studentMode]);
+
+  useEffect(() => {
+    if (readOnly || studentMode) return;
     const topic = meta.topic?.trim() ?? "";
     if (!isTopicReadyForGuidedQuestions(topic)) return;
     if (hydratedFromSaveRef.current && fetchedTopicKeyRef.current === normalizeTopicKey(topic)) {
@@ -141,11 +199,12 @@ export function useGuidedQuestions({
     }, 700);
 
     return () => window.clearTimeout(timer);
-  }, [loadForTopic, meta.topic, readOnly]);
+  }, [loadForTopic, meta.topic, readOnly, studentMode]);
 
   useEffect(() => {
     hydratedFromSaveRef.current = false;
     fetchedTopicKeyRef.current = "";
+    teacherPrefillDoneRef.current = false;
   }, [templateId]);
 
   return {
@@ -155,6 +214,7 @@ export function useGuidedQuestions({
     error,
     updateQuestion,
     regenerate,
-    visible: isTopicReadyForGuidedQuestions(meta.topic),
+    visible: studentMode ? true : isTopicReadyForGuidedQuestions(meta.topic),
+    studentMode,
   };
 }

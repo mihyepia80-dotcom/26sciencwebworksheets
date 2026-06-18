@@ -29,6 +29,7 @@ function mapDoc(id: string, data: Record<string, unknown>): GuidedQuestionSet {
     topicKey: String(data.topicKey ?? ""),
     unit: data.unit ? String(data.unit) : undefined,
     grade: data.grade ? String(data.grade) : undefined,
+    writingContext: data.writingContext ? String(data.writingContext) : undefined,
     questions: Array.isArray(data.questions) ? data.questions.map(String) : [],
     pinned: Boolean(data.pinned),
     updatedAt: updatedAt?.toDate?.() ?? null,
@@ -47,6 +48,24 @@ export async function findPinnedGuidedQuestions(
     collection(getClientDb(), COLLECTION),
     where("templateId", "==", templateId),
     where("topicKey", "==", topicKey),
+    where("pinned", "==", true),
+    orderBy("updatedAt", "desc"),
+    limit(1),
+  );
+
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  const docSnap = snap.docs[0];
+  return mapDoc(docSnap.id, docSnap.data() as Record<string, unknown>);
+}
+
+/** 학생: 템플릿별 최신 고정 유도 질문 (교사 수업 설정 반영) */
+export async function findLatestPinnedGuidedQuestionsForTemplate(
+  templateId: string,
+): Promise<GuidedQuestionSet | null> {
+  const q = query(
+    collection(getClientDb(), COLLECTION),
+    where("templateId", "==", templateId),
     where("pinned", "==", true),
     orderBy("updatedAt", "desc"),
     limit(1),
@@ -79,6 +98,7 @@ export interface SaveGuidedQuestionSetInput {
   topic: string;
   unit?: string;
   grade?: string;
+  writingContext?: string;
   questions: string[];
   pinned: boolean;
 }

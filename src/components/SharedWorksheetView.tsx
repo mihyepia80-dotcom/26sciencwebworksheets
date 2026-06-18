@@ -23,7 +23,6 @@ export function SharedWorksheetView({ share }: { share: ShareRecord }) {
             toolName={template.name}
             meta={share.meta}
             onMetaChange={() => {}}
-            extraFields={template.headerFields}
             readOnly
           />
           <TemplateRenderer

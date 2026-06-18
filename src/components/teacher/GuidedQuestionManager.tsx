@@ -31,6 +31,7 @@ export function GuidedQuestionManager() {
   const [topic, setTopic] = useState("");
   const [unit, setUnit] = useState("");
   const [grade, setGrade] = useState("");
+  const [writingContext, setWritingContext] = useState("");
   const [questions, setQuestions] = useState<string[]>(emptySlots());
   const [pinned, setPinned] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -66,7 +67,7 @@ export function GuidedQuestionManager() {
       const result = await requestGuidedQuestions({
         templateId: template.id,
         templateName: template.name,
-        meta: { topic, unit, grade },
+        meta: { topic, unit, grade, writingContext },
       });
       setQuestions(emptySlots(result.questions));
       setMessage("AI가 초등 수준의 유도 질문을 만들었습니다. 수정 후 고정할 수 있습니다.");
@@ -99,6 +100,7 @@ export function GuidedQuestionManager() {
       topic: topic.trim(),
       unit: unit.trim() || undefined,
       grade: grade.trim() || undefined,
+      writingContext: writingContext.trim() || undefined,
       questions: cleaned,
       pinned,
     };
@@ -125,6 +127,7 @@ export function GuidedQuestionManager() {
     setTopic(set.topic);
     setUnit(set.unit ?? "");
     setGrade(set.grade ?? "");
+    setWritingContext(set.writingContext ?? "");
     setQuestions(emptySlots(set.questions));
     setPinned(set.pinned);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -146,6 +149,7 @@ export function GuidedQuestionManager() {
     setTopic("");
     setUnit("");
     setGrade("");
+    setWritingContext("");
     setQuestions(emptySlots());
     setPinned(true);
     setMessage("");
@@ -172,7 +176,7 @@ export function GuidedQuestionManager() {
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">유도 질문 관리</h1>
           <p className="mt-1 text-sm text-slate-600">
-            고정하기를 켜면 해당 주제의 학생 활동지에 선생님 질문이 표시됩니다. 끄면 AI가 질문을 만듭니다.
+            단원·주제·글쓰기 상황과 가이드 질문을 저장하면 학생 활동지에 반영됩니다. AI 질문 생성은 교사만 사용합니다.
           </p>
         </div>
         <button
@@ -210,6 +214,16 @@ export function GuidedQuestionManager() {
             <span className="mb-1 block text-xs font-semibold text-slate-600">단원</span>
             <input className={INPUT} value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="예: 2단원 물의 상태 변화" />
           </label>
+          <label className="block sm:col-span-2">
+            <span className="mb-1 block text-xs font-semibold text-slate-600">글쓰기 상황</span>
+            <textarea
+              className={`${INPUT} min-h-[72px] resize-y`}
+              value={writingContext}
+              onChange={(e) => setWritingContext(e.target.value)}
+              placeholder="예: 실험 후 관찰 내용을 바탕으로 글쓰기"
+              rows={2}
+            />
+          </label>
         </div>
 
         <div className="mt-4 space-y-2">
@@ -232,7 +246,7 @@ export function GuidedQuestionManager() {
 
         <label className="mt-4 flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} />
-          고정하기 — 학생에게 이 질문을 우선 제공 (AI 생성 대신)
+          학생에게 제공 — 고정 시 해당 템플릿 활동지에 단원·주제·글쓰기 상황·가이드 질문이 반영됩니다
         </label>
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -277,6 +291,7 @@ export function GuidedQuestionManager() {
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
                     {set.grade || "학년 미지정"} · {set.unit || "단원 미지정"}
+                    {set.writingContext ? ` · ${set.writingContext}` : ""}
                   </p>
                 </div>
                 <div className="flex gap-2">

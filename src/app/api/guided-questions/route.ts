@@ -9,6 +9,7 @@ interface GenerateRequest {
   unit?: string;
   grade?: string;
   inquiryQuestion?: string;
+  writingContext?: string;
   count?: number;
 }
 
@@ -19,6 +20,7 @@ function buildPrompt(body: GenerateRequest, count: number): string {
 활동 주제: ${body.topic.trim()}
 단원: ${body.unit?.trim() || "없음"}
 학년: ${body.grade?.trim() || "초등"}
+글쓰기 상황: ${body.writingContext?.trim() || "없음"}
 탐구 질문: ${body.inquiryQuestion?.trim() || "없음"}
 
 요구사항:
