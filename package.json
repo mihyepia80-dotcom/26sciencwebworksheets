@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "firebase:login": "npx firebase-tools login",
-    "deploy:firestore": "node scripts/deploy-firestore.mjs"
+    "deploy:firestore": "node scripts/deploy-firestore.mjs",
+    "firebase:add-auth-domains": "node scripts/add-auth-domain.mjs"
   },
   "dependencies": {
     "firebase": "^11.9.0",

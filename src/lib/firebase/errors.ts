@@ -18,6 +18,11 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 export function getFirebaseErrorMessage(error: unknown, fallback = "요청에 실패했습니다."): string {
   if (error instanceof Error) {
     const code = (error as Error & { code?: string }).code;
+    if (code === "auth/unauthorized-domain") {
+      const host = typeof window !== "undefined" ? window.location.hostname : "";
+      const base = AUTH_ERROR_MESSAGES[code];
+      return host ? `${base}\n\n추가할 도메인: ${host}` : base;
+    }
     if (code && AUTH_ERROR_MESSAGES[code]) return AUTH_ERROR_MESSAGES[code];
     return error.message || fallback;
   }
