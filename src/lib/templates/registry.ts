@@ -463,10 +463,14 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   {
     id: "compass-points",
     order: 5,
-    name: "Compass Points",
+    name: "나침반 초점",
+    nameEn: "Compass Points",
     category: "concept-exploration",
-    description: "탐구 방향과 감정·걱정·다음 단계 정리",
-    headerFields: ["description"],
+    description: "흥미·걱정·알아야 할 점·다음 단계 브레인스토밍",
+    aiFeatureLabel: "4방향 사고 나침반",
+    aiFeature:
+      "새 아이디어에 대해 흥미로운 점, 걱정, 더 알아야 할 점, 다음 단계를 나침반처럼 네 방향에서 정리합니다.",
+    headerFields: ["unit", "inquiryQuestion", "writingContext"],
   },
   {
     id: "peel-the-fruit",

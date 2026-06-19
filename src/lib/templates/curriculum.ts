@@ -52,6 +52,7 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
     order: 5,
     name: "나침반 초점",
     nameEn: "Compass Points",
+    thinkingTraits: ["융통성", "정교성"],
   },
   "three-two-one-reflection": {
     category: "concept-exploration",

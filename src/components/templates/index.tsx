@@ -49,6 +49,7 @@ import {
 import { DoubleBubbleMapTemplate } from "./DoubleBubbleMapTemplate";
 import { HexagonKeywordsTemplate } from "./HexagonKeywordsTemplate";
 import { MandalartTemplate } from "./MandalartTemplate";
+import { CompassPointsTemplate } from "./CompassPointsTemplate";
 import {
   CircleTreeMapTemplate,
   MultiFlowMapTemplate,
@@ -57,7 +58,6 @@ import {
   SwotTemplate,
   FrayerModelTemplate,
   HoneycombQuestionsTemplate,
-  CompassPointsTemplate,
 } from "./maps";
 
 export const TEMPLATE_COMPONENTS: Record<string, ComponentType<TemplateProps>> = {

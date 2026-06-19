@@ -2,6 +2,7 @@ import type { Answers } from "@/lib/types";
 import { defaultDoubleBubbleFieldKeys, doubleBubbleFieldKeys } from "./double-bubble-map";
 import { hexagonKeywordFieldKeys } from "./hexagon-keywords";
 import { mandalartFieldKeys } from "./mandalart";
+import { compassPointFieldKeys } from "./compass-points";
 
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 const nums = (prefix: string, count: number, start = 1) =>
@@ -57,7 +58,7 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
   "circle-of-viewpoints": ["centerTopic", "viewpoint", "think", "concern"],
   spectrum: ["question", "notAtAll", "no", "yes", "veryYes", "reflection"],
   "honeycomb-questions": ["left1", "left2", "center", "right1", "right2", "summary"],
-  "compass-points": ["needToKnow", "excited", "worries", "steps", "notes"],
+  "compass-points": compassPointFieldKeys(),
   "plus-one": ["workspace", "reflect"],
   "stop-light": ["draft", "greenLights", "yellowLights", "redLights", "revisionPlan"],
   "y-chart": ["looks", "sounds", "feels", "notes"],

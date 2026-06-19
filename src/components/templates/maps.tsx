@@ -216,22 +216,6 @@ export function HoneycombQuestionsTemplate({ values, onChange, readOnly }: Templ
   );
 }
 
-/* ── Compass Points ── */
-export function CompassPointsTemplate({ values, onChange, readOnly }: TemplateProps) {
-  return (
-    <SectionBox title="Compass Points" color="pink">
-      <div className="relative mx-auto aspect-square max-w-md border-2 border-pink-300">
-        <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-          <textarea className="resize-none border border-pink-200 p-2 text-xs focus:outline-none" placeholder="NEED TO KNOW" value={v(values, "needToKnow")} disabled={readOnly} onChange={(e) => onChange("needToKnow", e.target.value)} />
-          <textarea className="resize-none border border-pink-200 p-2 text-xs focus:outline-none" placeholder="EXCITED" value={v(values, "excited")} disabled={readOnly} onChange={(e) => onChange("excited", e.target.value)} />
-          <textarea className="resize-none border border-pink-200 p-2 text-xs focus:outline-none" placeholder="WORRIES" value={v(values, "worries")} disabled={readOnly} onChange={(e) => onChange("worries", e.target.value)} />
-          <textarea className="resize-none border border-pink-200 p-2 text-xs focus:outline-none" placeholder="STEPS" value={v(values, "steps")} disabled={readOnly} onChange={(e) => onChange("steps", e.target.value)} />
-        </div>
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-pink-400" />
-      </div>
-      <TextAreaField label="추가 메모" value={v(values, "notes")} onChange={(val) => onChange("notes", val)} rows={3} readOnly={readOnly} className="mt-4" />
-    </SectionBox>
-  );
-}
+/* ── Compass Points → CompassPointsTemplate.tsx ── */
 
 /* ── Mandalart → MandalartTemplate.tsx ── */
