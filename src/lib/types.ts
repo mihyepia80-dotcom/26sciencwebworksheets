@@ -1,9 +1,12 @@
 export type ToolCategory =
-  | "questioning"
-  | "inquiring"
-  | "generalizing"
-  | "transfer"
-  | "reflection-exchange";
+  | "concept-exploration"
+  | "concept-synthesis"
+  | "concept-deepening"
+  | "feedback-support"
+  | "self-reflection"
+  | "student-exchange";
+
+export type ThinkingTrait = "유창성" | "융통성" | "독창성" | "정교성";
 
 export interface WorksheetMeta {
   grade: string;
@@ -32,6 +35,14 @@ export interface TemplateDefinition {
   name: string;
   nameEn?: string;
   category: ToolCategory;
+  /** 사고 특성 — 유창성·융통성·독창성·정교성 */
+  thinkingTraits?: ThinkingTrait[];
+  /** 차시별 반영 여부 */
+  perLesson?: boolean;
+  /** 다른 탐구 단계에도 표시 */
+  secondaryCategories?: ToolCategory[];
+  /** 보조 탐구 단계에서의 순번 */
+  secondaryOrders?: Partial<Record<ToolCategory, number>>;
   description: string;
   aiFeatureLabel?: string;
   aiFeature?: string;

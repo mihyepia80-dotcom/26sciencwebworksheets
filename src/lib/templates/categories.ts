@@ -1,27 +1,30 @@
 import type { ToolCategory } from "@/lib/types";
 
 export const CATEGORY_ORDER: ToolCategory[] = [
-  "questioning",
-  "inquiring",
-  "generalizing",
-  "transfer",
-  "reflection-exchange",
+  "concept-exploration",
+  "concept-synthesis",
+  "concept-deepening",
+  "feedback-support",
+  "self-reflection",
+  "student-exchange",
 ];
 
 export const CATEGORY_LABELS: Record<ToolCategory, string> = {
-  questioning: "1. 질문하기",
-  inquiring: "2. 탐구하기",
-  generalizing: "3. 일반화하기",
-  transfer: "4. 전이하기",
-  "reflection-exchange": "5. 자기 성찰 및 교류",
+  "concept-exploration": "󰊱 개념 소개 및 탐색 방법",
+  "concept-synthesis": "󰊲 개념 종합 및 정리 방법",
+  "concept-deepening": "󰊳 개념 심화 방법",
+  "feedback-support": "󰊴 피드백 지원 방법",
+  "self-reflection": "󰊵 자기성찰 방법",
+  "student-exchange": "󰊶 학생교류 방법",
 };
 
 export const CATEGORY_SUBTITLES: Partial<Record<ToolCategory, string>> = {
-  questioning: "사고도구 기법 · AI 프로그램 구현 방식(입력 가이드·마이크로 러닝 등)",
-  inquiring: "탐구 과정에서 증거·관점·실험 설계를 심화합니다",
-  generalizing: "개념 정의·CER·인과관계로 일반화합니다",
-  transfer: "퇴고·피드백·가설 전이로 확장합니다",
-  "reflection-exchange": "성찰과 학급 지식 교류로 마무리합니다",
+  "concept-exploration": "개념을 소개하고 탐색하는 사고기법",
+  "concept-synthesis": "개념을 종합하고 정리하는 사고기법",
+  "concept-deepening": "개념을 심화하는 사고기법",
+  "feedback-support": "동료·교사 피드백을 지원하는 사고기법",
+  "self-reflection": "학습을 돌아보는 자기성찰 사고기법",
+  "student-exchange": "학생 간 교류·협력 사고기법",
 };
 
 export function compareByCategory(a: ToolCategory, b: ToolCategory): number {

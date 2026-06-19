@@ -1,12 +1,14 @@
 import type { TemplateDefinition } from "@/lib/types";
+import { applyCurriculum } from "./curriculum";
 import { getFieldKeysForTemplate } from "./field-keys";
 
-/** 필드 키를 자동 연결한 완전한 템플릿 정의 반환 */
+/** 필드 키·수업 용어(curriculum)를 반영한 완전한 템플릿 정의 반환 */
 export function resolveTemplate(def: TemplateDefinition | undefined): TemplateDefinition | undefined {
   if (!def) return undefined;
+  const withCurriculum = applyCurriculum(def);
   return {
-    ...def,
-    fields: def.fields ?? getFieldKeysForTemplate(def.id),
+    ...withCurriculum,
+    fields: withCurriculum.fields ?? getFieldKeysForTemplate(withCurriculum.id),
   };
 }
 

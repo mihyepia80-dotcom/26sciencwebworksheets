@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { listStudentSubmissions } from "@/lib/firebase";
 import { getCategoryGroups, getSortedTemplates } from "@/lib/templates/registry";
+import { formatTemplateTitle, getGlobalSequenceNumber, getTemplateOrderInCategory } from "@/lib/templates/curriculum";
 
 export function StudentTemplateGrid() {
   const { user, role } = useAuth();
@@ -85,9 +86,11 @@ export function StudentTemplateGrid() {
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {group.templates.map((t) => {
               const used = isStudent && usedTemplateIds.has(t.id);
+              const stageOrder = getTemplateOrderInCategory(t, group.id);
+              const seqNo = getGlobalSequenceNumber(t);
               return (
                 <Link
-                  key={t.id}
+                  key={`${group.id}-${t.id}`}
                   href={`/templates/${t.id}`}
                   className={`group relative flex flex-col rounded-xl border p-4 shadow-sm transition hover:shadow-md ${
                     used
@@ -95,6 +98,19 @@ export function StudentTemplateGrid() {
                       : "border-slate-200 bg-white hover:border-blue-300"
                   }`}
                 >
+                  <div className="mb-2 flex flex-wrap items-center gap-1.5 pr-14">
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+                      {seqNo}
+                    </span>
+                    <span className="rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                      단계 {stageOrder}
+                    </span>
+                    {t.perLesson && (
+                      <span className="rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                        차시 반영
+                      </span>
+                    )}
+                  </div>
                   {isStudent && (
                     <span
                       className={`absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -105,11 +121,15 @@ export function StudentTemplateGrid() {
                     </span>
                   )}
                   <h3
-                    className={`pr-14 font-semibold ${used ? "text-emerald-900 group-hover:text-emerald-800" : "text-slate-800 group-hover:text-blue-700"}`}
+                    className={`font-semibold leading-snug ${used ? "text-emerald-900 group-hover:text-emerald-800" : "text-slate-800 group-hover:text-blue-700"}`}
                   >
-                    {t.name}
+                    {formatTemplateTitle(t)}
                   </h3>
-                  {t.nameEn && <p className="mt-0.5 text-xs text-slate-400">{t.nameEn}</p>}
+                  {t.thinkingTraits && t.thinkingTraits.length > 0 && (
+                    <p className="mt-1.5 text-[10px] text-slate-500">
+                      {t.thinkingTraits.join(" · ")}
+                    </p>
+                  )}
                   <p className="mt-1 text-sm text-slate-500">{t.description}</p>
                   {t.aiFeatureLabel && (
                     <p className="mt-2 text-xs font-medium text-violet-700">[{t.aiFeatureLabel}]</p>

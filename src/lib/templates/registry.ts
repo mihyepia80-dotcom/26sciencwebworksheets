@@ -5,6 +5,7 @@ import {
   CATEGORY_SUBTITLES,
   compareByCategory,
 } from "./categories";
+import { getTemplateOrderInCategory, templateBelongsToCategory } from "./curriculum";
 import { LEGACY_TEMPLATE_REGISTRY } from "./legacy-registry";
 import { resolveTemplate } from "./resolve-template";
 
@@ -14,7 +15,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 1,
     name: "See, Think, Wonder",
     nameEn: "보기·생각하기·궁금해하기",
-    category: "questioning",
+    category: "concept-exploration",
     description: "관찰·생각·궁금증 기록",
     aiFeatureLabel: "입력 가이드",
     aiFeature:
@@ -26,7 +27,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 2,
     name: "Zoom In",
     nameEn: "줌인(확대하기)",
-    category: "questioning",
+    category: "concept-exploration",
     description: "점진적 이미지 확대 추리",
     aiFeatureLabel: "마이크로 러닝",
     aiFeature:
@@ -38,7 +39,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 3,
     name: "Chalk Talk",
     nameEn: "분필 토론",
-    category: "questioning",
+    category: "concept-exploration",
     description: "침묵 속 아이디어 공유",
     aiFeatureLabel: "실시간 협업 보드",
     aiFeature:
@@ -50,7 +51,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 4,
     name: "Think, Puzzle, Explore",
     nameEn: "생각하기·퍼즐·탐색하기",
-    category: "questioning",
+    category: "concept-exploration",
     description: "알고 있는 것·궁금한 점·탐구",
     aiFeatureLabel: "선행지식 진단",
     aiFeature:
@@ -62,7 +63,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 5,
     name: "Starbursting",
     nameEn: "스타버스팅",
-    category: "questioning",
+    category: "concept-exploration",
     description: "5W1H 질문 확장",
     aiFeatureLabel: "육하원칙 질문 생성기",
     aiFeature:
@@ -76,7 +77,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 1,
     name: "What Makes You Say That?",
     nameEn: "그렇게 말하는 이유는?",
-    category: "inquiring",
+    category: "concept-deepening",
     description: "주장에 대한 증거 요구",
     aiFeatureLabel: "증거 요구(Prompt)",
     aiFeature:
@@ -88,7 +89,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 2,
     name: "Estimate, Explore, Explain",
     nameEn: "E3 추리·탐구·설명",
-    category: "inquiring",
+    category: "concept-deepening",
     description: "예측·실험·설명 탐구",
     aiFeatureLabel: "예측-실험-매칭 엔진",
     aiFeature:
@@ -100,7 +101,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 3,
     name: "5WHY's",
     nameEn: "5WHY 활동지",
-    category: "inquiring",
+    category: "concept-deepening",
     description: "5번의 왜 질문",
     aiFeatureLabel: "심층 원인 분석기",
     aiFeature:
@@ -112,7 +113,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 4,
     name: "Circle of Viewpoints",
     nameEn: "관점의 원",
-    category: "inquiring",
+    category: "concept-deepening",
     description: "다양한 관점 탐색",
     aiFeatureLabel: "다각적 시뮬레이터",
     aiFeature:
@@ -124,7 +125,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 5,
     name: "Step Inside",
     nameEn: "안으로 들어가기",
-    category: "inquiring",
+    category: "concept-deepening",
     description: "대상 속으로 들어가기",
     aiFeatureLabel: "가상 관점 빙의",
     aiFeature:
@@ -135,7 +136,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     id: "mandalart",
     order: 6,
     name: "만다라트",
-    category: "inquiring",
+    category: "concept-deepening",
     description: "실험 설계 변수 정리",
     aiFeatureLabel: "변인 통제 매트릭스",
     aiFeature:
@@ -146,7 +147,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     id: "brainstorming",
     order: 7,
     name: "브레인스토밍",
-    category: "inquiring",
+    category: "concept-deepening",
     description: "4가지 원칙 아이디어",
     aiFeatureLabel: "아이디어 무한 캔버스",
     aiFeature:
@@ -158,7 +159,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 8,
     name: "Brainwriting",
     nameEn: "브레인라이팅",
-    category: "inquiring",
+    category: "concept-deepening",
     description: "6-3-5 아이디어 확산",
     aiFeatureLabel: "비동기 데이터 축적",
     aiFeature:
@@ -172,7 +173,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 1,
     name: "프레이어 모델",
     nameEn: "Frayer Model",
-    category: "generalizing",
+    category: "concept-synthesis",
     description: "개념 정의·속성·예·비예시",
     aiFeatureLabel: "과학 개념 정의기",
     aiFeature:
@@ -184,7 +185,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 2,
     name: "Claim, Support, Question",
     nameEn: "주장·근거·질문",
-    category: "generalizing",
+    category: "concept-synthesis",
     description: "CER 구조화 글쓰기",
     aiFeatureLabel: "CER 구조화 대시보드",
     aiFeature:
@@ -196,7 +197,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 3,
     name: "Generate-Sort-Connect-Elaborate",
     nameEn: "생성·분류·연결·정교화",
-    category: "generalizing",
+    category: "concept-synthesis",
     description: "아이디어 생성과 구체화",
     aiFeatureLabel: "개요 작성 마법사",
     aiFeature:
@@ -208,7 +209,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 4,
     name: "Fishbone",
     nameEn: "피쉬본",
-    category: "generalizing",
+    category: "concept-synthesis",
     description: "원인·결과 인과관계",
     aiFeatureLabel: "인과관계 다이어그램 생성기",
     aiFeature:
@@ -220,7 +221,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 5,
     name: "Headline",
     nameEn: "표제 만들기",
-    category: "generalizing",
+    category: "concept-synthesis",
     description: "핵심을 한 문장으로",
     aiFeatureLabel: "논문 제목 추천기",
     aiFeature:
@@ -232,7 +233,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 6,
     name: "Color, Symbol, Image",
     nameEn: "색상·기호·이미지",
-    category: "generalizing",
+    category: "concept-synthesis",
     description: "시각적 요약 정리",
     aiFeatureLabel: "시각적 요약(인포그래픽)",
     aiFeature:
@@ -244,7 +245,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 7,
     name: "The 4 C's",
     nameEn: "연결·도전·개념·변화",
-    category: "generalizing",
+    category: "concept-synthesis",
     description: "Connections·Challenge·Concepts·Changes",
     aiFeatureLabel: "개념 매핑 보고서",
     aiFeature:
@@ -255,7 +256,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     id: "inquiry-classroom-rules",
     order: 8,
     name: "정확한 탐구교실 규칙",
-    category: "generalizing",
+    category: "concept-synthesis",
     description: "과학 글쓰기 프로토콜",
     aiFeatureLabel: "글쓰기 프로토콜 세팅",
     aiFeature:
@@ -269,7 +270,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 1,
     name: "Red Light, Yellow Light, Green Light",
     nameEn: "빨간불·노란불·초록불",
-    category: "transfer",
+    category: "concept-deepening",
     description: "초고 퇴고·논리 검증",
     aiFeatureLabel: "AI 논리 필터 / 퇴고 엔진",
     aiFeature:
@@ -281,7 +282,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 2,
     name: "SCAMPER",
     nameEn: "스캠퍼",
-    category: "transfer",
+    category: "concept-deepening",
     description: "가설 확장·변형",
     aiFeatureLabel: "가설 확장/변형 변환기",
     aiFeature:
@@ -293,7 +294,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 3,
     name: "육색사고모 기법",
     nameEn: "6 Thinking Hats",
-    category: "transfer",
+    category: "concept-deepening",
     description: "6가지 관점 퇴고",
     aiFeatureLabel: "6가지 모드 AI 에디터",
     aiFeature:
@@ -305,7 +306,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 4,
     name: "Ladder of Feedback",
     nameEn: "피드백의 사다리",
-    category: "transfer",
+    category: "feedback-support",
     description: "5단계 피드백",
     aiFeatureLabel: "동료 피드백 프로토콜",
     aiFeature:
@@ -317,7 +318,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 5,
     name: "Give 3 - Feedback Routine",
     nameEn: "3가지 피드백 루틴",
-    category: "transfer",
+    category: "feedback-support",
     description: "3가지 영역 피드백",
     aiFeatureLabel: "3가지 관점 AI 피드백",
     aiFeature:
@@ -328,7 +329,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     id: "question-bank",
     order: 6,
     name: "말하기·묻기·아이디어·제안",
-    category: "transfer",
+    category: "feedback-support",
     description: "피드백 대화 가이드",
     aiFeatureLabel: "피드백 챗봇 가이드",
     aiFeature:
@@ -342,7 +343,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 1,
     name: "I Used to Think... Now I Think...",
     nameEn: "예전에는… 지금 생각은?",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "생각의 변화 성찰",
     aiFeatureLabel: "개념 변화 타임라인",
     aiFeature:
@@ -354,7 +355,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 2,
     name: "3-2-1 Bridge",
     nameEn: "3-2-1 연결",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "단어 3·질문 2·비유 1 연결",
     aiFeatureLabel: "단어-질문-비유 매칭 리포트",
     aiFeature:
@@ -366,7 +367,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 3,
     name: "Traffic Light Reflection",
     nameEn: "신호등 성찰",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "이해 수준 자기 점검",
     aiFeatureLabel: "역량 성찰 리포트",
     aiFeature:
@@ -378,7 +379,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 4,
     name: "Show of Thumbs Reflection",
     nameEn: "엄지 표시 성찰",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "난이도·몰입도 성찰",
     aiFeatureLabel: "직관적 대시보드 성찰",
     aiFeature:
@@ -390,7 +391,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 5,
     name: "4C 반성",
     nameEn: "The 4 C's Reflection",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "글쓰기 전반 성찰",
     aiFeatureLabel: "종합 성찰 루틴",
     aiFeature:
@@ -402,7 +403,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 6,
     name: "Give One, Get One",
     nameEn: "하나 주고, 하나 받기",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "지식 교환",
     aiFeatureLabel: "지식 마켓플레이스",
     aiFeature:
@@ -414,7 +415,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 7,
     name: "+1 Routine",
     nameEn: "플러스 원",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "Plus One 협력 루틴",
     aiFeatureLabel: "지식 이어달리기",
     aiFeature:
@@ -426,7 +427,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 8,
     name: "Think Talk Open Exchange",
     nameEn: "생각하기·말하기·열린 교류",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "열린 토론 교류",
     aiFeatureLabel: "AI 주도 토론방",
     aiFeature:
@@ -438,7 +439,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 9,
     name: "The Leaderless Discussion",
     nameEn: "리더 없는 토론",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "데이터 기반 자율 토론",
     aiFeatureLabel: "데이터 기반 자율 토론",
     aiFeature:
@@ -450,11 +451,52 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     order: 10,
     name: "Making Meaning",
     nameEn: "의미 만들기",
-    category: "reflection-exchange",
+    category: "student-exchange",
     description: "집단적 과학 의미 도출",
     aiFeatureLabel: "종합 지식 단어구름",
     aiFeature:
       "학급 전체가 작성한 과학 탐구 글을 AI가 형태소 분석하여, 우리 반이 이번 탐구로 도출해 낸 '집단적 과학 의미(Word Cloud)'를 시각화합니다.",
+    headerFields: ["description"],
+  },
+
+  {
+    id: "compass-points",
+    order: 5,
+    name: "Compass Points",
+    category: "concept-exploration",
+    description: "탐구 방향과 감정·걱정·다음 단계 정리",
+    headerFields: ["description"],
+  },
+  {
+    id: "peel-the-fruit",
+    order: 7,
+    name: "Peel the Fruit",
+    category: "concept-deepening",
+    description: "주제를 겉에서 속까지 깊이 탐구",
+    headerFields: ["description"],
+  },
+  {
+    id: "honeycomb-questions",
+    order: 8,
+    name: "질문 시작어",
+    category: "concept-deepening",
+    description: "질문 시작어로 탐구 질문 확장",
+    headerFields: ["description"],
+  },
+  {
+    id: "window-map",
+    order: 9,
+    name: "윈도우맵",
+    category: "concept-deepening",
+    description: "중심·주변·숨은 의미 정리",
+    headerFields: ["writingContext"],
+  },
+  {
+    id: "spectrum",
+    order: 6,
+    name: "줄다리기",
+    category: "concept-deepening",
+    description: "찬반 입장과 근거 정리",
     headerFields: ["description"],
   },
 ];
@@ -481,9 +523,9 @@ export function getCategoryGroups() {
     id,
     label: CATEGORY_LABELS[id],
     subtitle: CATEGORY_SUBTITLES[id],
-    templates: TEMPLATE_REGISTRY.filter((t) => t.category === id)
-      .map((t) => resolveTemplate(t)!)
-      .sort((a, b) => a.order - b.order),
+    templates: TEMPLATE_REGISTRY.map((t) => resolveTemplate(t)!)
+      .filter((t) => templateBelongsToCategory(t, id))
+      .sort((a, b) => getTemplateOrderInCategory(a, id) - getTemplateOrderInCategory(b, id)),
   })).filter((g) => g.templates.length > 0);
 }
 

@@ -1,16 +1,14 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { StudentTemplateGrid } from "@/components/student/StudentTemplateGrid";
-import { getSortedTemplates } from "@/lib/templates/registry";
 
 export default function HomePage() {
-  const templates = getSortedTemplates();
 
   return (
     <div className="min-h-screen">
       <AppHeader
         title="사고도구 톡톡"
-        subtitle={`과학 탐구 글쓰기 학습지 · ${templates.length}개 사고도구`}
+        subtitle={`탐구 단계별 사고기법 학습지 · 순번·국문/영문 명칭 기준`}
       />
 
       <main className="mx-auto max-w-6xl px-4 py-8">

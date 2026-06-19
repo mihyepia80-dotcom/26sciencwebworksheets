@@ -19,6 +19,7 @@ import { useGuidedQuestions } from "@/hooks/useGuidedQuestions";
 import { useWorksheetLoader } from "@/hooks/useWorksheetLoader";
 import { useWorksheetSubmit } from "@/hooks/useWorksheetSubmit";
 import { getTemplateById } from "@/lib/templates/registry";
+import { formatTemplateTitle, getGlobalSequenceNumber } from "@/lib/templates/curriculum";
 import { DEFAULT_META, type WorksheetMeta } from "@/lib/types";
 import { useWorksheetState } from "@/lib/useWorksheetState";
 
@@ -164,7 +165,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
           ← 템플릿 목록
         </Link>
         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
-          #{template.order}
+          순번 {getGlobalSequenceNumber(template)}
         </span>
       </div>
 
@@ -173,7 +174,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       {loadError && <p className="text-sm text-red-600">{loadError}</p>}
 
       <WorksheetHeader
-        toolName={template.name}
+        toolName={formatTemplateTitle(template)}
         meta={meta}
         onMetaChange={onMetaChange}
         readOnly={submitted}
