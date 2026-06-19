@@ -1,22 +1,12 @@
 import type { Answers } from "@/lib/types";
 import { defaultDoubleBubbleFieldKeys, doubleBubbleFieldKeys } from "./double-bubble-map";
 import { hexagonKeywordFieldKeys } from "./hexagon-keywords";
+import { mandalartFieldKeys } from "./mandalart";
 
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 const nums = (prefix: string, count: number, start = 1) =>
   range(count).map((i) => `${prefix}${start + i}`);
 const unders = (prefix: string, count: number) => range(count).map((i) => `${prefix}_${i}`);
-
-export function mandalartFieldKeys(): string[] {
-  const keys = ["center", ...range(8).map((i) => `detail_${i}`)];
-  for (let b = 0; b < 9; b++) {
-    for (let i = 0; i < 9; i++) {
-      if (b !== 4 && i === 4) continue;
-      keys.push(`block_${b}_${i}`);
-    }
-  }
-  return keys;
-}
 
 export function questionBankFieldKeys(): string[] {
   return [

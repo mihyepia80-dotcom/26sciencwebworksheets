@@ -17,6 +17,18 @@
   }
 }
 
+.mandalart-ruled {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent,
+    transparent calc(1.75rem - 1px),
+    #fcd34d calc(1.75rem - 1px),
+    #fcd34d 1.75rem
+  );
+  background-attachment: local;
+  line-height: 1.75rem;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: #f8fafc;

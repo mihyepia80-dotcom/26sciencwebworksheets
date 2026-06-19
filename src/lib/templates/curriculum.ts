@@ -84,6 +84,7 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
     order: 10,
     name: "만다라트",
     nameEn: "Mandalart",
+    thinkingTraits: ["융통성", "독창성"],
   },
   fishbone: {
     category: "concept-exploration",

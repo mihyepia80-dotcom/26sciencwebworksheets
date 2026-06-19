@@ -134,14 +134,15 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   },
   {
     id: "mandalart",
-    order: 6,
+    order: 10,
     name: "만다라트",
-    category: "concept-deepening",
-    description: "실험 설계 변수 정리",
-    aiFeatureLabel: "변인 통제 매트릭스",
+    nameEn: "Mandalart",
+    category: "concept-exploration",
+    description: "주제 관련 키워드 찾기와 구체적 설명",
+    aiFeatureLabel: "주제 확장 그리드",
     aiFeature:
-      "과학 실험 설계 시 독립변인, 종속변인, 통제변인 등을 8방향의 디지털 매트릭스에 빠짐없이 채우도록 돕는 UI입니다.",
-    headerFields: ["description"],
+      "가운데 주제와 주변 8칸에 관련 키워드를 채운 뒤, 아래 세부내용 칸에서 예를 들어 구체적으로 설명합니다.",
+    headerFields: ["unit", "inquiryQuestion", "writingContext"],
   },
   {
     id: "brainstorming",
