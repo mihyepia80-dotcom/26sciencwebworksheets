@@ -23,19 +23,29 @@ export function isGeminiQuotaMessage(message: string): boolean {
   return /quota exceeded|rate.?limit|resource.?exhausted|free_tier/i.test(message);
 }
 
+export function isGeminiHighDemandMessage(message: string): boolean {
+  return /high demand|try again later|overloaded|temporarily unavailable|service unavailable/i.test(
+    message,
+  );
+}
+
+function isGeminiRetryable(status: number, message: string): boolean {
+  return status === 429 || status === 503 || isGeminiQuotaMessage(message) || isGeminiHighDemandMessage(message);
+}
+
 export function toGeminiApiError(status: number, rawMessage: string): GeminiApiError {
   const retryAfterSeconds = parseRetryAfterSeconds(rawMessage);
-  const isQuotaExceeded = status === 429 || isGeminiQuotaMessage(rawMessage);
+  const message = rawMessage || "AI 응답을 받지 못했습니다.";
 
-  if (isQuotaExceeded) {
+  if (isGeminiRetryable(status, message)) {
     const waitHint = retryAfterSeconds ? `약 ${retryAfterSeconds}초 후` : "잠시 후";
-    return new GeminiApiError(
-      `Gemini AI 무료 사용 한도에 도달했습니다. ${waitHint} 다시 시도해 주세요.`,
-      { status, retryAfterSeconds, isQuotaExceeded: true },
-    );
+    const userMessage = isGeminiHighDemandMessage(message) || status === 503
+      ? `AI 서버가 일시적으로 사용량이 많습니다. ${waitHint} 다시 시도해 주세요.`
+      : `Gemini AI 무료 사용 한도에 도달했습니다. ${waitHint} 다시 시도해 주세요.`;
+    return new GeminiApiError(userMessage, { status, retryAfterSeconds, isQuotaExceeded: true });
   }
 
-  return new GeminiApiError(rawMessage || "AI 응답을 받지 못했습니다.", { status });
+  return new GeminiApiError(message, { status });
 }
 
 function sleep(ms: number): Promise<void> {

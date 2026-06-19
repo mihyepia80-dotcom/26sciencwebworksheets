@@ -97,7 +97,8 @@ feedback는 공백 포함 200자 이내로 작성하세요.`;
       return NextResponse.json(
         {
           error:
-            "Gemini AI 무료 한도에 도달해 피드백을 만들지 못했습니다. 활동지는 제출할 수 있습니다. 잠시 후 다시 시도해 주세요.",
+            error.message ||
+            "AI 피드백을 만들지 못했습니다. 활동지는 제출할 수 있습니다. 잠시 후 다시 시도해 주세요.",
           quotaExceeded: true,
           geminiQuotaExceeded: true,
           retryAfterSeconds: error.retryAfterSeconds,
