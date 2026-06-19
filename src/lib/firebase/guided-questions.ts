@@ -18,6 +18,10 @@ import { getClientDb } from "./client";
 
 const COLLECTION = "guidedQuestionSets";
 
+function omitUndefined<T extends Record<string, unknown>>(data: T): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+}
+
 function mapDoc(id: string, data: Record<string, unknown>): GuidedQuestionSet {
   const updatedAt = data.updatedAt as Timestamp | undefined;
   return {
@@ -105,12 +109,15 @@ export interface SaveGuidedQuestionSetInput {
 
 export async function createGuidedQuestionSet(input: SaveGuidedQuestionSetInput): Promise<string> {
   const topicKey = normalizeTopicKey(input.topic);
-  const ref = await addDoc(collection(getClientDb(), COLLECTION), {
-    ...input,
-    topicKey,
-    questions: input.questions.filter((q) => q.trim().length > 0),
-    updatedAt: serverTimestamp(),
-  });
+  const ref = await addDoc(
+    collection(getClientDb(), COLLECTION),
+    omitUndefined({
+      ...input,
+      topicKey,
+      questions: input.questions.filter((q) => q.trim().length > 0),
+      updatedAt: serverTimestamp(),
+    }),
+  );
   return ref.id;
 }
 
@@ -128,7 +135,7 @@ export async function updateGuidedQuestionSet(
   if (input.questions) {
     payload.questions = input.questions.filter((q) => q.trim().length > 0);
   }
-  await updateDoc(doc(getClientDb(), COLLECTION, id), payload);
+  await updateDoc(doc(getClientDb(), COLLECTION, id), omitUndefined(payload));
 }
 
 export async function deleteGuidedQuestionSet(id: string): Promise<void> {
