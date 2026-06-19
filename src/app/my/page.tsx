@@ -16,8 +16,9 @@ import { getMetaFieldLabel } from "@/lib/meta-labels";
 import { inquiryReportTitle } from "@/lib/inquiry-report/types";
 
 function formatDate(submission: WorksheetSubmission) {
-  if (!submission.submittedAt) return "-";
-  return submission.submittedAt.toDate().toLocaleString("ko-KR");
+  const ts = submission.updatedAt ?? submission.submittedAt;
+  if (!ts) return "-";
+  return ts.toDate().toLocaleString("ko-KR");
 }
 
 function formatReportDate(report: InquiryReportDoc) {
@@ -153,7 +154,7 @@ export default function MyWorksheetsPage() {
 
         {!loading && !error && submissions.length === 0 && (
           <p className="mt-8 rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
-            아직 제출한 활동지가 없습니다.
+            아직 작성한 활동지가 없습니다.
           </p>
         )}
 
@@ -174,13 +175,22 @@ export default function MyWorksheetsPage() {
                     <p className="mt-1 text-sm text-slate-600">{submission.meta.topic || "주제 없음"}</p>
                   </div>
                   <div className="shrink-0 text-right text-xs text-slate-500">
-                    <p>{formatDate(submission)}</p>
+                    <span
+                      className={`inline-block rounded px-2 py-0.5 ${
+                        submission.status === "submitted"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {submission.status === "submitted" ? "제출됨" : "임시저장"}
+                    </span>
+                    <p className="mt-2">{formatDate(submission)}</p>
                     <Link
                       href={`/templates/${submission.templateId}?submission=${submission.id}`}
                       className="mt-2 inline-block rounded border border-blue-200 px-2 py-1 text-blue-700 hover:bg-blue-50"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      수정
+                      {submission.status === "submitted" ? "보기" : "이어서 작성"}
                     </Link>
                     <p className="mt-1">{open ? "접기" : "펼치기"}</p>
                   </div>
@@ -193,7 +203,7 @@ export default function MyWorksheetsPage() {
                         href={`/templates/${submission.templateId}?submission=${submission.id}`}
                         className="rounded-lg border border-blue-200 px-4 py-2 text-sm text-blue-700 hover:bg-blue-50"
                       >
-                        수정
+                        {submission.status === "submitted" ? "보기" : "이어서 작성"}
                       </Link>
                     </div>
                     <dl className="grid gap-2 sm:grid-cols-2">
@@ -216,12 +226,12 @@ export default function MyWorksheetsPage() {
                         ))}
                       </div>
                     )}
-                    {submission.aiRating && submission.aiFeedback && (
+                    {submission.status === "submitted" && submission.aiRating && submission.aiFeedback && (
                       <div className="mt-4">
                         <AiFeedbackCard rating={submission.aiRating} feedback={submission.aiFeedback} />
                       </div>
                     )}
-                    {user && submission.id && (
+                    {submission.status === "submitted" && user && submission.id && (
                       <div className="mt-4 border-t border-slate-100 pt-4">
                         <ShareButton submission={submission} studentUid={user.uid} />
                       </div>

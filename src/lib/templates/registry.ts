@@ -354,14 +354,14 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   {
     id: "three-two-one-reflection",
     order: 2,
-    name: "3-2-1 Bridge",
-    nameEn: "3-2-1 연결",
+    name: "3-2-1 연결",
+    nameEn: "3-2-1 Bridge",
     category: "student-exchange",
-    description: "단어 3·질문 2·비유 1 연결",
+    description: "배운 것·흥미·궁금한 점 성찰과 전후 연결",
     aiFeatureLabel: "단어-질문-비유 매칭 리포트",
     aiFeature:
-      "탐구 전후의 단어 3개, 질문 2개, 비유 1개의 변화를 연결선(Bridge) 그래프로 시각화하여 대시보드에 표출합니다.",
-    headerFields: ["unit", "inquiryQuestion"],
+      "탐구 전후의 생각 3가지, 흥미로운 점 2가지, 궁금한 점 1가지의 변화를 Bridge로 연결해 정리합니다.",
+    headerFields: ["unit", "inquiryQuestion", "writingContext"],
   },
   {
     id: "traffic-light-reflection",

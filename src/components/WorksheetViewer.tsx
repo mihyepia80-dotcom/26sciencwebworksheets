@@ -16,6 +16,7 @@ import { useAuth } from "@/components/AuthProvider";
 import type { AiRating } from "@/lib/ai/feedback";
 import { useAiQuota } from "@/hooks/useAiQuota";
 import { useGuidedQuestions } from "@/hooks/useGuidedQuestions";
+import { useWorksheetDraft } from "@/hooks/useWorksheetDraft";
 import { useWorksheetLoader } from "@/hooks/useWorksheetLoader";
 import { useWorksheetSubmit } from "@/hooks/useWorksheetSubmit";
 import { getTemplateById } from "@/lib/templates/registry";
@@ -45,6 +46,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
   const { values, onChange, setAll } = useWorksheetState();
   const [submissionId, setSubmissionId] = useState<string | null>(editSubmissionId);
   const [submitted, setSubmitted] = useState(false);
+  const [isDraft, setIsDraft] = useState(false);
   const [aiFeedback, setAiFeedback] = useState("");
   const [aiRating, setAiRating] = useState<AiRating | null>(null);
 
@@ -74,13 +76,16 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       values: Record<string, string>;
       aiFeedback: string;
       aiRating: AiRating | null;
+      status: "draft" | "submitted";
     }) => {
       setSubmissionId(data.submissionId);
       setMeta(data.meta);
       setAll(data.values);
       setAiFeedback(data.aiFeedback);
       setAiRating(data.aiRating);
-      setSubmitted(true);
+      const isSubmitted = data.status === "submitted";
+      setSubmitted(isSubmitted);
+      setIsDraft(!isSubmitted);
     },
     [setAll],
   );
@@ -99,9 +104,20 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       if (result.aiFeedback) setAiFeedback(result.aiFeedback);
       if (result.aiRating) setAiRating(result.aiRating);
       setSubmitted(true);
+      setIsDraft(false);
     },
     [],
   );
+
+  const handleDraftSuccess = useCallback((result: { submissionId: string }) => {
+    setSubmissionId(result.submissionId);
+    setIsDraft(true);
+    setSubmitted(false);
+  }, []);
+
+  const { savingDraft, draftMessage, draftError, saveDraft, clearDraftFeedback } = useWorksheetDraft({
+    onSuccess: handleDraftSuccess,
+  });
 
   const { submitting, submitError, submit, clearError, setSubmitError } = useWorksheetSubmit({
     aiQuota,
@@ -126,6 +142,26 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
     setMeta((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleDraftSave = () => {
+    if (!user || !isStudent) {
+      setSubmitError("학생 로그인 후 임시 저장할 수 있습니다.");
+      return;
+    }
+    clearDraftFeedback();
+    clearError();
+    void saveDraft(
+      {
+        templateId,
+        templateName: template.name,
+        meta,
+        values,
+        studentUid: user.uid,
+      },
+      submissionId,
+      submitted,
+    );
+  };
+
   const handleSubmit = () => {
     if (!user || !isStudent) {
       setSubmitError("학생 로그인 후 제출할 수 있습니다.");
@@ -148,6 +184,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
   const handleEdit = () => {
     setSubmitted(false);
     clearError();
+    clearDraftFeedback();
   };
 
   if (loading) {
@@ -230,7 +267,9 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
             meta,
             values,
             studentUid: user.uid,
+            status: "submitted",
             submittedAt: null,
+            updatedAt: null,
             aiFeedback: aiFeedback || undefined,
             aiRating: aiRating ?? undefined,
           }}
@@ -241,14 +280,24 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       <WorksheetActionBar
         submitted={submitted}
         submitting={submitting}
+        savingDraft={savingDraft}
         hasSubmissionId={Boolean(submissionId)}
         aiAvailable={aiQuota?.available !== false}
         onEdit={handleEdit}
+        onDraftSave={handleDraftSave}
         onSubmit={handleSubmit}
       />
 
-      {submitError && (
-        <p className="whitespace-pre-line text-center text-sm text-red-600">{submitError}</p>
+      {(submitError || draftError) && (
+        <p className="whitespace-pre-line text-center text-sm text-red-600">{submitError || draftError}</p>
+      )}
+
+      {draftMessage && !submitted && (
+        <p className="text-center text-sm text-amber-700">{draftMessage}</p>
+      )}
+
+      {isDraft && !submitted && !draftMessage && submissionId && (
+        <p className="text-center text-sm text-amber-700">임시 저장된 활동지입니다. 이어서 작성한 뒤 제출하세요.</p>
       )}
 
       {submitted && (

@@ -22,7 +22,7 @@ export function StudentTemplateGrid() {
     listStudentSubmissions(user.uid)
       .then((list) => {
         if (cancelled) return;
-        setUsedTemplateIds(new Set(list.map((s) => s.templateId)));
+        setUsedTemplateIds(new Set(list.filter((s) => s.status === "submitted").map((s) => s.templateId)));
       })
       .catch(() => {
         if (!cancelled) setUsedTemplateIds(new Set());

@@ -38,7 +38,7 @@ service cloud.firestore {
     }
 
     function isValidSubmissionData(data) {
-      return data.keys().hasAll(['templateId', 'templateName', 'meta', 'values', 'studentUid', 'submittedAt'])
+      return data.keys().hasAll(['templateId', 'templateName', 'meta', 'values', 'studentUid', 'status', 'updatedAt'])
         && data.templateId is string
         && data.templateId.size() > 0
         && data.templateId.size() <= 64
@@ -49,6 +49,11 @@ service cloud.firestore {
         && data.values is map
         && data.values.size() <= 200
         && data.studentUid is string
+        && data.status in ['draft', 'submitted']
+        && (
+          (data.status == 'draft' && data.submittedAt == null)
+          || (data.status == 'submitted' && data.submittedAt is timestamp)
+        )
         && (!('aiFeedback' in data) || (data.aiFeedback is string && data.aiFeedback.size() <= 300))
         && (!('aiRating' in data) || data.aiRating in ['잘함', '보통', '노력요함']);
     }
@@ -56,7 +61,11 @@ service cloud.firestore {
     function isValidSubmissionCreate(data) {
       return isValidSubmissionData(data)
         && data.studentUid == request.auth.uid
-        && data.submittedAt == request.time;
+        && data.updatedAt == request.time
+        && (
+          (data.status == 'draft' && data.submittedAt == null)
+          || (data.status == 'submitted' && data.submittedAt == request.time)
+        );
     }
 
     function isValidSubmissionUpdate() {
@@ -64,7 +73,11 @@ service cloud.firestore {
         && resource.data.studentUid == request.auth.uid
         && request.resource.data.studentUid == resource.data.studentUid
         && request.resource.data.templateId == resource.data.templateId
-        && request.resource.data.submittedAt == request.time;
+        && request.resource.data.updatedAt == request.time
+        && (
+          (request.resource.data.status == 'draft' && request.resource.data.submittedAt == null)
+          || (request.resource.data.status == 'submitted' && request.resource.data.submittedAt == request.time)
+        );
     }
 
     function isValidShareData(data) {

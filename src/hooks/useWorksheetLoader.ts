@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import type { AiRating } from "@/lib/ai/feedback";
-import { getSubmission } from "@/lib/firebase";
+import { findStudentDraftForTemplate, getSubmission } from "@/lib/firebase";
+import type { WorksheetSubmissionStatus } from "@/lib/firebase/submissions";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 
 interface LoadedSubmission {
@@ -11,6 +12,7 @@ interface LoadedSubmission {
   values: Answers;
   aiFeedback: string;
   aiRating: AiRating | null;
+  status: WorksheetSubmissionStatus;
 }
 
 interface UseWorksheetLoaderOptions {
@@ -28,11 +30,11 @@ export function useWorksheetLoader({
   enabled,
   onLoaded,
 }: UseWorksheetLoaderOptions) {
-  const [loading, setLoading] = useState(Boolean(editSubmissionId && enabled));
+  const [loading, setLoading] = useState(Boolean(enabled && studentUid));
   const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    if (!editSubmissionId || !enabled || !studentUid) {
+    if (!enabled || !studentUid) {
       setLoading(false);
       return;
     }
@@ -41,27 +43,39 @@ export function useWorksheetLoader({
     setLoading(true);
     setLoadError("");
 
-    getSubmission(editSubmissionId)
-      .then((submission) => {
+    const load = async () => {
+      try {
+        let submission = editSubmissionId ? await getSubmission(editSubmissionId) : null;
+
+        if (!editSubmissionId) {
+          submission = await findStudentDraftForTemplate(studentUid, templateId);
+        }
+
         if (cancelled) return;
+
         if (!submission || submission.studentUid !== studentUid || submission.templateId !== templateId) {
-          setLoadError("활동지를 불러올 수 없습니다.");
+          if (editSubmissionId) {
+            setLoadError("활동지를 불러올 수 없습니다.");
+          }
           return;
         }
+
         onLoaded({
-          submissionId: submission.id ?? editSubmissionId,
+          submissionId: submission.id ?? editSubmissionId ?? "",
           meta: submission.meta,
           values: submission.values,
           aiFeedback: submission.aiFeedback ?? "",
           aiRating: submission.aiRating ?? null,
+          status: submission.status,
         });
-      })
-      .catch(() => {
+      } catch {
         if (!cancelled) setLoadError("활동지를 불러오지 못했습니다.");
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
+
+    void load();
 
     return () => {
       cancelled = true;

@@ -2,12 +2,16 @@ export { getFirebaseConfig, isFirebaseConfigured } from "./config";
 export { getClientApp, getClientAuth, getClientDb } from "./client";
 export {
   saveSubmission,
+  saveSubmissionDraft,
   updateSubmission,
+  updateSubmissionDraft,
+  findStudentDraftForTemplate,
   deleteSubmission,
   getSubmission,
   listSubmissions,
   listStudentSubmissions,
   type WorksheetSubmission,
+  type WorksheetSubmissionStatus,
 } from "./submissions";
 export {
   signInTeacherWithGoogle,

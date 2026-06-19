@@ -4,7 +4,6 @@ import type { ComponentType } from "react";
 import type { TemplateProps } from "@/lib/types";
 import {
   SeeThinkWonderTemplate,
-  ThreeTwoOneReflectionTemplate,
   ThinkPuzzleExploreTemplate,
   ClaimSupportQuestionTemplate,
   FourCsTemplate,
@@ -50,6 +49,7 @@ import { DoubleBubbleMapTemplate } from "./DoubleBubbleMapTemplate";
 import { HexagonKeywordsTemplate } from "./HexagonKeywordsTemplate";
 import { MandalartTemplate } from "./MandalartTemplate";
 import { CompassPointsTemplate } from "./CompassPointsTemplate";
+import { ThreeTwoOneReflectionTemplate } from "./ThreeTwoOneReflectionTemplate";
 import {
   CircleTreeMapTemplate,
   MultiFlowMapTemplate,

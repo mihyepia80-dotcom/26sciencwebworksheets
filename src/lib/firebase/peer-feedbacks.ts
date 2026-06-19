@@ -121,6 +121,7 @@ export async function findClassmateWorkDocId(
           where("classNo", "==", classNo),
           where("templateId", "==", templateId),
           where("studentUid", "==", targetUid),
+          where("status", "==", "submitted"),
           orderBy("submittedAt", "desc"),
           limit(1),
         ),
@@ -133,6 +134,7 @@ export async function findClassmateWorkDocId(
         collection(getClientDb(), "submissions"),
         where("studentUid", "==", targetUid),
         where("templateId", "==", templateId),
+        where("status", "==", "submitted"),
         orderBy("submittedAt", "desc"),
         limit(1),
       ),
@@ -176,13 +178,18 @@ export async function hasAuthorSubmittedSameKind(
   if (targetType === "worksheet") {
     if (ownDocId) {
       const snap = await getDoc(doc(getClientDb(), "submissions", ownDocId));
-      return snap.exists() && snap.data()?.studentUid === authorUid;
+      return (
+        snap.exists() &&
+        snap.data()?.studentUid === authorUid &&
+        (snap.data()?.status === "submitted" || (!snap.data()?.status && snap.data()?.submittedAt))
+      );
     }
     const snap = await getDocs(
       query(
         collection(getClientDb(), "submissions"),
         where("studentUid", "==", authorUid),
         where("templateId", "==", templateId),
+        where("status", "==", "submitted"),
         limit(1),
       ),
     );

@@ -16,7 +16,10 @@ export function WorksheetGuidanceBanner({ templateId, aiQuota, studentMode }: Wo
     <p className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-xs text-blue-800">
       각 항목을 <strong>{minFieldChars}자 이상 한글</strong>로 작성한 뒤 제출하세요.
       {studentMode && (
-        <span className="mt-1 block">예시·가이드 문장을 그대로 붙여 넣으면 제출할 수 없습니다.</span>
+        <span className="mt-1 block">
+          작성 중에는 <strong>임시 저장</strong>으로 이어서 쓸 수 있습니다. 예시 문장을 그대로 붙여 넣으면 제출할 수
+          없습니다.
+        </span>
       )}
       {aiQuota?.available === false ? (
         <span className="mt-1 block text-amber-700">
@@ -37,20 +40,26 @@ export function WorksheetGuidanceBanner({ templateId, aiQuota, studentMode }: Wo
 interface WorksheetActionBarProps {
   submitted: boolean;
   submitting: boolean;
+  savingDraft: boolean;
   hasSubmissionId: boolean;
   aiAvailable: boolean;
   onEdit: () => void;
+  onDraftSave: () => void;
   onSubmit: () => void;
 }
 
 export function WorksheetActionBar({
   submitted,
   submitting,
+  savingDraft,
   hasSubmissionId,
   aiAvailable,
   onEdit,
+  onDraftSave,
   onSubmit,
 }: WorksheetActionBarProps) {
+  const busy = submitting || savingDraft;
+
   return (
     <div className="flex flex-wrap justify-end gap-3 pt-4">
       {submitted && (
@@ -65,22 +74,32 @@ export function WorksheetActionBar({
         type="button"
         className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-60"
         onClick={onEdit}
-        disabled={submitting || !submitted}
+        disabled={busy || !submitted}
       >
         다시 수정
       </button>
+      {!submitted && (
+        <button
+          type="button"
+          className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-800 hover:bg-amber-100 disabled:opacity-60"
+          onClick={onDraftSave}
+          disabled={busy}
+        >
+          {savingDraft ? "저장 중..." : "임시 저장"}
+        </button>
+      )}
       <button
         type="button"
         className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
         onClick={onSubmit}
-        disabled={submitting || submitted}
+        disabled={busy || submitted}
       >
         {submitting
           ? aiAvailable
             ? "AI 피드백 생성 중..."
             : "제출 중..."
           : hasSubmissionId
-            ? "다시 제출"
+            ? "제출하기"
             : "제출하기"}
       </button>
     </div>
