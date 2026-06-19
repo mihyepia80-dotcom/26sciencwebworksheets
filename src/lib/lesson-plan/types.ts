@@ -39,6 +39,8 @@ export interface LessonPlanForm {
   evaluationProcess: string;
   evaluationValues: string;
   thinkingTool: string;
+  /** 성찰 단계에 추가로 사용하는 사고도구 (선택, 최대 1개) */
+  reflectionThinkingTool: string;
   templateSource: string;
   writingContext: string;
   aiWebApp: string;
@@ -87,6 +89,7 @@ export const EMPTY_LESSON_PLAN: LessonPlanForm = {
   evaluationProcess: "",
   evaluationValues: "",
   thinkingTool: "",
+  reflectionThinkingTool: "",
   templateSource: "",
   writingContext: "",
   aiWebApp: "",

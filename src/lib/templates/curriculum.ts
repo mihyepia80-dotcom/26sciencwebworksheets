@@ -59,8 +59,6 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
     order: 6,
     name: "3-2-1 연결",
     nameEn: "3-2-1 Bridge",
-    secondaryCategories: ["self-reflection"],
-    secondaryOrders: { "self-reflection": 4 },
   },
   brainstorming: {
     category: "concept-exploration",

@@ -79,6 +79,7 @@ function mapDoc(id: string, data: Record<string, unknown>): LessonPlanDoc {
     evaluationProcess: String(data.evaluationProcess ?? ""),
     evaluationValues: String(data.evaluationValues ?? ""),
     thinkingTool: String(data.thinkingTool ?? ""),
+    reflectionThinkingTool: String(data.reflectionThinkingTool ?? ""),
     templateSource: String(data.templateSource ?? ""),
     writingContext: String(data.writingContext ?? ""),
     aiWebApp: String(data.aiWebApp ?? ""),

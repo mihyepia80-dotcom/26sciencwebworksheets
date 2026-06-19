@@ -15,12 +15,28 @@ import {
 import {
   EMPTY_LESSON_PLAN,
   EMPTY_PROCESS_ROW,
-  INQUIRY_STAGE_OPTIONS,
   type LessonPlanForm,
   type LessonProcessRow,
 } from "@/lib/lesson-plan/types";
+import {
+  buildInquiryStages,
+  formatToolOption,
+  getPrimaryToolOptions,
+  getReflectionToolOptions,
+  parseInquiryStages,
+  validateLessonThinkingTools,
+  type PrimaryInquiryStageKey,
+} from "@/lib/lesson-plan/thinking-tools";
+
+const PRIMARY_STAGE_LABELS: { key: PrimaryInquiryStageKey; label: string }[] = [
+  { key: "questioning", label: "질문하기" },
+  { key: "inquiring", label: "탐구하기" },
+  { key: "generalizing", label: "일반화하기" },
+  { key: "transferring", label: "전이하기" },
+];
 
 const INPUT = "w-full rounded border border-slate-200 px-3 py-2 text-sm";
+const SELECT = `${INPUT} bg-white`;
 const TEXTAREA = "w-full resize-y rounded border border-slate-200 px-3 py-2 text-sm";
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
@@ -71,13 +87,14 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
           setError("지도안을 불러올 수 없습니다.");
           return;
         }
+        const { primary, useReflection } = parseInquiryStages(doc.inquiryStages);
         setForm({
           planTitle: doc.planTitle,
           unit: doc.unit,
           period: doc.period,
           teachingModel: doc.teachingModel,
           coreIdea: doc.coreIdea,
-          inquiryStages: doc.inquiryStages,
+          inquiryStages: buildInquiryStages(primary, useReflection),
           learningTopic: doc.learningTopic,
           achievementStandards: doc.achievementStandards,
           learningObjectives: doc.learningObjectives,
@@ -96,6 +113,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
           evaluationProcess: doc.evaluationProcess,
           evaluationValues: doc.evaluationValues,
           thinkingTool: doc.thinkingTool,
+          reflectionThinkingTool: doc.reflectionThinkingTool ?? "",
           templateSource: doc.templateSource,
           writingContext: doc.writingContext,
           aiWebApp: doc.aiWebApp,
@@ -131,17 +149,62 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
     }));
   };
 
+  const { primary: primaryStage, useReflection } = parseInquiryStages(form.inquiryStages);
+  const primaryToolOptions = getPrimaryToolOptions(primaryStage);
+  const reflectionToolOptions = getReflectionToolOptions();
+
+  const setPrimaryStage = (stage: PrimaryInquiryStageKey) => {
+    setForm((prev) => {
+      const options = getPrimaryToolOptions(stage);
+      const keepTool =
+        !prev.thinkingTool || options.some((t) => formatToolOption(t) === prev.thinkingTool);
+      return {
+        ...prev,
+        inquiryStages: buildInquiryStages(stage, prev.inquiryStages.reflecting),
+        thinkingTool: keepTool ? prev.thinkingTool : "",
+      };
+    });
+  };
+
+  const setUseReflection = (checked: boolean) => {
+    setForm((prev) => {
+      const { primary } = parseInquiryStages(prev.inquiryStages);
+      return {
+        ...prev,
+        inquiryStages: buildInquiryStages(primary, checked),
+        reflectionThinkingTool: checked ? prev.reflectionThinkingTool : "",
+      };
+    });
+  };
+
   const handleSave = async () => {
     if (!user || role !== "teacher") return;
+
+    const toolError = validateLessonThinkingTools(
+      form.thinkingTool,
+      form.reflectionThinkingTool,
+      useReflection,
+    );
+    if (toolError) {
+      setError(toolError);
+      return;
+    }
+
     setSaving(true);
     setError("");
     setMessage("");
+    const saveForm: LessonPlanForm = {
+      ...form,
+      inquiryStages: buildInquiryStages(primaryStage, useReflection),
+    };
     try {
       if (planId) {
-        await updateLessonPlan(planId, form, user.uid);
+        await updateLessonPlan(planId, saveForm, user.uid);
+        setForm(saveForm);
       } else {
-        const id = await createLessonPlan(form, user.uid);
+        const id = await createLessonPlan(saveForm, user.uid);
         setPlanId(id);
+        setForm(saveForm);
         window.history.replaceState(null, "", `/teacher/lesson-plans?plan=${id}`);
       }
       setMessage("저장되었습니다.");
@@ -190,7 +253,10 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
             ← 교사 대시보드
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">수업지도안 설계</h1>
-          <p className="mt-1 text-sm text-slate-600">차시별로 직접 구성·저장·수정할 수 있습니다. (학생 화면 미노출)</p>
+          <p className="mt-1 text-sm text-slate-600">
+            차시별로 직접 구성·저장합니다. 한 차시에는 <strong>주 사고도구 1개</strong>, 필요 시{" "}
+            <strong>성찰 단계 사고도구 1개</strong>만 사용합니다.
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={handleNew} className="rounded-lg border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50">
@@ -269,31 +335,70 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
               <GridCell label="교수학습모형">
                 <input className={INPUT} value={form.teachingModel} onChange={(e) => patch("teachingModel", e.target.value)} />
               </GridCell>
-              <GridCell label="사고도구">
-                <input className={INPUT} value={form.thinkingTool} onChange={(e) => patch("thinkingTool", e.target.value)} placeholder="SEE/THINK/WONDER" />
+              <GridCell label="템플릿">
+                <input className={INPUT} value={form.templateSource} onChange={(e) => patch("templateSource", e.target.value)} placeholder="캔바, 웹앱 등" />
               </GridCell>
             </div>
 
             <div className="grid border-x border-b border-slate-200 sm:grid-cols-2">
-              <GridCell label="핵심 아이디어" className="sm:col-span-2">
-                <textarea className={TEXTAREA} rows={2} value={form.coreIdea} onChange={(e) => patch("coreIdea", e.target.value)} />
-              </GridCell>
-              <GridCell label="탐구 단계">
+              <GridCell label="이 차시의 주 탐구 단계 (1개)">
                 <div className="flex flex-wrap gap-3">
-                  {INQUIRY_STAGE_OPTIONS.map(({ key, label }) => (
+                  {PRIMARY_STAGE_LABELS.map(({ key, label }) => (
                     <label key={key} className="flex items-center gap-1.5 text-sm">
                       <input
-                        type="checkbox"
-                        checked={form.inquiryStages[key]}
-                        onChange={(e) => patch("inquiryStages", { ...form.inquiryStages, [key]: e.target.checked })}
+                        type="radio"
+                        name="primaryInquiryStage"
+                        checked={primaryStage === key}
+                        onChange={() => setPrimaryStage(key)}
                       />
                       {label}
                     </label>
                   ))}
                 </div>
               </GridCell>
-              <GridCell label="템플릿">
-                <input className={INPUT} value={form.templateSource} onChange={(e) => patch("templateSource", e.target.value)} placeholder="캔바, 웹앱 등" />
+              <GridCell label="주 사고도구 (1개)">
+                <select
+                  className={SELECT}
+                  value={form.thinkingTool}
+                  onChange={(e) => patch("thinkingTool", e.target.value)}
+                >
+                  <option value="">선택하세요</option>
+                  {primaryToolOptions.map((t) => (
+                    <option key={t.id} value={formatToolOption(t)}>
+                      {formatToolOption(t)}
+                    </option>
+                  ))}
+                </select>
+              </GridCell>
+              <GridCell label="성찰 단계 추가" className="sm:col-span-2">
+                <label className="mb-2 flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={useReflection}
+                    onChange={(e) => setUseReflection(e.target.checked)}
+                  />
+                  성찰 단계에 사고도구를 <strong>1개 더</strong> 사용합니다
+                </label>
+                {useReflection && (
+                  <select
+                    className={SELECT}
+                    value={form.reflectionThinkingTool}
+                    onChange={(e) => patch("reflectionThinkingTool", e.target.value)}
+                  >
+                    <option value="">성찰 사고도구 선택</option>
+                    {reflectionToolOptions.map((t) => (
+                      <option key={t.id} value={formatToolOption(t)}>
+                        {formatToolOption(t)}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </GridCell>
+            </div>
+
+            <div className="grid border-x border-b border-slate-200 sm:grid-cols-2">
+              <GridCell label="핵심 아이디어" className="sm:col-span-2">
+                <textarea className={TEXTAREA} rows={2} value={form.coreIdea} onChange={(e) => patch("coreIdea", e.target.value)} />
               </GridCell>
               <GridCell label="학습주제" className="sm:col-span-2">
                 <input className={INPUT} value={form.learningTopic} onChange={(e) => patch("learningTopic", e.target.value)} />
@@ -335,6 +440,10 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
               </GridCell>
             </div>
 
+            <p className="border-x border-b border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              아래 [1~3단계] 생각 만들기·모으기·제시하기는 <strong>글쓰기 과정</strong>입니다. 사고도구와는 별개로
+              기록합니다.
+            </p>
             <div className="grid border-x border-b border-slate-200 lg:grid-cols-3">
               <GridCell label="[1단계] 생각 만들기">
                 <textarea className={TEXTAREA} rows={3} value={form.thinkingStep1} onChange={(e) => patch("thinkingStep1", e.target.value)} />
