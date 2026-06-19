@@ -46,15 +46,15 @@ import {
   LeaderlessDiscussionTemplate,
   MakingMeaningTemplate,
 } from "./routines";
+import { DoubleBubbleMapTemplate } from "./DoubleBubbleMapTemplate";
+import { HexagonKeywordsTemplate } from "./HexagonKeywordsTemplate";
 import {
   CircleTreeMapTemplate,
-  DoubleBubbleMapTemplate,
   MultiFlowMapTemplate,
   BridgeMapTemplate,
   WindowMapTemplate,
   SwotTemplate,
   FrayerModelTemplate,
-  HexagonKeywordsTemplate,
   HoneycombQuestionsTemplate,
   CompassPointsTemplate,
   MandalartTemplate,

@@ -1,4 +1,5 @@
 import type { Answers } from "@/lib/types";
+import { getFieldKeysForTemplate } from "@/lib/templates/field-keys";
 import { getTemplateById } from "@/lib/templates/registry";
 import { matchUneditedExampleText } from "@/lib/templates/example-texts";
 
@@ -17,7 +18,7 @@ export function validateWorksheetValues(
   templateId: string,
   values: Answers,
 ): { ok: true } | { ok: false; errors: string[] } {
-  const fields = getTemplateById(templateId)?.fields ?? [];
+  const fields = getTemplateById(templateId)?.fields ?? getFieldKeysForTemplate(templateId, values);
   if (fields.length === 0) {
     return { ok: false, errors: ["이 템플릿의 입력 항목을 확인할 수 없습니다."] };
   }

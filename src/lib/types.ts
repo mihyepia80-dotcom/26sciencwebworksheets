@@ -1,5 +1,6 @@
 export type ToolCategory =
   | "concept-exploration"
+  | "concept-formation"
   | "concept-synthesis"
   | "concept-deepening"
   | "feedback-support"

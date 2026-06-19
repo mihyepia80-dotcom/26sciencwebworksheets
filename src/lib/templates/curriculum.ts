@@ -92,7 +92,16 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
     nameEn: "Fishbone",
   },
 
-  // 󰊲 개념 종합 및 정리 방법
+  // 󰊲 개념 형성 방법
+  "double-bubble-map": {
+    category: "concept-formation",
+    order: 1,
+    name: "더블 버블 맵",
+    nameEn: "Double Bubble Map",
+    thinkingTraits: ["융통성", "독창성"],
+  },
+
+  // 󰊳 개념 종합 및 정리 방법
   "color-symbol-image": {
     category: "concept-synthesis",
     order: 1,
@@ -153,8 +162,15 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
     name: "육색사고모 기법",
     nameEn: "6 Thinking Hats",
   },
+  "hexagon-keywords": {
+    category: "concept-synthesis",
+    order: 11,
+    name: "육각형 핵심 단어 연결하기",
+    nameEn: "Connecting Hexagon Key Words",
+    thinkingTraits: ["융통성", "정교성"],
+  },
 
-  // 󰊳 개념 심화 방법
+  // 󰊴 개념 심화 방법
   "what-makes-you-say-that": {
     category: "concept-deepening",
     order: 1,
@@ -216,7 +232,7 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
     nameEn: "Frayer Model",
   },
 
-  // 󰊴 피드백 지원 방법
+  // 󰊵 피드백 지원 방법
   "give-3-feedback": {
     category: "feedback-support",
     order: 1,
@@ -236,7 +252,7 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
     nameEn: "Talk · Ask · Ideas · Suggestions",
   },
 
-  // 󰊵 자기성찰 방법
+  // 󰊶 자기성찰 방법
   "traffic-light-reflection": {
     category: "self-reflection",
     order: 2,
@@ -256,7 +272,7 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
     nameEn: "The 4 C's Reflection",
   },
 
-  // 󰊶 학생교류 방법
+  // 󰊷 학생교류 방법
   "give-one-get-one": {
     category: "student-exchange",
     order: 1,

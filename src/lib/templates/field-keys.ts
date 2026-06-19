@@ -1,3 +1,7 @@
+import type { Answers } from "@/lib/types";
+import { defaultDoubleBubbleFieldKeys, doubleBubbleFieldKeys } from "./double-bubble-map";
+import { hexagonKeywordFieldKeys } from "./hexagon-keywords";
+
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
 const nums = (prefix: string, count: number, start = 1) =>
   range(count).map((i) => `${prefix}${start + i}`);
@@ -23,8 +27,6 @@ export function questionBankFieldKeys(): string[] {
   ];
 }
 
-const LINK_LETTERS = "ABCDEFGHIJKL".split("").map((l) => `link_${l}`);
-
 /** 템플릿 id → 검증 대상 value 필드 키 (단일 소스) */
 export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
   "see-think-wonder": ["see", "think", "wonder"],
@@ -44,30 +46,13 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
     ...nums("treeCat", 3),
     ...nums("treeDetail", 3),
   ],
-  "double-bubble-map": [
-    ...nums("topUnique", 3),
-    "subjectA",
-    "subjectB",
-    "shared1",
-    "shared2",
-    ...nums("bottomUnique", 3),
-  ],
+  "double-bubble-map": defaultDoubleBubbleFieldKeys(),
   "multi-flow-map": [...nums("effect", 3), "event", ...nums("cause", 3)],
   "bridge-map": [...nums("bridgeLabel", 3), ...nums("bridgeTop", 3), ...nums("bridgeBottom", 3)],
   "window-map": ["tl", "tr", "bl", "br", "center", "left1", "left2", "right1", "right2"],
   swot: ["strength", "weakness", "opportunity", "threat"],
   "think-puzzle-explore": ["think", "puzzle", "explore"],
-  "hexagon-keywords": [
-    "topLeft",
-    "top",
-    "topRight",
-    "bottomLeft",
-    "center",
-    "bottomRight",
-    "bottom",
-    ...LINK_LETTERS,
-    "summary",
-  ],
+  "hexagon-keywords": hexagonKeywordFieldKeys(),
   "six-thinking-hats": ["invention", "white1", "yellow", "white2", "red", "blue", "black", "green"],
   "claim-support-question": ["claim", "support", "question"],
   "five-why": ["mainTopic", ...range(5).flatMap((i) => [`q${i + 1}`, `a${i + 1}`]), "conclusion"],
@@ -122,6 +107,9 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
   "making-meaning": ["contribution", "classInsight", "wordCloud"],
 };
 
-export function getFieldKeysForTemplate(templateId: string): string[] {
+export function getFieldKeysForTemplate(templateId: string, values?: Answers): string[] {
+  if (templateId === "double-bubble-map") {
+    return doubleBubbleFieldKeys(values ?? {});
+  }
   return TEMPLATE_FIELD_KEYS[templateId] ?? [];
 }

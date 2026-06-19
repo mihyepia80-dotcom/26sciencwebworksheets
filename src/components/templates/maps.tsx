@@ -49,38 +49,7 @@ export function CircleTreeMapTemplate({ values, onChange, readOnly }: TemplatePr
   );
 }
 
-/* ── Double Bubble Map ── */
-export function DoubleBubbleMapTemplate({ values, onChange, readOnly }: TemplateProps) {
-  const bubble = (key: string, ph: string, size = "h-20 w-20") => (
-    <textarea
-      className={`${size} resize-none rounded-full border-2 border-pink-200 bg-pink-50 p-2 text-center text-xs focus:outline-none`}
-      value={v(values, key)}
-      disabled={readOnly}
-      placeholder={ph}
-      onChange={(e) => onChange(key, e.target.value)}
-    />
-  );
-  return (
-    <SectionBox title="더블 버블 맵" color="pink">
-      <div className="flex flex-col items-center gap-4">
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {bubble("topUnique1", "고유1")}{bubble("topUnique2", "고유2")}{bubble("topUnique3", "고유3")}
-        </div>
-        <div className="flex items-center gap-4">
-          {bubble("subjectA", "대상 A", "h-24 w-24")}
-          <div className="flex flex-col gap-2">
-            {bubble("shared1", "공통1", "h-16 w-16")}
-            {bubble("shared2", "공통2", "h-16 w-16")}
-          </div>
-          {bubble("subjectB", "대상 B", "h-24 w-24")}
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {bubble("bottomUnique1", "고유1")}{bubble("bottomUnique2", "고유2")}{bubble("bottomUnique3", "고유3")}
-        </div>
-      </div>
-    </SectionBox>
-  );
-}
+/* ── Double Bubble Map → DoubleBubbleMapTemplate.tsx ── */
 
 /* ── Multi Flow Map ── */
 export function MultiFlowMapTemplate({ values, onChange, readOnly }: TemplateProps) {
@@ -228,44 +197,7 @@ export function FrayerModelTemplate({ values, onChange, readOnly }: TemplateProp
   );
 }
 
-/* ── Hexagon Keywords ── */
-function HexCell({ value, onChange, readOnly, className = "" }: { value: string; onChange: (v: string) => void; readOnly?: boolean; className?: string }) {
-  return (
-    <textarea
-      className={`hex-cell resize-none border-2 border-slate-400 bg-white p-2 text-center text-xs focus:outline-none ${className}`}
-      value={value}
-      disabled={readOnly}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  );
-}
-
-export function HexagonKeywordsTemplate({ values, onChange, readOnly }: TemplateProps) {
-  return (
-    <SectionBox title="육각형 핵심 단어 연결하기" color="yellow">
-      <div className="mx-auto max-w-md">
-        <div className="grid grid-cols-3 gap-1 place-items-center">
-          <HexCell value={v(values, "topLeft")} onChange={(val) => onChange("topLeft", val)} readOnly={readOnly} />
-          <HexCell value={v(values, "top")} onChange={(val) => onChange("top", val)} readOnly={readOnly} />
-          <HexCell value={v(values, "topRight")} onChange={(val) => onChange("topRight", val)} readOnly={readOnly} />
-          <HexCell value={v(values, "bottomLeft")} onChange={(val) => onChange("bottomLeft", val)} readOnly={readOnly} />
-          <HexCell value={v(values, "center")} onChange={(val) => onChange("center", val)} readOnly={readOnly} className="font-bold" />
-          <HexCell value={v(values, "bottomRight")} onChange={(val) => onChange("bottomRight", val)} readOnly={readOnly} />
-          <div />
-          <HexCell value={v(values, "bottom")} onChange={(val) => onChange("bottom", val)} readOnly={readOnly} />
-          <div />
-        </div>
-      </div>
-      <p className="my-3 text-xs text-slate-500">알파벳 A~L: 두 단어 사이의 연결을 설명하세요</p>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-        {"ABCDEFGHIJKL".split("").map((letter, i) => (
-          <TextAreaField key={letter} label={letter} value={v(values, `link_${letter}`)} onChange={(val) => onChange(`link_${letter}`, val)} rows={2} readOnly={readOnly} />
-        ))}
-      </div>
-      <TextAreaField label="한 문장으로 정리" value={v(values, "summary")} onChange={(val) => onChange("summary", val)} rows={2} readOnly={readOnly} className="mt-3" />
-    </SectionBox>
-  );
-}
+/* ── Hexagon Keywords → HexagonKeywordsTemplate.tsx ── */
 
 /* ── Honeycomb Questions ── */
 export function HoneycombQuestionsTemplate({ values, onChange, readOnly }: TemplateProps) {

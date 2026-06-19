@@ -499,6 +499,30 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     description: "찬반 입장과 근거 정리",
     headerFields: ["description"],
   },
+  {
+    id: "double-bubble-map",
+    order: 1,
+    name: "더블 버블 맵",
+    nameEn: "Double Bubble Map",
+    category: "concept-formation",
+    description: "두 개념어 비교·대조로 개념 형성",
+    aiFeatureLabel: "개념어 확장 맵",
+    aiFeature:
+      "두 개념의 공통점·차이점을 버블로 정리하며, 동그라미를 추가해 브레인스토밍처럼 개념을 확장합니다.",
+    headerFields: ["unit", "inquiryQuestion", "writingContext"],
+  },
+  {
+    id: "hexagon-keywords",
+    order: 11,
+    name: "육각형 핵심 단어 연결하기",
+    nameEn: "Connecting Hexagon Key Words",
+    category: "concept-synthesis",
+    description: "핵심 단어 간 연결성 탐구",
+    aiFeatureLabel: "키워드 연결 맵",
+    aiFeature:
+      "육각형에 키워드를 배치하고, 맞닿는 변(가~타)마다 두 단어의 연결을 설명하며 개념을 정교화합니다.",
+    headerFields: ["unit", "inquiryQuestion", "writingContext"],
+  },
 ];
 
 export function getTemplateById(id: string): TemplateDefinition | undefined {
