@@ -21,6 +21,7 @@ import {
   type PeerFeedbackForm,
   type PeerFeedbackTargetType,
 } from "@/lib/peer-feedback/types";
+import { MIN_FEEDBACK_FIELD_CHARS } from "@/lib/worksheet-validation";
 
 interface PeerFeedbackSectionProps {
   targetType: PeerFeedbackTargetType;
@@ -200,7 +201,8 @@ export function PeerFeedbackSection({
     <section className="mt-8 rounded-xl border border-emerald-200 bg-emerald-50/40 p-5">
       <h3 className="text-base font-bold text-emerald-900">동료 피드백</h3>
       <p className="mt-1 text-sm text-emerald-800">
-        같은 반 친구 활동지에 피드백을 작성하세요. ({given.length}/{MAX_PEER_FEEDBACK_COUNT})
+        같은 반 친구 활동지에 피드백을 작성하세요. 각 항목 {MIN_FEEDBACK_FIELD_CHARS}자 이상 한글로
+        작성합니다. ({given.length}/{MAX_PEER_FEEDBACK_COUNT})
       </p>
 
       {loading && <p className="mt-3 text-sm text-slate-500">불러오는 중...</p>}

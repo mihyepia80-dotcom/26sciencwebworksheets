@@ -1,3 +1,8 @@
+import {
+  hasKorean,
+  MIN_FEEDBACK_FIELD_CHARS,
+} from "@/lib/worksheet-validation";
+
 export type PeerFeedbackTargetType = "worksheet" | "inquiry-report";
 
 export const MAX_PEER_FEEDBACK_COUNT = 2;
@@ -24,8 +29,24 @@ export interface ClassmateInfo {
 
 export function validatePeerFeedbackForm(form: PeerFeedbackForm): string[] {
   const errors: string[] = [];
-  if (!form.differentPoint.trim()) errors.push("나와 다른 점을 입력하세요.");
-  if (!form.goodPoint.trim()) errors.push("잘한 점을 입력하세요.");
-  if (!form.curiousPoint.trim()) errors.push("궁금한 점을 입력하세요.");
+  const fields: { key: keyof PeerFeedbackForm; label: string }[] = [
+    { key: "differentPoint", label: "나와 다른 점" },
+    { key: "goodPoint", label: "잘한 점" },
+    { key: "curiousPoint", label: "궁금한 점" },
+  ];
+
+  for (const { key, label } of fields) {
+    const text = form[key].trim();
+    if (!text) {
+      errors.push(`${label}을(를) 입력하세요.`);
+      continue;
+    }
+    if (text.length < MIN_FEEDBACK_FIELD_CHARS || !hasKorean(text)) {
+      errors.push(
+        `${label}: ${MIN_FEEDBACK_FIELD_CHARS}자 이상 한글로 작성해 주세요 (현재 ${text.length}자)`,
+      );
+    }
+  }
+
   return errors;
 }

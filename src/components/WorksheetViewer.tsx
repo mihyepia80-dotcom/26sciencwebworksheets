@@ -169,7 +169,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
         </span>
       </div>
 
-      <WorksheetGuidanceBanner aiQuota={aiQuota} studentMode={isStudent} />
+      <WorksheetGuidanceBanner templateId={template.id} aiQuota={aiQuota} studentMode={isStudent} />
 
       {loadError && <p className="text-sm text-red-600">{loadError}</p>}
 

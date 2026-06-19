@@ -4,14 +4,21 @@ import { getTemplateById } from "@/lib/templates/registry";
 import { matchUneditedExampleText } from "@/lib/templates/example-texts";
 
 export const MIN_FIELD_CHARS = 150;
+/** 피드백 지원 학습지(동료 피드백 작성 등) 최소 글자수 */
+export const MIN_FEEDBACK_FIELD_CHARS = 50;
 
 export function hasKorean(text: string): boolean {
   return /[\uAC00-\uD7A3]/.test(text);
 }
 
-export function isValidFieldContent(text: string): boolean {
+export function getMinFieldChars(templateId: string): number {
+  const category = getTemplateById(templateId)?.category;
+  return category === "feedback-support" ? MIN_FEEDBACK_FIELD_CHARS : MIN_FIELD_CHARS;
+}
+
+export function isValidFieldContent(text: string, minChars = MIN_FIELD_CHARS): boolean {
   const trimmed = text.trim();
-  return trimmed.length >= MIN_FIELD_CHARS && hasKorean(trimmed);
+  return trimmed.length >= minChars && hasKorean(trimmed);
 }
 
 export function validateWorksheetValues(
@@ -23,6 +30,7 @@ export function validateWorksheetValues(
     return { ok: false, errors: ["이 템플릿의 입력 항목을 확인할 수 없습니다."] };
   }
 
+  const minChars = getMinFieldChars(templateId);
   const errors: string[] = [];
   for (const key of fields) {
     const text = values[key] ?? "";
@@ -31,9 +39,9 @@ export function validateWorksheetValues(
       errors.push(`「${key}」: 예시 문장을 그대로 붙여 넣었습니다. 내 생각을 담아 다시 작성해 주세요.`);
       continue;
     }
-    if (!isValidFieldContent(text)) {
+    if (!isValidFieldContent(text, minChars)) {
       const len = text.trim().length;
-      errors.push(`「${key}」: 150자 이상 한글로 작성해 주세요 (현재 ${len}자)`);
+      errors.push(`「${key}」: ${minChars}자 이상 한글로 작성해 주세요 (현재 ${len}자)`);
     }
   }
 

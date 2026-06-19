@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import type { AiQuotaStatus } from "@/lib/ai/feedback";
-import { MIN_FIELD_CHARS } from "@/lib/worksheet-validation";
+import { getMinFieldChars } from "@/lib/worksheet-validation";
 
 interface WorksheetGuidanceBannerProps {
+  templateId: string;
   aiQuota: AiQuotaStatus | null;
   studentMode?: boolean;
 }
 
-export function WorksheetGuidanceBanner({ aiQuota, studentMode }: WorksheetGuidanceBannerProps) {
+export function WorksheetGuidanceBanner({ templateId, aiQuota, studentMode }: WorksheetGuidanceBannerProps) {
+  const minFieldChars = getMinFieldChars(templateId);
   return (
     <p className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-xs text-blue-800">
-      각 항목을 <strong>{MIN_FIELD_CHARS}자 이상 한글</strong>로 작성한 뒤 제출하세요.
+      각 항목을 <strong>{minFieldChars}자 이상 한글</strong>로 작성한 뒤 제출하세요.
       {studentMode && (
         <span className="mt-1 block">예시·가이드 문장을 그대로 붙여 넣으면 제출할 수 없습니다.</span>
       )}
