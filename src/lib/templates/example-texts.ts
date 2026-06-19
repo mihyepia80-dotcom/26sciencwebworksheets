@@ -89,6 +89,15 @@ const FIELD_EXAMPLE_TEXTS: Record<string, Record<string, string[]>> = {
   exaggeration: {
     content: ["과장된 질문과 아이디어를 적어보세요"],
   },
+  scamper: {
+    substitute: ["아이디어에서 바꿀 수 있는 부분은 무엇일까?"],
+    combine: ["두 가지 생각을 하나로 합쳐서 새로운 것으로 만들 수 있을까?"],
+    adapt: ["이 방법을 다른 곳이나 다른 상황에 그래도 쓸 수 있을까?"],
+    modify: ["모양을 더 크게 하거나, 색깔을 바꾸거나, 다르게 고친다면?"],
+    putToOtherUse: ["원래 쓰던 곳 말고 완전히 다른 곳에 쓸 수 없을까?"],
+    eliminate: ["필요 없는 부분을 빼거나 없애면 어떻게 될까?"],
+    reverse: ["순서를 앞뒤로 바꾸거나 거꾸로 뒤집으면 어떻게 될까?"],
+  },
   "plus-one": {
     workspace: ["생각을 자유롭게 기록하세요"],
   },

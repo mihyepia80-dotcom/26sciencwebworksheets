@@ -759,20 +759,107 @@ export function InquiryClassroomRulesTemplate({ values, onChange, readOnly }: Te
 
 export function ScamperTemplate({ values, onChange, readOnly }: TemplateProps) {
   const items = [
-    { key: "substitute", label: "S — Substitute (대체)" },
-    { key: "combine", label: "C — Combine (결합)" },
-    { key: "adapt", label: "A — Adapt (적용)" },
-    { key: "modify", label: "M — Modify (수정)" },
-    { key: "putToOtherUse", label: "P — Put to other use (다른 용도)" },
-    { key: "eliminate", label: "E — Eliminate (제거)" },
-    { key: "reverse", label: "R — Reverse (뒤집기)" },
+    {
+      key: "substitute",
+      letter: "S",
+      title: "대체하기",
+      hint: "아이디어에서 바꿀 수 있는 부분은 무엇일까?",
+      header: "bg-red-600",
+      panel: "border-red-200 bg-red-50",
+      badge: "bg-red-100 text-red-800",
+    },
+    {
+      key: "combine",
+      letter: "C",
+      title: "조합하기",
+      hint: "두 가지 생각을 하나로 합쳐서 새로운 것으로 만들 수 있을까?",
+      header: "bg-orange-500",
+      panel: "border-orange-200 bg-orange-50",
+      badge: "bg-orange-100 text-orange-800",
+    },
+    {
+      key: "adapt",
+      letter: "A",
+      title: "적용하기",
+      hint: "이 방법을 다른 곳이나 다른 상황에 그래도 쓸 수 있을까?",
+      header: "bg-amber-500",
+      panel: "border-amber-200 bg-amber-50",
+      badge: "bg-amber-100 text-amber-800",
+    },
+    {
+      key: "modify",
+      letter: "M",
+      title: "수정하기",
+      hint: "모양을 더 크게 하거나, 색깔을 바꾸거나, 다르게 고친다면?",
+      header: "bg-green-600",
+      panel: "border-green-200 bg-green-50",
+      badge: "bg-green-100 text-green-800",
+    },
+    {
+      key: "putToOtherUse",
+      letter: "P",
+      title: "다른 용도로 사용하기",
+      hint: "원래 쓰던 곳 말고 완전히 다른 곳에 쓸 수 없을까?",
+      header: "bg-sky-500",
+      panel: "border-sky-200 bg-sky-50",
+      badge: "bg-sky-100 text-sky-800",
+    },
+    {
+      key: "eliminate",
+      letter: "E",
+      title: "제거하기",
+      hint: "필요 없는 부분을 빼거나 없애면 어떻게 될까?",
+      header: "bg-blue-600",
+      panel: "border-blue-200 bg-blue-50",
+      badge: "bg-blue-100 text-blue-800",
+    },
+    {
+      key: "reverse",
+      letter: "R",
+      title: "재배치하기",
+      hint: "순서를 앞뒤로 바꾸거나 거꾸로 뒤집으면 어떻게 될까?",
+      header: "bg-violet-600",
+      panel: "border-violet-200 bg-violet-50",
+      badge: "bg-violet-100 text-violet-800",
+    },
   ] as const;
+
   return (
     <SectionBox title="SCAMPER — 가설 확장·변형" color="yellow">
-      <TextAreaField label="전이할 결론·가설" value={v(values, "conclusion")} onChange={(val) => onChange("conclusion", val)} rows={3} readOnly={readOnly} className="mb-4" />
-      {items.map(({ key, label }) => (
-        <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={3} readOnly={readOnly} className="mb-2" />
-      ))}
+      <TextAreaField
+        label="아이디어 (바꿀 대상)"
+        value={v(values, "conclusion")}
+        onChange={(val) => onChange("conclusion", val)}
+        rows={2}
+        readOnly={readOnly}
+        placeholder="대체·조합·변형할 아이디어를 적어 보세요"
+        className="mb-4"
+      />
+
+      <div className="overflow-x-auto pb-2">
+        <div className="flex min-w-[980px] gap-2">
+          {items.map(({ key, letter, title, hint, header, panel, badge }) => (
+            <div key={key} className={`flex min-w-0 flex-1 flex-col rounded-lg border ${panel}`}>
+              <div className={`flex flex-col items-center gap-2 px-2 py-3 ${header} text-white`}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
+                  {letter}
+                </span>
+                <p className="text-center text-xs font-bold leading-tight">{title}</p>
+              </div>
+              <div className="flex flex-1 flex-col p-2">
+                <p className={`mb-2 rounded px-2 py-1.5 text-[11px] leading-snug ${badge}`}>{hint}</p>
+                <textarea
+                  className="min-h-[140px] flex-1 resize-y rounded border border-white bg-white px-2 py-2 text-xs text-slate-800 focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-300 disabled:bg-slate-50"
+                  value={v(values, key)}
+                  disabled={readOnly}
+                  placeholder={hint}
+                  onChange={(e) => onChange(key, e.target.value)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </SectionBox>
   );
 }
