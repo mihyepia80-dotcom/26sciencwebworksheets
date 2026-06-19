@@ -61,6 +61,7 @@ export function useGuidedQuestions({
   userUid,
 }: UseGuidedQuestionsOptions) {
   const [questions, setQuestions] = useState<string[]>(padQuestions([]));
+  const [teacherReferenceQuestions, setTeacherReferenceQuestions] = useState<string[]>(padQuestions([]));
   const [source, setSource] = useState<GuidedQuestionSource | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -157,7 +158,13 @@ export function useGuidedQuestions({
 
       applyTeacherMeta(pinned, onMetaPrefill);
       if (pinned.questions.length) {
-        applyQuestions(pinned.questions, "pinned");
+        const reference = padQuestions(pinned.questions);
+        setTeacherReferenceQuestions(reference);
+        if (studentMode) {
+          setSource("pinned");
+        } else {
+          applyQuestions(pinned.questions, "pinned");
+        }
       } else {
         setSource("manual");
       }
@@ -173,7 +180,7 @@ export function useGuidedQuestions({
     } finally {
       setLoading(false);
     }
-  }, [applyQuestions, onMetaPrefill, skipTeacherPrefill, templateId]);
+  }, [applyQuestions, onMetaPrefill, skipTeacherPrefill, studentMode, templateId]);
 
   const regenerate = useCallback(() => {
     if (readOnly || source === "pinned" || studentMode) return;
@@ -216,10 +223,12 @@ export function useGuidedQuestions({
     hydratedFromSaveRef.current = false;
     fetchedTopicKeyRef.current = "";
     teacherPrefillDoneRef.current = false;
+    setTeacherReferenceQuestions(padQuestions([]));
   }, [templateId]);
 
   return {
     questions,
+    teacherReferenceQuestions,
     source,
     loading,
     error,

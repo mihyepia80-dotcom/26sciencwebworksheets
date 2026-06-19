@@ -50,14 +50,6 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
               교사 대시보드
             </Link>
           )}
-          {role === "student" && (
-            <Link
-              href="/teacher"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:border-blue-300 hover:text-blue-700"
-            >
-              교사 로그인
-            </Link>
-          )}
           {user && (
             <button
               type="button"

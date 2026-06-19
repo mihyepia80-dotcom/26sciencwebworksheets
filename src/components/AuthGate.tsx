@@ -51,6 +51,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
       router.replace(role === "teacher" ? "/teacher" : "/login");
     }
 
+    if (pathname.startsWith("/teacher") && role === "student") {
+      router.replace("/");
+      return;
+    }
+
     if (pathname.startsWith("/teacher/") && role !== "teacher") {
       router.replace(role === "student" ? "/" : "/teacher");
       return;

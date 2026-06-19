@@ -10,6 +10,7 @@ import { PeerFeedbackSection } from "@/components/peer-feedback/PeerFeedbackSect
 import { WorksheetHeader } from "@/components/common/WorksheetHeader";
 import { TemplateRenderer } from "@/components/templates";
 import { GuidedQuestionsPanel } from "@/components/worksheet/GuidedQuestionsPanel";
+import { TeacherGuidedQuestionsSidebar } from "@/components/student/TeacherGuidedQuestionsSidebar";
 import { WorksheetActionBar, WorksheetGuidanceBanner } from "@/components/worksheet/WorksheetChrome";
 import { useAuth } from "@/components/AuthProvider";
 import type { AiRating } from "@/lib/ai/feedback";
@@ -157,7 +158,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 px-4 py-6">
+    <div className={`mx-auto space-y-4 px-4 py-6 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}>
       <div className="flex items-center justify-between">
         <Link href="/" className="text-sm text-blue-600 hover:underline">
           ← 템플릿 목록
@@ -167,7 +168,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
         </span>
       </div>
 
-      <WorksheetGuidanceBanner aiQuota={aiQuota} />
+      <WorksheetGuidanceBanner aiQuota={aiQuota} studentMode={isStudent} />
 
       {loadError && <p className="text-sm text-red-600">{loadError}</p>}
 
@@ -180,7 +181,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
 
       {!isStudent && template.aiFeature && <AiFeaturePanel template={template} />}
 
-      {isStudent && guided.visible && (
+      {!isStudent && guided.visible && (
         <GuidedQuestionsPanel
           topic={meta.topic}
           questions={guided.questions}
@@ -194,7 +195,26 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
         />
       )}
 
-      <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+      {isStudent ? (
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="min-w-0">
+            <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+          </div>
+          {guided.visible && (
+            <div className="lg:sticky lg:top-4 lg:self-start">
+              <TeacherGuidedQuestionsSidebar
+              meta={meta}
+              questions={guided.teacherReferenceQuestions}
+              loading={guided.loading}
+              error={guided.error}
+              hasTeacherGuide={guided.source === "pinned" && guided.teacherReferenceQuestions.some((q) => q.trim())}
+              />
+            </div>
+          )}
+        </div>
+      ) : (
+        <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+      )}
 
       {submitted && aiRating && aiFeedback && (
         <AiFeedbackCard rating={aiRating} feedback={aiFeedback} />

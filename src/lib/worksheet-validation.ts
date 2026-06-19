@@ -1,5 +1,6 @@
 import type { Answers } from "@/lib/types";
 import { getTemplateById } from "@/lib/templates/registry";
+import { matchUneditedExampleText } from "@/lib/templates/example-texts";
 
 export const MIN_FIELD_CHARS = 150;
 
@@ -24,6 +25,11 @@ export function validateWorksheetValues(
   const errors: string[] = [];
   for (const key of fields) {
     const text = values[key] ?? "";
+    const exampleMatch = matchUneditedExampleText(templateId, key, text);
+    if (exampleMatch) {
+      errors.push(`「${key}」: 예시 문장을 그대로 붙여 넣었습니다. 내 생각을 담아 다시 작성해 주세요.`);
+      continue;
+    }
     if (!isValidFieldContent(text)) {
       const len = text.trim().length;
       errors.push(`「${key}」: 150자 이상 한글로 작성해 주세요 (현재 ${len}자)`);

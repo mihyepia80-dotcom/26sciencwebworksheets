@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
-import { AiFeaturePanel } from "@/components/AiFeaturePanel";
-import { getCategoryGroups, getSortedTemplates } from "@/lib/templates/registry";
+import { StudentTemplateGrid } from "@/components/student/StudentTemplateGrid";
+import { getSortedTemplates } from "@/lib/templates/registry";
 
 export default function HomePage() {
   const templates = getSortedTemplates();
-  const groups = getCategoryGroups();
 
   return (
     <div className="min-h-screen">
@@ -27,32 +26,7 @@ export default function HomePage() {
           </Link>
         </section>
 
-        {groups.map((group) => (
-          <section key={group.id} className="mb-10">
-            <h2 className="text-lg font-bold text-slate-800">
-              {group.label}
-              <span className="ml-2 text-sm font-normal text-slate-400">({group.templates.length})</span>
-            </h2>
-            {group.subtitle && <p className="mb-4 text-sm text-slate-500">{group.subtitle}</p>}
-            {!group.subtitle && <div className="mb-4" />}
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {group.templates.map((t) => (
-                <Link
-                  key={t.id}
-                  href={`/templates/${t.id}`}
-                  className="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
-                >
-                  <h3 className="font-semibold text-slate-800 group-hover:text-blue-700">{t.name}</h3>
-                  {t.nameEn && <p className="mt-0.5 text-xs text-slate-400">{t.nameEn}</p>}
-                  <p className="mt-1 text-sm text-slate-500">{t.description}</p>
-                  {t.aiFeatureLabel && (
-                    <p className="mt-2 text-xs font-medium text-violet-700">[{t.aiFeatureLabel}]</p>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </section>
-        ))}
+        <StudentTemplateGrid />
       </main>
     </div>
   );
