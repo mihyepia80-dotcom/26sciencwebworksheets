@@ -2,6 +2,11 @@ import type { Answers } from "@/lib/types";
 import { getFieldKeysForTemplate } from "@/lib/templates/field-keys";
 import { getTemplateById } from "@/lib/templates/registry";
 import { matchUneditedExampleText } from "@/lib/templates/example-texts";
+import {
+  CLOSING_CHECKLIST,
+  CLOSING_HEADLINE_KEY,
+  CLOSING_HEADLINE_MIN_CHARS,
+} from "@/lib/worksheet-closing/constants";
 
 export const MIN_FIELD_CHARS = 150;
 /** 피드백 지원 학습지(동료 피드백 작성 등) 최소 글자수 */
@@ -31,17 +36,23 @@ export function validateWorksheetValues(
   }
 
   const minChars = getMinFieldChars(templateId);
+  const closingCheckKeys = new Set<string>(CLOSING_CHECKLIST.map((c) => c.key));
   const errors: string[] = [];
   for (const key of fields) {
+    if (closingCheckKeys.has(key)) continue;
+
     const text = values[key] ?? "";
     const exampleMatch = matchUneditedExampleText(templateId, key, text);
     if (exampleMatch) {
       errors.push(`「${key}」: 예시 문장을 그대로 붙여 넣었습니다. 내 생각을 담아 다시 작성해 주세요.`);
       continue;
     }
-    if (!isValidFieldContent(text, minChars)) {
+
+    const fieldMin =
+      key === CLOSING_HEADLINE_KEY ? CLOSING_HEADLINE_MIN_CHARS : minChars;
+    if (!isValidFieldContent(text, fieldMin)) {
       const len = text.trim().length;
-      errors.push(`「${key}」: ${minChars}자 이상 한글로 작성해 주세요 (현재 ${len}자)`);
+      errors.push(`「${key}」: ${fieldMin}자 이상 한글로 작성해 주세요 (현재 ${len}자)`);
     }
   }
 

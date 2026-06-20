@@ -121,7 +121,14 @@ function normalizeComparable(text: string): string {
   return text.trim().replace(/\s+/g, " ");
 }
 
+const CLOSING_HEADLINE_EXAMPLES = [
+  "예: 용액은 일정한 성질을 유지하므로 우리 생활에서 믿고 쓸 수 있다.",
+];
+
 function collectExamples(templateId: string, fieldKey: string): string[] {
+  if (fieldKey === "closingHeadline") {
+    return CLOSING_HEADLINE_EXAMPLES;
+  }
   const fieldSpecific = FIELD_EXAMPLE_TEXTS[templateId]?.[fieldKey] ?? [];
   return [...new Set([...fieldSpecific, ...COMMON_PLACEHOLDERS])];
 }

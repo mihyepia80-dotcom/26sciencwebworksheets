@@ -2,14 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TemplateProps } from "@/lib/types";
-import { SectionBox, TextAreaField, TextField } from "@/components/common/Fields";
+import { SectionBox, TextAreaField } from "@/components/common/Fields";
 import { fieldValue as v } from "@/components/templates/utils";
 import {
   addConnection,
   addCustomChip,
   createInitialBoardState,
   findChipZone,
-  GSCE_CHECKLIST,
   GSCE_ELABORATE_SECTIONS,
   moveChip,
   parseBoardState,
@@ -457,33 +456,6 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
               />
             ))}
           </div>
-        </section>
-
-        {/* 최종 결론 & 체크리스트 */}
-        <section className="rounded-xl border border-slate-200 bg-slate-50/50 p-4">
-          <h3 className="mb-3 text-sm font-bold text-slate-800">최종 한 줄 결론 (Headline)</h3>
-          <TextField
-            value={v(values, "headline")}
-            onChange={(val) => onChange("headline", val)}
-            readOnly={readOnly}
-            placeholder="오늘 실험에서 발견한 핵심을 한 문장으로 정리하세요"
-            className="mb-4"
-          />
-          <h4 className="mb-2 text-xs font-bold text-slate-700">나의 글 최종 점검 (셀프 체크리스트)</h4>
-          <ul className="space-y-2">
-            {GSCE_CHECKLIST.map(({ key, label }) => (
-              <li key={key} className="flex items-start gap-2 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={v(values, key) === "true"}
-                  disabled={readOnly}
-                  onChange={(e) => onChange(key, e.target.checked ? "true" : "")}
-                />
-                <span>{label}</span>
-              </li>
-            ))}
-          </ul>
         </section>
       </SectionBox>
     </div>

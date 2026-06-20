@@ -2,7 +2,7 @@
 
 import type { TemplateProps } from "@/lib/types";
 import { fieldValue as v } from "@/components/templates/utils";
-import { CSQ_CHECKLIST, CSQ_INQUIRY_MEMO, CSQ_SECTIONS } from "@/lib/templates/csq";
+import { CSQ_INQUIRY_MEMO, CSQ_SECTIONS } from "@/lib/templates/csq";
 
 export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
@@ -40,25 +40,6 @@ export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: Tem
               />
             </div>
           ))}
-        </div>
-
-        <div className="mt-8 border-t border-slate-200 pt-6">
-          <h3 className="mb-3 text-sm font-bold text-slate-800">나의 글 최종 점검 (셀프 체크)</h3>
-          <div className="mb-6 space-y-2 text-sm text-slate-600">
-            {CSQ_CHECKLIST.map(({ key, label }) => (
-              <label key={key} className="flex cursor-pointer items-start gap-2">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                  checked={v(values, key) === "true"}
-                  disabled={readOnly}
-                  onChange={(e) => onChange(key, e.target.checked ? "true" : "")}
-                />
-                <span>{label}</span>
-              </label>
-            ))}
-          </div>
-
         </div>
       </div>
     </div>

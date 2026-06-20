@@ -3,7 +3,6 @@
 import type { TemplateProps } from "@/lib/types";
 import { fieldValue as v } from "@/components/templates/utils";
 import {
-  HEADLINE_CHECKLIST,
   HEADLINE_GUIDE,
   HEADLINE_PLACEHOLDERS,
   HEADLINE_REMINDERS,
@@ -66,26 +65,6 @@ export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) 
               onChange={(e) => onChange("headlineReason", e.target.value)}
             />
           </div>
-        </div>
-
-        <div className="mt-8 border-t border-slate-200 pt-6">
-          <h3 className="mb-3 text-sm font-bold text-slate-800">메타인지 셀프 체크리스트</h3>
-          <ul className="space-y-2 text-sm text-slate-700">
-            {HEADLINE_CHECKLIST.map(({ key, label }) => (
-              <li key={key}>
-                <label className="flex cursor-pointer items-start gap-2">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
-                    checked={v(values, key) === "true"}
-                    disabled={readOnly}
-                    onChange={(e) => onChange(key, e.target.checked ? "true" : "")}
-                  />
-                  <span>{label}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </div>

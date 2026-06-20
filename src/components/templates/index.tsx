@@ -2,6 +2,7 @@
 
 import type { ComponentType } from "react";
 import type { TemplateProps } from "@/lib/types";
+import { WorksheetClosingSection } from "@/components/worksheet/WorksheetClosingSection";
 import {
   SeeThinkWonderTemplate,
   ThinkPuzzleExploreTemplate,
@@ -125,5 +126,10 @@ export function TemplateRenderer({ templateId, ...props }: TemplateProps & { tem
       </div>
     );
   }
-  return <Component {...props} />;
+  return (
+    <div className="worksheet-body">
+      <Component {...props} />
+      <WorksheetClosingSection templateId={templateId} {...props} />
+    </div>
+  );
 }

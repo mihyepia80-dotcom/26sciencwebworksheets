@@ -92,6 +92,11 @@ body {
     display: none !important;
   }
 
+  .worksheet-closing {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
   .csq-worksheet textarea,
   .headline-worksheet textarea {
     border-color: #cbd5e1 !important;

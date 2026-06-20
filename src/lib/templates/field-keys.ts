@@ -1,4 +1,5 @@
 import type { Answers } from "@/lib/types";
+import { appendClosingFieldKeys } from "@/lib/worksheet-closing/constants";
 import { defaultDoubleBubbleFieldKeys, doubleBubbleFieldKeys } from "./double-bubble-map";
 import { hexagonKeywordFieldKeys } from "./hexagon-keywords";
 import { mandalartFieldKeys } from "./mandalart";
@@ -51,7 +52,7 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
   headline: ["headline", "headlineReason"],
   "zoom-in": ["step1", "step2", "step3", "writingSituation"],
   "chalk-talk": ["writingContext", "activityExample", "activityTip"],
-  gsce: ["elaborateA", "elaborateB", "elaborateC", "headline"],
+  gsce: ["elaborateA", "elaborateB", "elaborateC"],
   "frayer-model": ["definition", "characteristics", "examples", "nonExamples", "concept"],
   "question-types": ["inquiry", "aiPrompt", "fact", "concept", "curiosity", "expected"],
   "question-bank": questionBankFieldKeys(),
@@ -99,8 +100,11 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
 };
 
 export function getFieldKeysForTemplate(templateId: string, values?: Answers): string[] {
+  let keys: string[];
   if (templateId === "double-bubble-map") {
-    return doubleBubbleFieldKeys(values ?? {});
+    keys = doubleBubbleFieldKeys(values ?? {});
+  } else {
+    keys = TEMPLATE_FIELD_KEYS[templateId] ?? [];
   }
-  return TEMPLATE_FIELD_KEYS[templateId] ?? [];
+  return appendClosingFieldKeys(templateId, keys);
 }
