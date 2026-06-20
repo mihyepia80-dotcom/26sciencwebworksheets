@@ -36,4 +36,4 @@ export function appendClosingFieldKeys(templateId: string, fieldKeys: string[]):
   return merged;
 }
 
-export const CLOSING_HEADLINE_MIN_CHARS = 30;
+export const CLOSING_HEADLINE_MIN_CHARS = 40;

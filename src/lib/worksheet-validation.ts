@@ -8,9 +8,9 @@ import {
   CLOSING_HEADLINE_MIN_CHARS,
 } from "@/lib/worksheet-closing/constants";
 
-export const MIN_FIELD_CHARS = 150;
+export const MIN_FIELD_CHARS = 40;
 /** 피드백 지원 학습지(동료 피드백 작성 등) 최소 글자수 */
-export const MIN_FEEDBACK_FIELD_CHARS = 50;
+export const MIN_FEEDBACK_FIELD_CHARS = 40;
 
 export function hasKorean(text: string): boolean {
   return /[\uAC00-\uD7A3]/.test(text);
