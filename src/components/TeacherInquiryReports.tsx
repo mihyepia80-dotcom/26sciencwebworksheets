@@ -16,6 +16,8 @@ function formatDate(report: InquiryReportDoc): string {
 }
 
 const REPORT_FIELDS: { label: string; key: keyof InquiryReportDoc }[] = [
+  { label: "모둠 번호", key: "groupNo" },
+  { label: "기록자", key: "recorder" },
   { label: "단원명", key: "unitName" },
   { label: "차시명", key: "lessonName" },
   { label: "궁금한 내용", key: "curiousContent" },
@@ -28,8 +30,15 @@ const REPORT_FIELDS: { label: string; key: keyof InquiryReportDoc }[] = [
   { label: "가장 궁금했던 내용", key: "mostCurious" },
   { label: "탐구 결과 정리", key: "resultOrganized" },
   { label: "생활 속 이야기", key: "realLifeStory" },
-  { label: "그림 설명", key: "visualDescription" },
 ];
+
+const PROCESS_STEP_KEYS = [
+  "processStep1",
+  "processStep2",
+  "processStep3",
+  "processStep4",
+  "processStep5",
+] as const;
 
 export function TeacherInquiryReports() {
   const [reports, setReports] = useState<InquiryReportDoc[]>([]);
@@ -95,9 +104,10 @@ export function TeacherInquiryReports() {
         {reports.map((report) => {
           const open = expandedId === report.id;
           const members = report.members.filter((m) => m.trim()).join(", ");
-          const processSteps = [report.processStep1, report.processStep2, report.processStep3, report.processStep4, report.processStep5]
-            .filter((s) => s.trim())
-            .join("\n");
+          const processSteps = PROCESS_STEP_KEYS.map((key, index) => ({
+            label: `탐구 과정 ${index + 1}단계`,
+            value: report[key].trim(),
+          })).filter((step) => step.value);
 
           return (
             <article key={report.id} className="overflow-hidden rounded-xl border border-violet-100 bg-white shadow-sm">
@@ -135,10 +145,12 @@ export function TeacherInquiryReports() {
                   {REPORT_FIELDS.map(({ label, key }) => (
                     <ReportField key={key} label={label} value={String(report[key] ?? "")} />
                   ))}
-                  {processSteps && (
-                    <div className="rounded-lg bg-slate-50 p-3">
-                      <p className="text-xs font-semibold text-slate-500">탐구 과정</p>
-                      <p className="mt-1 whitespace-pre-wrap text-slate-800">{processSteps}</p>
+                  {processSteps.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">탐구 과정</p>
+                      {processSteps.map((step) => (
+                        <ReportField key={step.label} label={step.label} value={step.value} />
+                      ))}
                     </div>
                   )}
                   {report.visualDrawing && (

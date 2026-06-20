@@ -16,12 +16,15 @@ export {
 } from "./submissions";
 export {
   signInTeacherWithGoogle,
+  signInTeacherWithGoogleRedirect,
   signOutUser,
   checkIsTeacher,
   verifyTeacherPassword,
   resolveAuthRole,
   completeTeacherGoogleRedirect,
   isTeacherGoogleRedirectInProgress,
+  isTeacherPopupBlockedError,
+  isMissingRedirectStateError,
   subscribeAppAuth,
   type AppAuthState,
   type AuthRole,

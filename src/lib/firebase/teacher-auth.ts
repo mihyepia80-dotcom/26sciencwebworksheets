@@ -15,11 +15,10 @@ import { getClientAuth } from "./client";
 import { clearTeacherPinVerified, isTeacherPinVerified, setTeacherPinVerified } from "./teacher-pin";
 
 const REDIRECT_IN_PROGRESS = "REDIRECT_IN_PROGRESS";
+const REDIRECT_PENDING_KEY = "sagodogu_teacher_google_redirect";
 
-const POPUP_FALLBACK_CODES = new Set([
+const POPUP_BLOCKED_CODES = new Set([
   "auth/popup-blocked",
-  "auth/popup-closed-by-user",
-  "auth/cancelled-popup-request",
   "auth/operation-not-supported-in-this-environment",
 ]);
 
@@ -57,6 +56,35 @@ async function ensureTeacherGoogleSignInReady(): Promise<void> {
   }
 }
 
+function markRedirectPending(): void {
+  try {
+    sessionStorage.setItem(REDIRECT_PENDING_KEY, "1");
+  } catch {
+    // sessionStorage 차단 환경
+  }
+}
+
+function clearRedirectPending(): void {
+  try {
+    sessionStorage.removeItem(REDIRECT_PENDING_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+function isRedirectPending(): boolean {
+  try {
+    return sessionStorage.getItem(REDIRECT_PENDING_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function isMissingRedirectStateError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.includes("missing initial state");
+}
+
 export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
   if (!user) return null;
   if (await isGoogleSignIn(user)) {
@@ -66,21 +94,37 @@ export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
   return null;
 }
 
-/** Google 리다이렉트 로그인 복귀 처리 (앱 시작 시 1회) */
+/** Google 리다이렉트 로그인 복귀 처리 (리다이렉트 직후에만 호출) */
 export async function completeTeacherGoogleRedirect(): Promise<User | null> {
+  if (!isRedirectPending()) return null;
+
   const auth = getClientAuth();
-  const result = await getRedirectResult(auth);
-  if (!result?.user) return null;
-  await refreshUserProfile(result.user);
-  return result.user;
+  try {
+    const result = await getRedirectResult(auth);
+    if (!result?.user) return null;
+    await refreshUserProfile(result.user);
+    return result.user;
+  } catch (error: unknown) {
+    if (isMissingRedirectStateError(error)) {
+      return null;
+    }
+    throw error;
+  } finally {
+    clearRedirectPending();
+  }
+}
+
+function createGoogleProvider(): GoogleAuthProvider {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  return provider;
 }
 
 export async function signInTeacherWithGoogle(): Promise<User> {
   await ensureTeacherGoogleSignInReady();
 
   const auth = getClientAuth();
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
+  const provider = createGoogleProvider();
 
   try {
     const result = await signInWithPopup(auth, provider);
@@ -88,16 +132,30 @@ export async function signInTeacherWithGoogle(): Promise<User> {
     return result.user;
   } catch (error: unknown) {
     const code = (error as { code?: string }).code;
-    if (code && POPUP_FALLBACK_CODES.has(code)) {
-      await signInWithRedirect(auth, provider);
-      throw new Error(REDIRECT_IN_PROGRESS);
+    if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
+      throw error;
+    }
+    if (code && POPUP_BLOCKED_CODES.has(code)) {
+      throw new Error("POPUP_BLOCKED");
     }
     throw error;
   }
 }
 
+/** 팝업이 막힌 환경에서만 사용 — 페이지 이동 방식 Google 로그인 */
+export async function signInTeacherWithGoogleRedirect(): Promise<never> {
+  await ensureTeacherGoogleSignInReady();
+  markRedirectPending();
+  await signInWithRedirect(getClientAuth(), createGoogleProvider());
+  throw new Error(REDIRECT_IN_PROGRESS);
+}
+
 export function isTeacherGoogleRedirectInProgress(error: unknown): boolean {
   return error instanceof Error && error.message === REDIRECT_IN_PROGRESS;
+}
+
+export function isTeacherPopupBlockedError(error: unknown): boolean {
+  return error instanceof Error && error.message === "POPUP_BLOCKED";
 }
 
 export async function verifyTeacherPassword(user: User, password: string): Promise<boolean> {
@@ -108,6 +166,7 @@ export async function verifyTeacherPassword(user: User, password: string): Promi
 }
 
 export async function signOutUser(): Promise<void> {
+  clearRedirectPending();
   clearTeacherPinVerified();
   await signOut(getClientAuth());
 }
@@ -135,8 +194,9 @@ export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
 
   onChange({ user: null, role: null, loading: true });
 
-  void completeTeacherGoogleRedirect().catch(() => {
-    // 리다이렉트 복귀가 아니면 무시
+  void completeTeacherGoogleRedirect().catch((error) => {
+    if (isMissingRedirectStateError(error)) return;
+    console.warn("Google redirect login failed:", error);
   });
 
   const unsubscribe = onAuthStateChanged(auth, (user) => {

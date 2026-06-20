@@ -14,7 +14,8 @@ export function WorksheetGuidanceBanner({ templateId, aiQuota, studentMode }: Wo
   const minFieldChars = getMinFieldChars(templateId);
   return (
     <p className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-2 text-xs text-blue-800">
-      각 항목을 <strong>{minFieldChars}자 이상 한글</strong>로 작성한 뒤 제출하세요.
+      본문 입력칸을 각각 <strong>{minFieldChars}자 이상 한글</strong>로 작성한 뒤 제출하세요.
+      마무리 결론·셀프 체크·유도 질문 등은 글자수 제한 대상이 아닙니다.
       {studentMode && (
         <span className="mt-1 block">
           작성 중에는 <strong>임시 저장</strong>으로 이어서 쓸 수 있습니다. 예시 문장을 그대로 붙여 넣으면 제출할 수

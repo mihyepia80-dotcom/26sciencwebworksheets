@@ -6,7 +6,7 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   "auth/email-already-in-use": "이미 등록된 학생입니다. 다시 로그인해 주세요.",
   "auth/operation-not-allowed": "Firebase에서 이메일/비밀번호 또는 Google 로그인을 활성화해 주세요.",
   "auth/popup-closed-by-user": "Google 로그인 창이 닫혔습니다.",
-  "auth/popup-blocked": "팝업이 차단되었습니다. 브라우저에서 팝업을 허용하거나, 잠시 후 Google 페이지로 이동합니다.",
+  "auth/popup-blocked": "팝업이 차단되었습니다. 브라우저에서 이 사이트의 팝업을 허용한 뒤 다시 시도하거나, 아래 「페이지 이동 로그인」을 사용하세요.",
   "auth/unauthorized-domain": "이 사이트 주소가 Firebase 승인 도메인에 없습니다. Firebase Console → Authentication → Settings → Authorized domains에 현재 주소를 추가해 주세요.",
   "auth/internal-error": "Firebase 인증 오류입니다. Google 로그인이 켜져 있는지, 승인 도메인이 등록됐는지 확인해 주세요.",
   "auth/account-exists-with-different-credential": "다른 방식으로 가입된 계정입니다. 학생 로그인을 먼저 로그아웃한 뒤 다시 시도해 주세요.",
@@ -16,14 +16,24 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
 };
 
 export function getFirebaseErrorMessage(error: unknown, fallback = "요청에 실패했습니다."): string {
+  const code =
+    error && typeof error === "object" && "code" in error
+      ? String((error as { code?: string }).code)
+      : error instanceof Error
+        ? (error as Error & { code?: string }).code
+        : undefined;
+
+  if (code === "auth/unauthorized-domain") {
+    const host = typeof window !== "undefined" ? window.location.hostname : "";
+    const base = AUTH_ERROR_MESSAGES[code];
+    return host ? `${base}\n\n추가할 도메인: ${host}` : base;
+  }
+  if (code && AUTH_ERROR_MESSAGES[code]) return AUTH_ERROR_MESSAGES[code];
+
   if (error instanceof Error) {
-    const code = (error as Error & { code?: string }).code;
-    if (code === "auth/unauthorized-domain") {
-      const host = typeof window !== "undefined" ? window.location.hostname : "";
-      const base = AUTH_ERROR_MESSAGES[code];
-      return host ? `${base}\n\n추가할 도메인: ${host}` : base;
+    if (error.message.includes("missing initial state")) {
+      return "Google 로그인 세션이 끊겼습니다. 팝업 로그인을 다시 시도하거나, 시크릿 창·다른 브라우저(Chrome/Edge)에서 접속해 주세요.";
     }
-    if (code && AUTH_ERROR_MESSAGES[code]) return AUTH_ERROR_MESSAGES[code];
     return error.message || fallback;
   }
   return fallback;

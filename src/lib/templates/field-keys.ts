@@ -115,3 +115,14 @@ export function getFieldKeysForTemplate(templateId: string, values?: Answers): s
   }
   return appendClosingFieldKeys(templateId, keys);
 }
+
+/** 제출 글자수 검증 대상 — 학습지 본문 입력칸만 (마무리·유도 질문 제외) */
+export function getBodyFieldKeysForTemplate(templateId: string, values?: Answers): string[] {
+  let keys: string[];
+  if (templateId === "double-bubble-map") {
+    keys = doubleBubbleFieldKeys(values ?? {});
+  } else {
+    keys = TEMPLATE_FIELD_KEYS[templateId] ?? [];
+  }
+  return keys.filter((key) => !key.startsWith("guided_q_"));
+}

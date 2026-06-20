@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
-import { getFirebaseErrorMessage, isTeacherGoogleRedirectInProgress, signInTeacherWithGoogle } from "@/lib/firebase";
+import {
+  getFirebaseErrorMessage,
+  isTeacherGoogleRedirectInProgress,
+  isTeacherPopupBlockedError,
+  signInTeacherWithGoogle,
+  signInTeacherWithGoogleRedirect,
+} from "@/lib/firebase";
 
 interface TeacherLoginPanelProps {
   onSuccess?: () => void;
@@ -13,6 +19,8 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
   const [teacherPassword, setTeacherPassword] = useState("");
   const [error, setError] = useState("");
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [redirectLoading, setRedirectLoading] = useState(false);
+  const [showRedirectOption, setShowRedirectOption] = useState(false);
   const [pinLoading, setPinLoading] = useState(false);
   const [pinVerified, setPinVerified] = useState(false);
 
@@ -27,6 +35,28 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
     setGoogleLoading(true);
     try {
       await signInTeacherWithGoogle();
+      setShowRedirectOption(false);
+    } catch (err: unknown) {
+      if (isTeacherGoogleRedirectInProgress(err)) {
+        setError("Google 로그인 페이지로 이동합니다…");
+        return;
+      }
+      if (isTeacherPopupBlockedError(err)) {
+        setShowRedirectOption(true);
+        setError(getFirebaseErrorMessage({ code: "auth/popup-blocked" } as Error & { code: string }));
+        return;
+      }
+      setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleRedirectLogin = async () => {
+    setError("");
+    setRedirectLoading(true);
+    try {
+      await signInTeacherWithGoogleRedirect();
     } catch (err: unknown) {
       if (isTeacherGoogleRedirectInProgress(err)) {
         setError("Google 로그인 페이지로 이동합니다…");
@@ -34,7 +64,7 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
       }
       setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
     } finally {
-      setGoogleLoading(false);
+      setRedirectLoading(false);
     }
   };
 
@@ -88,12 +118,25 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
     <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <button
         type="button"
-        disabled={googleLoading}
-        onClick={handleGoogleLogin}
+        disabled={googleLoading || redirectLoading}
+        onClick={() => void handleGoogleLogin()}
         className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
       >
-        {googleLoading ? "연결 중..." : "Google로 로그인"}
+        {googleLoading ? "연결 중..." : "Google로 로그인 (팝업)"}
       </button>
+      {(showRedirectOption || redirectLoading) && (
+        <button
+          type="button"
+          disabled={redirectLoading || googleLoading}
+          onClick={() => void handleRedirectLogin()}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100 disabled:opacity-60"
+        >
+          {redirectLoading ? "이동 중..." : "페이지 이동 로그인"}
+        </button>
+      )}
+      <p className="mt-3 text-xs text-slate-500">
+        팝업이 차단되면 주소창 옆에서 팝업을 허용하거나, 「페이지 이동 로그인」을 사용하세요.
+      </p>
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </div>
   );

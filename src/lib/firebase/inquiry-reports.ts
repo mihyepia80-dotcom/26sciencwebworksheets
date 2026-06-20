@@ -146,11 +146,29 @@ export async function listStudentInquiryReports(studentUid: string, max = 20): P
   return snap.docs.map((d) => mapDoc(d.id, d.data()));
 }
 
-export async function listAllInquiryReports(max = 100): Promise<InquiryReportDoc[]> {
-  const snap = await getDocs(
-    query(collection(getClientDb(), "inquiryReports"), orderBy("updatedAt", "desc"), limit(max)),
-  );
-  return snap.docs.map((d) => mapDoc(d.id, d.data()));
+export async function listAllInquiryReports(max = 200): Promise<InquiryReportDoc[]> {
+  const [byUpdated, bySubmitted] = await Promise.all([
+    getDocs(
+      query(collection(getClientDb(), "inquiryReports"), orderBy("updatedAt", "desc"), limit(max)),
+    ),
+    getDocs(
+      query(collection(getClientDb(), "inquiryReports"), orderBy("submittedAt", "desc"), limit(max)),
+    ),
+  ]);
+
+  const merged = new Map<string, InquiryReportDoc>();
+  for (const docSnap of [...byUpdated.docs, ...bySubmitted.docs]) {
+    merged.set(docSnap.id, mapDoc(docSnap.id, docSnap.data()));
+  }
+
+  return [...merged.values()]
+    .sort((a, b) => inquiryReportSortTime(b) - inquiryReportSortTime(a))
+    .slice(0, max);
+}
+
+function inquiryReportSortTime(report: InquiryReportDoc): number {
+  const ts = report.updatedAt ?? report.submittedAt;
+  return ts?.toMillis() ?? 0;
 }
 
 export async function deleteInquiryReport(reportId: string): Promise<void> {
