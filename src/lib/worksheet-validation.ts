@@ -1,5 +1,6 @@
 import type { Answers } from "@/lib/types";
 import { getBodyFieldKeysForTemplate } from "@/lib/templates/field-keys";
+import { isExcludedFromCharCountValidation } from "@/lib/worksheet-closing/constants";
 import { getTemplateById } from "@/lib/templates/registry";
 import { matchUneditedExampleText } from "@/lib/templates/example-texts";
 
@@ -33,6 +34,8 @@ export function validateWorksheetValues(
   const minChars = getMinFieldChars(templateId);
   const errors: string[] = [];
   for (const key of fields) {
+    if (isExcludedFromCharCountValidation(key)) continue;
+
     const text = values[key] ?? "";
     const exampleMatch = matchUneditedExampleText(templateId, key, text);
     if (exampleMatch) {

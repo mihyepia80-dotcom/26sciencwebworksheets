@@ -1,5 +1,5 @@
 import type { Answers } from "@/lib/types";
-import { appendClosingFieldKeys } from "@/lib/worksheet-closing/constants";
+import { appendClosingFieldKeys, isExcludedFromCharCountValidation } from "@/lib/worksheet-closing/constants";
 import { defaultDoubleBubbleFieldKeys, doubleBubbleFieldKeys } from "./double-bubble-map";
 import { hexagonKeywordFieldKeys } from "./hexagon-keywords";
 import { mandalartFieldKeys } from "./mandalart";
@@ -124,5 +124,5 @@ export function getBodyFieldKeysForTemplate(templateId: string, values?: Answers
   } else {
     keys = TEMPLATE_FIELD_KEYS[templateId] ?? [];
   }
-  return keys.filter((key) => !key.startsWith("guided_q_"));
+  return keys.filter((key) => !isExcludedFromCharCountValidation(key));
 }

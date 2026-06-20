@@ -37,3 +37,11 @@ export function appendClosingFieldKeys(templateId: string, fieldKeys: string[]):
 }
 
 export const CLOSING_HEADLINE_MIN_CHARS = 40;
+
+/** 글자수·한글 검증에서 제외할 필드 (마무리·유도 질문 등) */
+export function isExcludedFromCharCountValidation(key: string): boolean {
+  if (key.startsWith("guided_q_")) return true;
+  if (key.startsWith("closing")) return true;
+  if (key === CLOSING_HEADLINE_KEY) return true;
+  return CLOSING_CHECKLIST.some((item) => item.key === key);
+}
