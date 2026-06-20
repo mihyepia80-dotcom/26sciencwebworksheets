@@ -220,16 +220,6 @@ export function PlusOneTemplate({ values, onChange, readOnly }: TemplateProps) {
   );
 }
 
-/* ── Headline ── */
-export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) {
-  return (
-    <SectionBox title="Headline 활동" color="blue">
-      <p className="mb-3 text-sm text-slate-600">오늘 배운 내용을 신문 헤드라인처럼 한 문장으로 정리해보세요.</p>
-      <TextAreaField value={v(values, "headline")} onChange={(val) => onChange("headline", val)} placeholder="예: '모인 물방울이 지구를 구한다!'" rows={3} readOnly={readOnly} />
-    </SectionBox>
-  );
-}
-
 /* ── Give 3 Feedback ── */
 export function Give3FeedbackTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (

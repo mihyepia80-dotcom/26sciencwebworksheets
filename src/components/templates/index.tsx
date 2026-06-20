@@ -10,7 +10,6 @@ import {
   StepInsideTemplate,
   IUsedToThinkTemplate,
   PlusOneTemplate,
-  HeadlineTemplate,
   Give3FeedbackTemplate,
   LadderOfFeedbackTemplate,
   ChalkTalkTemplate,
@@ -50,6 +49,7 @@ import { CompassPointsTemplate } from "./CompassPointsTemplate";
 import { ThreeTwoOneReflectionTemplate } from "./ThreeTwoOneReflectionTemplate";
 import { GsceTemplate } from "./GsceTemplate";
 import { ClaimSupportQuestionTemplate } from "./ClaimSupportQuestionTemplate";
+import { HeadlineTemplate } from "./HeadlineTemplate";
 import {
   CircleTreeMapTemplate,
   MultiFlowMapTemplate,

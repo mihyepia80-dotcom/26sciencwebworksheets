@@ -80,7 +80,10 @@ const FIELD_EXAMPLE_TEXTS: Record<string, Record<string, string[]>> = {
     nonExamples: FRAYER_NONEXAMPLE_CHIPS,
   },
   headline: {
-    headline: ["예: '모인 물방울이 지구를 구한다!'"],
+    headline: ["예: '손 소독제, 작은 용액이 지키는 우리의 건강'"],
+    headlineReason: [
+      "예: 손 소독제는 알코올(용질)이 물(용매)에 녹아 만든 용액이기 때문에 어디서나 같은 성분과 농도로 살균할 수 있다. …",
+    ],
   },
   "hot-spots": {
     case1: ["나는 여기가 눈에 띄었어요. 왜냐하면…"],

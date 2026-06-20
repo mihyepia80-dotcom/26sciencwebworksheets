@@ -92,7 +92,8 @@ body {
     display: none !important;
   }
 
-  .csq-worksheet textarea {
+  .csq-worksheet textarea,
+  .headline-worksheet textarea {
     border-color: #cbd5e1 !important;
     resize: none !important;
   }

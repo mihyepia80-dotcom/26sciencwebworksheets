@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Headlines (헤드라인) — 일상 속 용액 글쓰기 학습지</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f8fafc;
+      line-height: 1.65;
+    }
+    @page {
+      size: A4;
+      margin: 14mm;
+    }
+    @media print {
+      html, body {
+        background: #ffffff !important;
+        font-size: 11pt;
+      }
+      .no-print { display: none !important; }
+      .print-card {
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      textarea, input[type="text"], input[type="number"] {
+        border: 1px solid #cbd5e1 !important;
+        background: #fff !important;
+        resize: none !important;
+        overflow: visible !important;
+      }
+      section, .rounded-xl {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body class="px-4 py-8 sm:px-6 lg:px-8">
+
+  <div class="print-card mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+
+    <header class="mb-6 border-b border-slate-200 pb-6 text-center">
+      <p class="text-xs font-medium text-slate-500">과학 5학년 2학기 / 3. 용해와 용액 (8차시)</p>
+      <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-800">Headlines (헤드라인)</h1>
+      <p class="mt-2 text-sm text-slate-600">일상생활에서 이용하는 용액을 찾아라!</p>
+    </header>
+
+    <section class="mb-6">
+      <div class="grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-4">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500" for="grade">학년</label>
+          <input type="number" id="grade" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm focus:border-teal-500 focus:outline-none" placeholder="5">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500" for="classNo">반</label>
+          <input type="number" id="classNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm focus:border-teal-500 focus:outline-none" placeholder="1">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500" for="studentNo">번호</label>
+          <input type="number" id="studentNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm focus:border-teal-500 focus:outline-none" placeholder="1">
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-slate-500" for="studentName">이름</label>
+          <input type="text" id="studentName" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm focus:border-teal-500 focus:outline-none" placeholder="홍길동">
+        </div>
+      </div>
+    </section>
+
+    <section class="mb-8 rounded-xl border border-teal-100 bg-teal-50/60 p-4">
+      <h2 class="mb-2 text-sm font-bold text-teal-900">탐구 데이터 리마인더</h2>
+      <ul class="list-disc space-y-2 pl-4 text-sm leading-relaxed text-teal-900/90">
+        <li>구강 청결제, 식물 영양제, 식초, 손 소독제 등은 모두 우리 일상생활에서 유익하게 사용되는 대표적인 '용액'이다.</li>
+        <li>용액은 용질이 용매에 가라앉는 것 없이 완벽하고 골고루 용해되어 있기 때문에 성질이 일정하다.</li>
+      </ul>
+    </section>
+
+    <p class="mb-6 rounded-lg border border-blue-100 bg-blue-50/50 px-4 py-3 text-sm leading-relaxed text-slate-700">
+      내가 조사한 일상 속 용액 1가지를 선택하고, 그 용액이 우리 삶에 주는 가치와 중요성을 신문 기사의 헤드라인처럼 멋지게 요약해 봅시다.
+    </p>
+
+    <section class="mb-6 rounded-xl border border-slate-200 p-5">
+      <h2 class="mb-1 text-sm font-bold text-slate-800">헤드라인 뽑기</h2>
+      <p class="mb-3 text-xs text-slate-500">탐구 내용의 핵심 본질과 가치를 한 줄로 관통하는 제목을 작성하세요.</p>
+      <input type="text" id="headline" class="field w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:border-blue-500 focus:outline-none" placeholder="예: '손 소독제, 작은 용액이 지키는 우리의 건강'">
+    </section>
+
+    <section class="mb-8 rounded-xl border border-slate-200 p-5">
+      <h2 class="mb-1 text-sm font-bold text-slate-800">이유 서술하기</h2>
+      <p class="mb-3 text-xs text-slate-500">왜 그렇게 헤드라인을 뽑았는지, 과학적 사실(실험·조사 데이터)과 인과 관계를 담아 서술하세요.</p>
+      <textarea id="headlineReason" rows="8" class="field w-full resize-y rounded-lg border border-slate-200 p-3 text-sm leading-relaxed focus:border-blue-500 focus:outline-none" placeholder="예: 손 소독제는 알코올(용질)이 물(용매)에 녹아 만든 용액이기 때문에 어디서나 같은 성분과 농도로 살균할 수 있다. …"></textarea>
+    </section>
+
+    <section class="border-t border-slate-200 pt-6">
+      <h2 class="mb-3 text-sm font-bold text-slate-800">메타인지 셀프 체크리스트</h2>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li>
+          <label class="flex cursor-pointer items-start gap-2">
+            <input type="checkbox" id="checkTerms" class="check mt-0.5 rounded border-slate-300 text-teal-600">
+            <span>핵심 과학 용어(용질, 용매, 용액 등)를 정확하게 사용했는가?</span>
+          </label>
+        </li>
+        <li>
+          <label class="flex cursor-pointer items-start gap-2">
+            <input type="checkbox" id="checkEvidence" class="check mt-0.5 rounded border-slate-300 text-teal-600">
+            <span>나의 주장과 이를 뒷받침하는 구체적인 근거·데이터를 포함했는가?</span>
+          </label>
+        </li>
+        <li>
+          <label class="flex cursor-pointer items-start gap-2">
+            <input type="checkbox" id="checkCausal" class="check mt-0.5 rounded border-slate-300 text-teal-600">
+            <span>문장이 논리적인 인과 구조("~이기 때문이다" 등)로 끝나는가?</span>
+          </label>
+        </li>
+      </ul>
+
+      <div class="no-print mt-8 flex justify-end gap-3">
+        <button type="button" id="saveBtn" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">임시 저장</button>
+        <button type="button" id="printBtn" class="rounded-xl bg-teal-700 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-teal-800">작성 완료 및 인쇄(PDF)</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    var STORAGE_KEY = 'headline-daily-solutions-v1';
+    var textFields = ['grade', 'classNo', 'studentNo', 'studentName', 'headline', 'headlineReason'];
+    var checkFields = ['checkTerms', 'checkEvidence', 'checkCausal'];
+
+    function loadData() {
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        var data = JSON.parse(raw);
+        textFields.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el && data[id] != null) el.value = data[id];
+        });
+        checkFields.forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el && data[id] === true) el.checked = true;
+        });
+      } catch (e) {}
+    }
+
+    function saveData(silent) {
+      var data = {};
+      textFields.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) data[id] = el.value;
+      });
+      checkFields.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) data[id] = el.checked;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      if (!silent) alert('학습지가 안전하게 임시 저장되었습니다.');
+    }
+
+    document.querySelectorAll('.field').forEach(function(el) {
+      el.addEventListener('input', function() { saveData(true); });
+    });
+    document.querySelectorAll('.check').forEach(function(el) {
+      el.addEventListener('change', function() { saveData(true); });
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', function() { saveData(false); });
+    document.getElementById('printBtn').addEventListener('click', function() {
+      saveData(true);
+      window.print();
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
