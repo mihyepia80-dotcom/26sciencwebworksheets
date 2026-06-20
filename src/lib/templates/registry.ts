@@ -239,7 +239,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     aiFeatureLabel: "시각적 요약(인포그래픽)",
     aiFeature:
       "학생이 텍스트로 정리한 일반화 명제를 기반으로, AI가 어울리는 색상과 기호, 이미지를 매칭하여 과학 포스터 요약본을 자동 생성합니다.",
-    headerFields: ["description"],
+    headerFields: ["writingContext"],
   },
   {
     id: "four-cs",

@@ -78,7 +78,14 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
   "what-makes-you-say-that": ["claim", "evidence", "reasoning"],
   e3: ["estimate", "exploreData", "gapAnalysis", "explain"],
   fishbone: ["phenomenon", "cause1", "cause2", "cause3", "cause4", "summary"],
-  "color-symbol-image": ["summary", "color", "symbol", "imageDesc"],
+  "color-symbol-image": [
+    "colorText",
+    "colorPicker",
+    "colorReason",
+    "symbolText",
+    "symbolReason",
+    "imageReason",
+  ],
   "inquiry-classroom-rules": ["objectiveData", "avoidGuess", "citeEvidence", "selfCheck"],
   scamper: [
     "conclusion",

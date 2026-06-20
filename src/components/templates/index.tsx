@@ -32,7 +32,6 @@ import {
   WhatMakesYouSayThatTemplate,
   E3Template,
   FishboneTemplate,
-  ColorSymbolImageTemplate,
   InquiryClassroomRulesTemplate,
   ScamperTemplate,
   TrafficLightReflectionTemplate,
@@ -51,6 +50,7 @@ import { ThreeTwoOneReflectionTemplate } from "./ThreeTwoOneReflectionTemplate";
 import { GsceTemplate } from "./GsceTemplate";
 import { ClaimSupportQuestionTemplate } from "./ClaimSupportQuestionTemplate";
 import { HeadlineTemplate } from "./HeadlineTemplate";
+import { ColorSymbolImageTemplate } from "./ColorSymbolImageTemplate";
 import {
   CircleTreeMapTemplate,
   MultiFlowMapTemplate,

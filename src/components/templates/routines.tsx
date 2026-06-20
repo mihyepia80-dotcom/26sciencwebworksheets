@@ -605,17 +605,6 @@ export function FishboneTemplate({ values, onChange, readOnly }: TemplateProps) 
   );
 }
 
-export function ColorSymbolImageTemplate({ values, onChange, readOnly }: TemplateProps) {
-  return (
-    <SectionBox title="Color · Symbol · Image" color="purple">
-      <TextAreaField label="일반화 명제(텍스트 요약)" value={v(values, "summary")} onChange={(val) => onChange("summary", val)} rows={4} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="Color — 대표 색상과 의미" value={v(values, "color")} onChange={(val) => onChange("color", val)} rows={3} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="Symbol — 기호 선택과 이유" value={v(values, "symbol")} onChange={(val) => onChange("symbol", val)} rows={3} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="Image — 이미지·포스터 설명" value={v(values, "imageDesc")} onChange={(val) => onChange("imageDesc", val)} rows={4} readOnly={readOnly} />
-    </SectionBox>
-  );
-}
-
 export function InquiryClassroomRulesTemplate({ values, onChange, readOnly }: TemplateProps) {
   const rules = [
     { key: "objectiveData", label: "객관적 수치·데이터 사용" },

@@ -104,6 +104,19 @@ const FIELD_EXAMPLE_TEXTS: Record<string, Record<string, string[]>> = {
   "plus-one": {
     workspace: ["생각을 자유롭게 기록하세요"],
   },
+  "color-symbol-image": {
+    colorText: ["예: 초록색, 투명색"],
+    colorReason: [
+      "이 색이 용액의 어떤 특징을 닮았는지 과학적으로 서술하세요.",
+    ],
+    symbolText: ["예: =, +"],
+    symbolReason: [
+      "선택한 기호가 용액의 어떤 과학적 원리를 나타내는지 서술하세요.",
+    ],
+    imageReason: [
+      "예: 눈에 보이지 않는 작은 그물망들이 설탕 입자들을 꽉 붙잡고 공중에 고르게 띄워놓은 장면이 떠오른다. 용매와 용질이 완벽하게 섞여 성질이 일정하다는 용액의 특징을 나타내기 때문이다.",
+    ],
+  },
   "claim-support-question": {
     claim: [
       "예시) 색깔이 없는 투명한 용액이더라도 물체를 띄워보면 진하기를 비교할 수 있다.",
