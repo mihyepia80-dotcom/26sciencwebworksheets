@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { DrawingCanvas } from "@/components/inquiry-report/DrawingCanvas";
 import { PeerFeedbackSection } from "@/components/peer-feedback/PeerFeedbackSection";
 import { useAuth } from "@/components/AuthProvider";
@@ -10,6 +11,10 @@ import {
   getInquiryReport,
   updateInquiryReport,
 } from "@/lib/firebase/inquiry-reports";
+import {
+  createInquiryReportShareLink,
+  sanitizeInquiryReportForSave,
+} from "@/lib/firebase/inquiry-report-shares";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
 import {
   EMPTY_INQUIRY_REPORT,
@@ -28,6 +33,7 @@ const TOOL_BUTTON =
   "flex flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs text-slate-600 hover:bg-slate-100";
 
 export function InquiryReportEditor({ initialReportId }: { initialReportId?: string | null }) {
+  const router = useRouter();
   const { user, role, studentProfile } = useAuth();
   const [form, setForm] = useState<InquiryReportForm>(EMPTY_INQUIRY_REPORT);
   const [reportId, setReportId] = useState<string | null>(initialReportId ?? null);
@@ -40,6 +46,7 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const contentRef = useRef<HTMLDivElement>(null);
   const readOnly = mode === "preview" || submitted;
 
@@ -110,18 +117,26 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
   const ensureReportId = useCallback(async (): Promise<string> => {
     if (reportId) return reportId;
     if (!user) throw new Error("로그인이 필요합니다.");
+    const safeForm = sanitizeInquiryReportForSave(form);
     const id = await createInquiryReportDraft(
-      form,
+      safeForm,
       user.uid,
       studentProfile?.grade ?? "",
       studentProfile?.classNo ?? "",
     );
     setReportId(id);
+    router.replace(`/inquiry-report?report=${id}`, { scroll: false });
     return id;
-  }, [form, reportId, studentProfile?.classNo, studentProfile?.grade, user]);
+  }, [form, reportId, router, studentProfile?.classNo, studentProfile?.grade, user]);
 
   const patch = <K extends keyof InquiryReportForm>(key: K, value: InquiryReportForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handlePdfSave = () => {
+    setMode("preview");
+    setMessage("");
+    window.setTimeout(() => window.print(), 300);
   };
 
   const handleSave = async () => {
@@ -133,20 +148,39 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
     setError("");
     setMessage("");
     try {
+      const safeForm = sanitizeInquiryReportForSave(form);
       const id = await ensureReportId();
       await updateInquiryReport(
         id,
-        form,
+        safeForm,
         user.uid,
         submitted ? "submitted" : "draft",
         studentProfile?.grade ?? "",
         studentProfile?.classNo ?? "",
       );
-      setMessage("저장되었습니다.");
+      const token = await createInquiryReportShareLink(id, user.uid, safeForm);
+      const url = `${window.location.origin}/inquiry-report/view/${token}`;
+      setShareUrl(url);
+      try {
+        await navigator.clipboard.writeText(url);
+        setMessage("저장되었습니다. 미리보기 공유 링크가 복사되었습니다.");
+      } catch {
+        setMessage("저장되었습니다. 아래 공유 링크를 복사해 사용하세요.");
+      }
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "저장에 실패했습니다."));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setMessage("공유 링크가 복사되었습니다.");
+    } catch {
+      setError("링크 복사에 실패했습니다. 주소를 직접 복사해 주세요.");
     }
   };
 
@@ -164,18 +198,21 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
     setError("");
     setMessage("");
     try {
+      const safeForm = sanitizeInquiryReportForSave(form);
       const id = await ensureReportId();
       await updateInquiryReport(
         id,
-        form,
+        safeForm,
         user.uid,
         "submitted",
         studentProfile?.grade ?? "",
         studentProfile?.classNo ?? "",
       );
+      const token = await createInquiryReportShareLink(id, user.uid, safeForm);
+      setShareUrl(`${window.location.origin}/inquiry-report/view/${token}`);
       setSubmitted(true);
       setMode("preview");
-      setMessage("제출이 완료되었습니다!");
+      setMessage("제출이 완료되었습니다! 공유 링크로 미리보기할 수 있습니다.");
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "제출에 실패했습니다."));
     } finally {
@@ -196,7 +233,7 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100 print:bg-white">
+    <div className="inquiry-report-editor flex min-h-screen flex-col bg-slate-100 print:bg-white">
       {/* 상단 메뉴바 */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white shadow-sm print:hidden">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3">
@@ -213,7 +250,6 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
               onClick={() => setMode("write")}
               disabled={submitted}
             >
-              <span className="text-base">✏️</span>
               쓰기
             </button>
             <button
@@ -221,28 +257,41 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
               className={`${TOOL_BUTTON} ${mode === "preview" ? "bg-blue-50 text-blue-700" : ""}`}
               onClick={() => setMode("preview")}
             >
-              <span className="text-base">👁</span>
               미리보기
             </button>
             <button type="button" className={TOOL_BUTTON} onClick={cycleZoom}>
-              <span className="text-base">🔍</span>
               화면확대 ({zoom}%)
             </button>
-            <button type="button" className={TOOL_BUTTON} onClick={() => window.print()}>
-              <span className="text-base">🖨</span>
-              출력
+            <button type="button" className={TOOL_BUTTON} onClick={handlePdfSave}>
+              PDF 저장
             </button>
             <button
               type="button"
-              className={TOOL_BUTTON}
-              onClick={handleSave}
-              disabled={saving || submitted}
+              className={`${TOOL_BUTTON} bg-emerald-50 text-emerald-800 hover:bg-emerald-100`}
+              onClick={() => void handleSave()}
+              disabled={saving}
             >
-              <span className="text-base">💾</span>
-              {saving ? "저장 중..." : "저장"}
+              {saving ? "저장 중..." : "저장하기"}
             </button>
           </div>
         </div>
+        {shareUrl && (
+          <div className="border-t border-slate-100 bg-slate-50 px-4 py-2 print:hidden">
+            <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 text-xs">
+              <span className="font-medium text-slate-600">미리보기 공유 링크</span>
+              <a href={shareUrl} target="_blank" rel="noreferrer" className="break-all text-blue-600 hover:underline">
+                {shareUrl}
+              </a>
+              <button
+                type="button"
+                onClick={() => void handleCopyShareLink()}
+                className="rounded border border-slate-300 bg-white px-2 py-1 text-slate-600 hover:bg-slate-100"
+              >
+                링크 복사
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 gap-0 print:max-w-none">
@@ -269,9 +318,10 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
 
         {/* 본문 */}
         <main
+          id="inquiry-report-print"
           ref={contentRef}
-          className="flex-1 overflow-y-auto px-4 py-6 print:overflow-visible"
-          style={{ transform: `scale(${zoom / 100})`, transformOrigin: "top center" }}
+          className="inquiry-report-print flex-1 overflow-y-auto px-4 py-6 print:overflow-visible"
+          style={{ transform: zoom === 100 ? undefined : `scale(${zoom / 100})`, transformOrigin: "top center" }}
         >
           <div className="mx-auto max-w-3xl space-y-5 pb-24">
             {/* 단원·차시·모둠 정보 */}

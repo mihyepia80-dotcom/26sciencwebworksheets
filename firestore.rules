@@ -257,5 +257,14 @@ service cloud.firestore {
       allow create, update: if isTeacher() && isValidWorksheetContent(request.resource.data);
       allow delete: if isTeacher();
     }
+
+    match /inquiryReportShares/{shareId} {
+      allow read: if true;
+      allow create, update: if isStudent()
+        && request.resource.data.studentUid == request.auth.uid
+        && request.resource.data.reportId is string
+        && request.resource.data.title is string;
+      allow delete: if isTeacher() || (isStudent() && resource.data.studentUid == request.auth.uid);
+    }
   }
 }

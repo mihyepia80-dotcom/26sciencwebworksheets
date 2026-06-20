@@ -44,6 +44,12 @@ export {
   type InquiryReportDoc,
 } from "./inquiry-reports";
 export {
+  createInquiryReportShareLink,
+  getInquiryReportShareByToken,
+  sanitizeInquiryReportForSave,
+  type InquiryReportShareRecord,
+} from "./inquiry-report-shares";
+export {
   createLessonPlan,
   updateLessonPlan,
   getLessonPlan,

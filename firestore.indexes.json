@@ -144,10 +144,11 @@
       ]
     },
     {
-      "collectionGroup": "badgeDefinitions",
+      "collectionGroup": "inquiryReportShares",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "order", "order": "ASCENDING" }
+        { "fieldPath": "reportId", "order": "ASCENDING" },
+        { "fieldPath": "studentUid", "order": "ASCENDING" }
       ]
     }
   ],

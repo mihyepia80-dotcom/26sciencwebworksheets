@@ -86,15 +86,18 @@ function mapDoc(id: string, data: Record<string, unknown>): InquiryReportDoc {
 }
 
 function toFirestorePayload(form: InquiryReportForm, studentUid: string, status: InquiryReportStatus, grade = "", classNo = "") {
+  const safe = { ...form, members: form.members.slice(0, 6) };
+  if (safe.visualDrawing.length > 900_000) {
+    safe.visualDrawing = "";
+  }
   return {
-    ...form,
-    members: form.members.slice(0, 6),
+    ...safe,
     studentUid,
     grade,
     classNo,
     status,
     updatedAt: serverTimestamp(),
-    ...(status === "submitted" ? { submittedAt: serverTimestamp() } : {}),
+    submittedAt: status === "submitted" ? serverTimestamp() : null,
   };
 }
 

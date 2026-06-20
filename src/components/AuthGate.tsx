@@ -8,7 +8,11 @@ import { useAuth } from "@/components/AuthProvider";
 const PUBLIC_PATHS = ["/login"];
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.includes(pathname) || pathname.startsWith("/share/");
+  return (
+    PUBLIC_PATHS.includes(pathname) ||
+    pathname.startsWith("/share/") ||
+    pathname.startsWith("/inquiry-report/view/")
+  );
 }
 
 export function AuthGate({ children }: { children: ReactNode }) {

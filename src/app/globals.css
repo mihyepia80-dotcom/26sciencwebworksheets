@@ -102,4 +102,35 @@ body {
     border-color: #cbd5e1 !important;
     resize: none !important;
   }
+
+  #inquiry-report-print,
+  .inquiry-report-print {
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  #inquiry-report-print textarea,
+  #inquiry-report-print input,
+  .inquiry-report-print textarea,
+  .inquiry-report-print input {
+    border-color: #cbd5e1 !important;
+    background: white !important;
+    resize: none !important;
+    overflow: visible !important;
+  }
+
+  #inquiry-report-print section,
+  .inquiry-report-print section,
+  #inquiry-report-print article,
+  .inquiry-report-print article {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .inquiry-report-editor > header,
+  .inquiry-report-editor aside,
+  .inquiry-report-editor button,
+  .inquiry-report-editor .peer-feedback-section {
+    display: none !important;
+  }
 }
