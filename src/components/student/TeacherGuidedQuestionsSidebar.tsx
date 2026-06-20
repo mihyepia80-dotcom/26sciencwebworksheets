@@ -1,6 +1,7 @@
 "use client";
 
 import type { WorksheetMeta } from "@/lib/types";
+import { getMetaFieldLabel } from "@/lib/meta-labels";
 import { GUIDED_QUESTION_SLOTS } from "@/lib/guided-questions/types";
 
 interface TeacherGuidedQuestionsSidebarProps {
@@ -43,7 +44,7 @@ export function TeacherGuidedQuestionsSidebar({
           )}
           {meta.writingContext?.trim() && (
             <div>
-              <dt className="font-semibold text-emerald-800">글쓰기 상황</dt>
+              <dt className="font-semibold text-emerald-800">{getMetaFieldLabel("writingContext")}</dt>
               <dd className="mt-0.5 text-slate-700">{meta.writingContext}</dd>
             </div>
           )}

@@ -101,6 +101,17 @@ const FIELD_EXAMPLE_TEXTS: Record<string, Record<string, string[]>> = {
   "plus-one": {
     workspace: ["생각을 자유롭게 기록하세요"],
   },
+  "claim-support-question": {
+    claim: [
+      "예시) 색깔이 없는 투명한 용액이더라도 물체를 띄워보면 진하기를 비교할 수 있다.",
+    ],
+    support: [
+      "예시) 왜냐하면 백설탕을 많이 녹여 더 진하게 만든 용액에 방울토마토를 넣었을 때가, 설탕을 적게 녹인 연한 용액에서보다 방울토마토가 훨씬 더 높이 떠 올랐기 때문이다.",
+    ],
+    question: [
+      "예시) 그렇다면 방울토마토가 아니라 메추리알을 넣어도 용액이 진할수록 더 높이 떠오를까?",
+    ],
+  },
 };
 
 function normalizeComparable(text: string): string {

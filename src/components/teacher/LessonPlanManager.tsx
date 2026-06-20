@@ -27,6 +27,7 @@ import {
   validateLessonThinkingTools,
   type PrimaryInquiryStageKey,
 } from "@/lib/lesson-plan/thinking-tools";
+import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 
 const PRIMARY_STAGE_LABELS: { key: PrimaryInquiryStageKey; label: string }[] = [
   { key: "questioning", label: "질문하기" },
@@ -457,8 +458,8 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
             </div>
 
             <div className="grid border-x border-b border-slate-200 sm:grid-cols-2">
-              <GridCell label="글쓰기 상황">
-                <textarea className={TEXTAREA} rows={3} value={form.writingContext} onChange={(e) => patch("writingContext", e.target.value)} />
+              <GridCell label={getMetaFieldLabel("writingContext")}>
+                <textarea className={TEXTAREA} rows={3} value={form.writingContext} onChange={(e) => patch("writingContext", e.target.value)} placeholder={getMetaFieldPlaceholder("writingContext")} />
               </GridCell>
               <GridCell label="AI 활용 웹앱">
                 <textarea className={TEXTAREA} rows={3} value={form.aiWebApp} onChange={(e) => patch("aiWebApp", e.target.value)} />

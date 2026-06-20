@@ -5,7 +5,6 @@ import type { TemplateProps } from "@/lib/types";
 import {
   SeeThinkWonderTemplate,
   ThinkPuzzleExploreTemplate,
-  ClaimSupportQuestionTemplate,
   FourCsTemplate,
   FiveWhyTemplate,
   StepInsideTemplate,
@@ -50,6 +49,7 @@ import { MandalartTemplate } from "./MandalartTemplate";
 import { CompassPointsTemplate } from "./CompassPointsTemplate";
 import { ThreeTwoOneReflectionTemplate } from "./ThreeTwoOneReflectionTemplate";
 import { GsceTemplate } from "./GsceTemplate";
+import { ClaimSupportQuestionTemplate } from "./ClaimSupportQuestionTemplate";
 import {
   CircleTreeMapTemplate,
   MultiFlowMapTemplate,

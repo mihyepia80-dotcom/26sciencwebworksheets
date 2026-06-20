@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { GeminiApiError, callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
 import { GUIDED_QUESTION_DEFAULT_COUNT } from "@/lib/guided-questions/types";
+import { getMetaFieldLabel } from "@/lib/meta-labels";
 
 interface GenerateRequest {
   templateId: string;
@@ -20,7 +21,7 @@ function buildPrompt(body: GenerateRequest, count: number): string {
 활동 주제: ${body.topic.trim()}
 단원: ${body.unit?.trim() || "없음"}
 학년: ${body.grade?.trim() || "초등"}
-글쓰기 상황: ${body.writingContext?.trim() || "없음"}
+${getMetaFieldLabel("writingContext")}: ${body.writingContext?.trim() || "없음"}
 탐구 질문: ${body.inquiryQuestion?.trim() || "없음"}
 
 요구사항:

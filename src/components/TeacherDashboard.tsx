@@ -37,7 +37,7 @@ const META_LABELS: Record<string, string> = {
   unit: "단원",
   period: "차시",
   inquiryQuestion: "탐구질문",
-  writingContext: "글쓰기 상황",
+  writingContext: getMetaFieldLabel("writingContext"),
   description: "설명",
 };
 

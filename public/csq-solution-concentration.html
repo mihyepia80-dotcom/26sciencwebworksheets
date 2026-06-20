@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[과학 성장 포트폴리오] 용액의 진하기 비교 CSQ 글쓰기 학습지</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: #f8fafc;
+    }
+    @media print {
+      body { background-color: #ffffff; }
+      .no-print { display: none !important; }
+      .print-card { border: 1px solid #cbd5e1 !important; box-shadow: none !important; margin-bottom: 1.5rem !important; }
+      textarea { border: none !important; resize: none !important; }
+    }
+  </style>
+</head>
+<body class="px-4 py-8 sm:px-6 lg:px-8">
+
+  <div class="print-card mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+
+    <div class="mb-6 border-b border-slate-200 pb-6 text-center">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-800">과학과 성장 포트폴리오</h1>
+      <p class="mt-1 text-slate-500">CSQ 루틴 기반 과학 성찰 글쓰기 (용액의 진하기 비교)</p>
+    </div>
+
+    <div class="mb-8 grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-4">
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">학년</label>
+        <input type="number" id="grade" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none" placeholder="5">
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">반</label>
+        <input type="number" id="class" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none" placeholder="1">
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">번호</label>
+        <input type="number" id="number" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none" placeholder="1">
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-medium text-slate-500">이름</label>
+        <input type="text" id="name" class="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 focus:border-indigo-500 focus:outline-none" placeholder="홍길동">
+      </div>
+    </div>
+
+    <div class="mb-8 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-indigo-900">나의 탐구 데이터 핵심 메모</h2>
+      <ul class="list-disc space-y-1 pl-4 text-xs text-indigo-800">
+        <li>황설탕 용액(색깔 있는 용액): 용액이 진할수록 색깔이 더 진하고 살짝 끈적임.</li>
+        <li>백설탕 용액(색깔 없는 용액): 용액이 진할수록 방울토마토가 더 높이 떠오름.</li>
+      </ul>
+    </div>
+
+    <div class="space-y-6">
+      <div class="rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">C</span>
+          <label class="text-base font-bold text-slate-800">Claim (주장)</label>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">질문: 색깔이 없는 투명한 용액의 진하기는 어떻게 비교하여 증명할 수 있을까요?</p>
+        <textarea id="claim" rows="2" class="w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-700 focus:border-blue-500 focus:outline-none" placeholder="예시) 색깔이 없는 투명한 용액이더라도 물체를 띄워보면 진하기를 비교할 수 있다."></textarea>
+      </div>
+
+      <div class="rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-emerald-600 px-2 py-0.5 text-xs font-bold text-white">S</span>
+          <label class="text-base font-bold text-slate-800">Support (근거)</label>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">질문: 그렇게 주장하는 과학적 실험 근거(관찰한 데이터, 방울토마토 현상)는 무엇인가요?</p>
+        <textarea id="support" rows="3" class="w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none" placeholder="예시) 왜냐하면 백설탕을 많이 녹여 더 진하게 만든 용액에 방울토마토를 넣었을 때가, 설탕을 적게 녹인 연한 용액에서보다 방울토마토가 훨씬 더 높이 떠 올랐기 때문이다."></textarea>
+      </div>
+
+      <div class="rounded-xl border border-slate-200 p-5 shadow-xs">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-amber-600 px-2 py-0.5 text-xs font-bold text-white">Q</span>
+          <label class="text-base font-bold text-slate-800">Question (질문)</label>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">질문: 오늘 실험 결과와 관련하여 더 탐구하고 싶거나 새롭게 생겨난 질문은 무엇인가요?</p>
+        <textarea id="question" rows="2" class="w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-700 focus:border-amber-500 focus:outline-none" placeholder="예시) 그렇다면 방울토마토가 아니라 메추리알을 넣어도 용액이 진할수록 더 높이 떠오를까?"></textarea>
+      </div>
+    </div>
+
+    <div class="mt-8 border-t border-slate-200 pt-6">
+      <h3 class="mb-3 text-sm font-bold text-slate-800">나의 글 최종 점검 (셀프 체크)</h3>
+      <div class="mb-6 space-y-2 text-sm text-slate-600">
+        <label class="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" id="check1" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+          <span>용질, 용매, 진하기라는 과학 용어를 알맞게 사용했나요?</span>
+        </label>
+        <label class="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" id="check2" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+          <span>주장을 뒷받침하는 구체적인 실험 관찰 사실(방울토마토의 높이)을 적었나요?</span>
+        </label>
+        <label class="flex cursor-pointer items-center gap-2">
+          <input type="checkbox" id="check3" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+          <span>문장이 "~이다", "~때문이다"와 같이 인과 관계로 끝이 나나요?</span>
+        </label>
+      </div>
+
+      <div class="no-print flex justify-end gap-3">
+        <button type="button" onclick="saveData()" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200">임시 저장</button>
+        <button type="button" onclick="window.print()" class="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-xs transition hover:bg-indigo-700">작성 완료 및 인쇄(PDF)</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const fields = ['grade', 'class', 'number', 'name', 'claim', 'support', 'question', 'check1', 'check2', 'check3'];
+
+    window.onload = function() {
+      fields.forEach(function(field) {
+        var value = localStorage.getItem('csq_' + field);
+        if (value !== null) {
+          var el = document.getElementById(field);
+          if (el.type === 'checkbox') {
+            el.checked = value === 'true';
+          } else {
+            el.value = value;
+          }
+        }
+      });
+    };
+
+    function saveData() {
+      fields.forEach(function(field) {
+        var el = document.getElementById(field);
+        var value = el.type === 'checkbox' ? el.checked : el.value;
+        localStorage.setItem('csq_' + field, value);
+      });
+      alert('학습지가 안전하게 임시 저장되었습니다.');
+    }
+  </script>
+</body>
+</html>

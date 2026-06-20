@@ -3,6 +3,7 @@
 import type { TemplateProps } from "@/lib/types";
 import { GuideChips, SectionBox, TextAreaField, GridInput } from "@/components/common/Fields";
 import { fieldValue as v } from "@/components/templates/utils";
+import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 
 /* ── See/Think/Wonder ── */
 const STW_SECTIONS = {
@@ -118,27 +119,6 @@ export function ThinkPuzzleExploreTemplate({ values, onChange, readOnly }: Templ
               <p className="italic">{ex}</p>
             </div>
             <TextAreaField value={v(values, key)} onChange={(val) => onChange(key, val)} rows={5} readOnly={readOnly} className="px-3 pb-3" />
-          </div>
-        ))}
-      </div>
-    </SectionBox>
-  );
-}
-
-/* ── Claim Support Question ── */
-export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: TemplateProps) {
-  const cols = [
-    { key: "claim", title: "Claim (주장)", ph: "나는 ___이 중요하다고 생각해요." },
-    { key: "support", title: "Support (근거)", ph: "왜냐하면 ___에서 그렇게 말했어요." },
-    { key: "question", title: "Question (질문)", ph: "만약 ___라면 어떻게 될까요?" },
-  ];
-  return (
-    <SectionBox title="Claim · Support · Question" color="pink">
-      <div className="grid gap-3 md:grid-cols-3">
-        {cols.map(({ key, title, ph }) => (
-          <div key={key} className="rounded border-2 border-red-200 bg-white">
-            <div className="bg-pink-100 px-3 py-2 text-sm font-bold">{title}</div>
-            <TextAreaField value={v(values, key)} onChange={(val) => onChange(key, val)} placeholder={ph} rows={6} readOnly={readOnly} className="p-3" />
           </div>
         ))}
       </div>
@@ -303,7 +283,7 @@ export function ChalkTalkTemplate(props: TemplateProps) {
   return (
     <SectionBox title="Chalk Talk" color="blue">
       <ActivitySheetTemplate {...props} fields={[
-        { key: "writingContext", label: "글쓰기 상황" },
+        { key: "writingContext", label: getMetaFieldLabel("writingContext") },
         { key: "activityExample", label: "활동 사례" },
         { key: "activityTip", label: "활동 팁" },
       ]} />
@@ -335,7 +315,7 @@ export function ZoomInTemplate({ values, onChange, readOnly }: TemplateProps) {
           <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={5} readOnly={readOnly} />
         ))}
       </div>
-      <TextAreaField label="글쓰기 상황" value={v(values, "writingSituation")} onChange={(val) => onChange("writingSituation", val)} rows={3} readOnly={readOnly} className="mt-4" />
+      <TextAreaField label={getMetaFieldLabel("writingContext")} value={v(values, "writingSituation")} onChange={(val) => onChange("writingSituation", val)} rows={3} readOnly={readOnly} className="mt-4" placeholder={getMetaFieldPlaceholder("writingContext")} />
     </SectionBox>
   );
 }

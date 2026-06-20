@@ -12,6 +12,7 @@ import {
   updateGuidedQuestionSet,
 } from "@/lib/firebase";
 import { getSortedTemplates } from "@/lib/templates/registry";
+import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 import { GUIDED_QUESTION_SLOTS } from "@/lib/guided-questions/types";
 import type { GuidedQuestionSet } from "@/lib/guided-questions/types";
 
@@ -176,7 +177,7 @@ export function GuidedQuestionManager() {
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">유도 질문 관리</h1>
           <p className="mt-1 text-sm text-slate-600">
-            단원·주제·글쓰기 상황과 가이드 질문을 저장하면 학생 활동지에 반영됩니다. AI 질문 생성은 교사만 사용합니다.
+            단원·주제·{getMetaFieldLabel("writingContext")}과 가이드 질문을 저장하면 학생 활동지에 반영됩니다. AI 질문 생성은 교사만 사용합니다.
           </p>
         </div>
         <button
@@ -215,12 +216,12 @@ export function GuidedQuestionManager() {
             <input className={INPUT} value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="예: 2단원 물의 상태 변화" />
           </label>
           <label className="block sm:col-span-2">
-            <span className="mb-1 block text-xs font-semibold text-slate-600">글쓰기 상황</span>
+            <span className="mb-1 block text-xs font-semibold text-slate-600">{getMetaFieldLabel("writingContext")}</span>
             <textarea
               className={`${INPUT} min-h-[72px] resize-y`}
               value={writingContext}
               onChange={(e) => setWritingContext(e.target.value)}
-              placeholder="예: 실험 후 관찰 내용을 바탕으로 글쓰기"
+              placeholder={getMetaFieldPlaceholder("writingContext")}
               rows={2}
             />
           </label>
@@ -246,7 +247,7 @@ export function GuidedQuestionManager() {
 
         <label className="mt-4 flex items-center gap-2 text-sm text-slate-700">
           <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} />
-          학생에게 제공 — 고정 시 해당 템플릿 활동지에 단원·주제·글쓰기 상황·가이드 질문이 반영됩니다
+          학생에게 제공 — 고정 시 해당 템플릿 활동지에 단원·주제·{getMetaFieldLabel("writingContext")}·가이드 질문이 반영됩니다
         </label>
 
         <div className="mt-4 flex flex-wrap gap-2">

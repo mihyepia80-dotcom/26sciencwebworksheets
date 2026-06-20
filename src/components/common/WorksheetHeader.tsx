@@ -1,7 +1,7 @@
 "use client";
 
 import type { WorksheetMeta } from "@/lib/types";
-import { getMetaFieldLabel } from "@/lib/meta-labels";
+import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 
 interface WorksheetHeaderProps {
   toolName: string;
@@ -32,8 +32,8 @@ export function WorksheetHeader({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 border-b border-slate-200 md:grid-cols-[120px_1fr]">
-        <div className="bg-sky-50 px-3 py-2 text-xs font-semibold text-slate-600">{getMetaFieldLabel("unit")}</div>
+      <div className="grid grid-cols-1 border-b border-slate-200 md:grid-cols-[140px_1fr]">
+        <div className="bg-sky-50 px-3 py-2 text-xs font-semibold leading-snug text-slate-600">{getMetaFieldLabel("unit")}</div>
         <textarea
           className="min-h-[48px] resize-y px-3 py-2 text-sm focus:outline-none"
           placeholder={`${getMetaFieldLabel("unit")}을(를) 입력하세요`}
@@ -44,16 +44,16 @@ export function WorksheetHeader({
         />
       </div>
 
-      <div className="grid grid-cols-1 border-b border-slate-200 md:grid-cols-[120px_1fr]">
-        <div className="bg-sky-50 px-3 py-2 text-xs font-semibold text-slate-600">{getMetaFieldLabel("topic")}</div>
+      <div className="grid grid-cols-1 border-b border-slate-200 md:grid-cols-[140px_1fr]">
+        <div className="bg-sky-50 px-3 py-2 text-xs font-semibold leading-snug text-slate-600">{getMetaFieldLabel("topic")}</div>
         <input className="px-3 py-2 text-sm focus:outline-none" placeholder="주제를 입력하세요" value={meta.topic} disabled={readOnly} onChange={(e) => onMetaChange("topic", e.target.value)} />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[120px_1fr]">
-        <div className="bg-sky-50 px-3 py-2 text-xs font-semibold text-slate-600">{getMetaFieldLabel("writingContext")}</div>
+      <div className="grid grid-cols-1 md:grid-cols-[140px_1fr]">
+        <div className="bg-sky-50 px-3 py-2 text-xs font-semibold leading-snug text-slate-600">{getMetaFieldLabel("writingContext")}</div>
         <textarea
           className="min-h-[48px] resize-y px-3 py-2 text-sm focus:outline-none"
-          placeholder={`${getMetaFieldLabel("writingContext")}을(를) 입력하세요`}
+          placeholder={getMetaFieldPlaceholder("writingContext")}
           rows={2}
           value={meta.writingContext ?? ""}
           disabled={readOnly}

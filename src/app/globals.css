@@ -62,4 +62,13 @@ body {
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
+  .csq-worksheet button {
+    display: none !important;
+  }
+
+  .csq-worksheet textarea {
+    border-color: #cbd5e1 !important;
+    resize: none !important;
+  }
 }
