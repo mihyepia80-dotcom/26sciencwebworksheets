@@ -11,11 +11,13 @@ import { WorksheetHeader } from "@/components/common/WorksheetHeader";
 import { TemplateRenderer } from "@/components/templates";
 import { GuidedQuestionsPanel } from "@/components/worksheet/GuidedQuestionsPanel";
 import { TeacherGuidedQuestionsSidebar } from "@/components/student/TeacherGuidedQuestionsSidebar";
+import { WorksheetProgressNav } from "@/components/student/WorksheetProgressNav";
 import { WorksheetActionBar, WorksheetGuidanceBanner, WorksheetPrintBar } from "@/components/worksheet/WorksheetChrome";
 import { useAuth } from "@/components/AuthProvider";
 import type { AiRating } from "@/lib/ai/feedback";
 import { useAiQuota } from "@/hooks/useAiQuota";
 import { useGuidedQuestions } from "@/hooks/useGuidedQuestions";
+import { useStudentTemplateProgress } from "@/hooks/useStudentTemplateProgress";
 import { useWorksheetDraft } from "@/hooks/useWorksheetDraft";
 import { useWorksheetLoader } from "@/hooks/useWorksheetLoader";
 import { useWorksheetSubmit } from "@/hooks/useWorksheetSubmit";
@@ -51,6 +53,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
   const [aiRating, setAiRating] = useState<AiRating | null>(null);
 
   const { aiQuota, setAiQuota } = useAiQuota(user?.uid, isStudent);
+  const { getProgress, loading: progressLoading } = useStudentTemplateProgress(isStudent);
 
   const handleTeacherMetaPrefill = useCallback((patch: Partial<WorksheetMeta>) => {
     setMeta((prev) => ({ ...prev, ...patch }));
@@ -212,6 +215,30 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
 
       {loadError && <p className="text-sm text-red-600 print:hidden">{loadError}</p>}
 
+      {isStudent && (
+        <div className="print:hidden lg:hidden">
+          <WorksheetProgressNav
+            variant="tabs"
+            currentTemplateId={templateId}
+            getProgress={getProgress}
+            loading={progressLoading}
+          />
+        </div>
+      )}
+
+      <div className={isStudent ? "grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]" : ""}>
+        {isStudent && (
+          <div className="hidden print:hidden lg:block">
+            <WorksheetProgressNav
+              variant="sidebar"
+              currentTemplateId={templateId}
+              getProgress={getProgress}
+              loading={progressLoading}
+            />
+          </div>
+        )}
+
+        <div className="min-w-0 space-y-4">
       <div id="worksheet-print" className="worksheet-print-area space-y-4">
         <WorksheetHeader
           toolName={formatTemplateTitle(template)}
@@ -342,6 +369,8 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
           ownDocId={submissionId}
           enabled={submitted && Boolean(submissionId) && isStudent}
         />
+      </div>
+        </div>
       </div>
     </div>
   );

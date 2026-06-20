@@ -70,3 +70,20 @@ export {
   createPeerFeedback,
   type PeerFeedbackDoc,
 } from "./peer-feedbacks";
+export {
+  listBadgeDefinitions,
+  listAllBadgeDefinitionsForTeacher,
+  seedDefaultBadgeDefinitions,
+  saveBadgeDefinition,
+  deleteBadgeDefinition,
+  awardStudentBadge,
+  listStudentBadges,
+  listAllStudentBadges,
+  revokeStudentBadge,
+} from "./badges";
+export {
+  getWorksheetContent,
+  subscribeWorksheetContent,
+  publishWorksheetContent,
+  type WorksheetContentDoc,
+} from "./worksheet-content";

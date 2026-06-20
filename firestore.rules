@@ -208,5 +208,54 @@ service cloud.firestore {
       allow delete: if isTeacher()
         && resource.data.teacherUid == request.auth.uid;
     }
+
+    function isValidBadgeDefinition(data) {
+      return data.keys().hasAll(['label', 'iconKey', 'active', 'order'])
+        && data.label is string && data.label.size() > 0 && data.label.size() <= 80
+        && data.iconKey in ['shirt-green', 'shirt-blue', 'shirt-purple', 'shirt-amber', 'shirt-rose']
+        && data.active is bool
+        && data.order is number;
+    }
+
+    function isValidStudentBadge(data) {
+      return data.keys().hasAll([
+          'studentUid', 'studentName', 'grade', 'classNo', 'studentNo',
+          'badgeId', 'badgeLabel', 'iconKey', 'awardedBy', 'awardedAt'
+        ])
+        && data.studentUid is string
+        && data.badgeLabel is string
+        && data.awardedBy is string
+        && data.awardedBy == request.auth.uid
+        && data.iconKey in ['shirt-green', 'shirt-blue', 'shirt-purple', 'shirt-amber', 'shirt-rose'];
+    }
+
+    match /badgeDefinitions/{badgeId} {
+      allow read: if request.auth != null;
+      allow create, update: if isTeacher() && isValidBadgeDefinition(request.resource.data);
+      allow delete: if isTeacher();
+    }
+
+    match /studentBadges/{awardId} {
+      allow read: if isTeacher()
+        || (request.auth != null && resource.data.studentUid == request.auth.uid);
+      allow create: if isTeacher() && isValidStudentBadge(request.resource.data);
+      allow delete: if isTeacher();
+      allow update: if false;
+    }
+
+    function isValidWorksheetContent(data) {
+      return data.keys().hasAll(['templateId', 'fields', 'updatedBy', 'updatedAt'])
+        && data.templateId is string
+        && data.fields is map
+        && data.fields.size() <= 50
+        && data.updatedBy is string
+        && data.updatedBy == request.auth.uid;
+    }
+
+    match /worksheetContent/{templateId} {
+      allow read: if request.auth != null;
+      allow create, update: if isTeacher() && isValidWorksheetContent(request.resource.data);
+      allow delete: if isTeacher();
+    }
   }
 }

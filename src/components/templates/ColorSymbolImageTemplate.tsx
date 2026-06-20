@@ -2,31 +2,33 @@
 
 import type { TemplateProps } from "@/lib/types";
 import { fieldValue as v } from "@/components/templates/utils";
-import { CSI_REMINDERS, CSI_SECTIONS, CSI_TOPIC, CSI_UNIT, CSI_WRITING_GUIDE } from "@/lib/templates/csi";
+import { CSI_SECTIONS } from "@/lib/templates/csi";
+import { useWorksheetContent } from "@/hooks/useWorksheetContent";
 
 export function ColorSymbolImageTemplate({ values, onChange, readOnly }: TemplateProps) {
+  const { get } = useWorksheetContent("color-symbol-image");
+
   return (
     <div className="csi-worksheet mx-auto max-w-3xl">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 print:shadow-none">
         <div className="mb-6 border-b border-slate-200 pb-6 text-center">
-          <p className="text-xs font-medium text-slate-500">{CSI_UNIT}</p>
+          <p className="text-xs font-medium text-slate-500">{get("unit")}</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">
             CSI (색상·기호·이미지) — Visible Thinking
           </h2>
-          <p className="mt-2 text-sm text-slate-600">{CSI_TOPIC}</p>
+          <p className="mt-2 text-sm text-slate-600">{get("topic")}</p>
         </div>
 
         <div className="mb-6 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
           <h3 className="mb-2 text-sm font-bold text-indigo-900">나의 핵심 탐구 지식 리마인더</h3>
           <ul className="list-disc space-y-2 pl-4 text-sm leading-relaxed text-indigo-900/90">
-            {CSI_REMINDERS.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
+            {get("reminder1") && <li>{get("reminder1")}</li>}
+            {get("reminder2") && <li>{get("reminder2")}</li>}
           </ul>
         </div>
 
         <p className="mb-6 border-l-4 border-indigo-400 pl-3 text-sm leading-relaxed text-slate-700">
-          <strong className="text-slate-800">글쓰기 안내.</strong> {CSI_WRITING_GUIDE}
+          <strong className="text-slate-800">글쓰기 안내.</strong> {get("writingGuide")}
         </p>
 
         <div className="space-y-6">

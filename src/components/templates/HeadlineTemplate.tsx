@@ -2,37 +2,33 @@
 
 import type { TemplateProps } from "@/lib/types";
 import { fieldValue as v } from "@/components/templates/utils";
-import {
-  HEADLINE_GUIDE,
-  HEADLINE_PLACEHOLDERS,
-  HEADLINE_REMINDERS,
-  HEADLINE_TOPIC,
-  HEADLINE_UNIT,
-} from "@/lib/templates/headlines";
+import { HEADLINE_PLACEHOLDERS } from "@/lib/templates/headlines";
+import { useWorksheetContent } from "@/hooks/useWorksheetContent";
 
 export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) {
+  const { get } = useWorksheetContent("headline");
+
   return (
     <div className="headline-worksheet mx-auto max-w-3xl">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 print:shadow-none">
         <div className="mb-6 border-b border-slate-200 pb-6 text-center">
-          <p className="text-xs font-medium text-slate-500">{HEADLINE_UNIT}</p>
+          <p className="text-xs font-medium text-slate-500">{get("unit")}</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">
             Headlines (헤드라인) — Visible Thinking
           </h2>
-          <p className="mt-2 text-sm text-slate-600">{HEADLINE_TOPIC}</p>
+          <p className="mt-2 text-sm text-slate-600">{get("topic")}</p>
         </div>
 
         <div className="mb-8 rounded-xl border border-teal-100 bg-teal-50/60 p-4">
           <h3 className="mb-2 text-sm font-bold text-teal-900">탐구 데이터 리마인더</h3>
           <ul className="list-disc space-y-2 pl-4 text-sm leading-relaxed text-teal-900/90">
-            {HEADLINE_REMINDERS.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
+            {get("reminder1") && <li>{get("reminder1")}</li>}
+            {get("reminder2") && <li>{get("reminder2")}</li>}
           </ul>
         </div>
 
         <p className="mb-6 rounded-lg border border-blue-100 bg-blue-50/50 px-4 py-3 text-sm leading-relaxed text-slate-700">
-          {HEADLINE_GUIDE}
+          {get("writingGuide")}
         </p>
 
         <div className="space-y-6">

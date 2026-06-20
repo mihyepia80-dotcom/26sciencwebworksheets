@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
+import { StudentBadgeBar } from "@/components/student/StudentBadgeBar";
 import { StudentTemplateGrid } from "@/components/student/StudentTemplateGrid";
 
 export default function HomePage() {
@@ -12,6 +13,8 @@ export default function HomePage() {
       />
 
       <main className="mx-auto max-w-6xl px-4 py-8">
+        <StudentBadgeBar />
+
         <section className="mb-10">
           <Link
             href="/inquiry-report"

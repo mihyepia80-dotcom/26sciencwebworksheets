@@ -6,6 +6,7 @@ import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
 import { TeacherDailyTable } from "@/components/TeacherDailyTable";
 import { TeacherInquiryReports } from "@/components/TeacherInquiryReports";
 import { TeacherPeerFeedbacks } from "@/components/TeacherPeerFeedbacks";
+import { TeacherAwardBadgeQuick } from "@/components/teacher/TeacherAwardBadgeQuick";
 import { AiFeedbackCard } from "@/components/AiFeedbackCard";
 import { useAuth } from "@/components/AuthProvider";
 import {
@@ -145,6 +146,18 @@ export function TeacherDashboard() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
+            href="/teacher/badges"
+            className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+          >
+            칭찬 배지 관리
+          </Link>
+          <Link
+            href="/teacher/worksheet-content"
+            className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100"
+          >
+            학습지 텍스트 편집
+          </Link>
+          <Link
             href="/teacher/guided-questions"
             className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
           >
@@ -253,6 +266,8 @@ export function TeacherDashboard() {
                       <AiFeedbackCard rating={submission.aiRating} feedback={submission.aiFeedback} />
                     </div>
                   )}
+
+                  <TeacherAwardBadgeQuick submission={submission} />
 
                   <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
                     <button
