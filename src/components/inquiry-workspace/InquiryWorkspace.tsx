@@ -61,10 +61,11 @@ export function InquiryWorkspace() {
   const [error, setError] = useState("");
 
   const refreshWorksheets = useCallback(async (rid: string) => {
-    const items = await listSubmissionsForReport(rid);
+    if (!user) return [];
+    const items = await listSubmissionsForReport(user.uid, rid);
     setWorksheets(items);
     return items;
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (role !== "student" || !user) {

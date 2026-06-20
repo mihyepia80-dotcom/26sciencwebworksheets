@@ -165,6 +165,15 @@
       "fields": [
         { "fieldPath": "studentUid", "order": "ASCENDING" },
         { "fieldPath": "linkedReportId", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "submissions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "studentUid", "order": "ASCENDING" },
+        { "fieldPath": "linkedReportId", "order": "ASCENDING" },
         { "fieldPath": "templateId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]

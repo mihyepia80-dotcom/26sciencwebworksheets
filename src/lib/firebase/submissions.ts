@@ -174,10 +174,14 @@ export async function findStudentDraftForReport(
   return drafts[0];
 }
 
-export async function listSubmissionsForReport(reportId: string): Promise<WorksheetSubmission[]> {
+export async function listSubmissionsForReport(
+  studentUid: string,
+  reportId: string,
+): Promise<WorksheetSubmission[]> {
   const snapshot = await getDocs(
     query(
       collection(getClientDb(), "submissions"),
+      where("studentUid", "==", studentUid),
       where("linkedReportId", "==", reportId),
       orderBy("updatedAt", "desc"),
       limit(100),
