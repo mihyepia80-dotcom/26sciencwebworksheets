@@ -48,6 +48,23 @@ interface WorksheetActionBarProps {
   onSubmit: () => void;
 }
 
+export function WorksheetPrintBar({ onBeforePrint }: { onBeforePrint?: () => void }) {
+  return (
+    <div className="mt-6 flex justify-end border-t border-slate-200 pt-4 print:hidden">
+      <button
+        type="button"
+        className="rounded-lg bg-slate-800 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-slate-900"
+        onClick={() => {
+          onBeforePrint?.();
+          window.print();
+        }}
+      >
+        최종 결과 저장 및 PDF 출력
+      </button>
+    </div>
+  );
+}
+
 export function WorksheetActionBar({
   submitted,
   submitting,

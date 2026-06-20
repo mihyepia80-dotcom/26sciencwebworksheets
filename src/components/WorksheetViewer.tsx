@@ -11,7 +11,7 @@ import { WorksheetHeader } from "@/components/common/WorksheetHeader";
 import { TemplateRenderer } from "@/components/templates";
 import { GuidedQuestionsPanel } from "@/components/worksheet/GuidedQuestionsPanel";
 import { TeacherGuidedQuestionsSidebar } from "@/components/student/TeacherGuidedQuestionsSidebar";
-import { WorksheetActionBar, WorksheetGuidanceBanner } from "@/components/worksheet/WorksheetChrome";
+import { WorksheetActionBar, WorksheetGuidanceBanner, WorksheetPrintBar } from "@/components/worksheet/WorksheetChrome";
 import { useAuth } from "@/components/AuthProvider";
 import type { AiRating } from "@/lib/ai/feedback";
 import { useAiQuota } from "@/hooks/useAiQuota";
@@ -196,8 +196,8 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
   }
 
   return (
-    <div className={`mx-auto space-y-4 px-4 py-6 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}>
-      <div className="flex items-center justify-between">
+    <div className={`mx-auto space-y-4 px-4 py-6 print:max-w-none print:space-y-0 print:p-0 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}>
+      <div className="flex items-center justify-between print:hidden">
         <Link href="/" className="text-sm text-blue-600 hover:underline">
           ← 템플릿 목록
         </Link>
@@ -206,60 +206,81 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
         </span>
       </div>
 
-      <WorksheetGuidanceBanner templateId={template.id} aiQuota={aiQuota} studentMode={isStudent} />
+      <div className="print:hidden">
+        <WorksheetGuidanceBanner templateId={template.id} aiQuota={aiQuota} studentMode={isStudent} />
+      </div>
 
-      {loadError && <p className="text-sm text-red-600">{loadError}</p>}
+      {loadError && <p className="text-sm text-red-600 print:hidden">{loadError}</p>}
 
-      <WorksheetHeader
-        toolName={formatTemplateTitle(template)}
-        meta={meta}
-        onMetaChange={onMetaChange}
-        readOnly={submitted}
-      />
-
-      {!isStudent && template.aiFeature && <AiFeaturePanel template={template} />}
-
-      {!isStudent && guided.visible && (
-        <GuidedQuestionsPanel
-          topic={meta.topic}
-          questions={guided.questions}
-          source={guided.source}
-          loading={guided.loading}
-          error={guided.error}
+      <div id="worksheet-print" className="worksheet-print-area space-y-4">
+        <WorksheetHeader
+          toolName={formatTemplateTitle(template)}
+          meta={meta}
+          onMetaChange={onMetaChange}
           readOnly={submitted}
-          studentView={guided.studentMode}
-          onQuestionChange={guided.updateQuestion}
-          onRegenerate={guided.studentMode ? undefined : guided.regenerate}
         />
-      )}
 
-      {isStudent ? (
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="min-w-0">
-            <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+        {!isStudent && template.aiFeature && (
+          <div className="print:hidden">
+            <AiFeaturePanel template={template} />
           </div>
-          {guided.visible && (
-            <div className="lg:sticky lg:top-4 lg:self-start">
-              <TeacherGuidedQuestionsSidebar
-              meta={meta}
-              questions={guided.teacherReferenceQuestions}
+        )}
+
+        {!isStudent && guided.visible && (
+          <div className="print:hidden">
+            <GuidedQuestionsPanel
+              topic={meta.topic}
+              questions={guided.questions}
+              source={guided.source}
               loading={guided.loading}
               error={guided.error}
-              hasTeacherGuide={guided.source === "pinned" && guided.teacherReferenceQuestions.some((q) => q.trim())}
-              />
+              readOnly={submitted}
+              studentView={guided.studentMode}
+              onQuestionChange={guided.updateQuestion}
+              onRegenerate={guided.studentMode ? undefined : guided.regenerate}
+            />
+          </div>
+        )}
+
+        {isStudent ? (
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="min-w-0">
+              <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
             </div>
-          )}
-        </div>
-      ) : (
-        <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
-      )}
+            {guided.visible && (
+              <div className="lg:sticky lg:top-4 lg:self-start print:hidden">
+                <TeacherGuidedQuestionsSidebar
+                  meta={meta}
+                  questions={guided.teacherReferenceQuestions}
+                  loading={guided.loading}
+                  error={guided.error}
+                  hasTeacherGuide={guided.source === "pinned" && guided.teacherReferenceQuestions.some((q) => q.trim())}
+                />
+              </div>
+            )}
+          </div>
+        ) : (
+          <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+        )}
+
+        <WorksheetPrintBar
+          onBeforePrint={() => {
+            if (isStudent && user && !submitted && !savingDraft) {
+              handleDraftSave();
+            }
+          }}
+        />
+      </div>
 
       {submitted && aiRating && aiFeedback && (
-        <AiFeedbackCard rating={aiRating} feedback={aiFeedback} />
+        <div className="print:hidden">
+          <AiFeedbackCard rating={aiRating} feedback={aiFeedback} />
+        </div>
       )}
 
       {submitted && submissionId && user && (
-        <ShareButton
+        <div className="print:hidden">
+          <ShareButton
           submission={{
             id: submissionId,
             templateId,
@@ -275,9 +296,11 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
           }}
           studentUid={user.uid}
         />
+        </div>
       )}
 
-      <WorksheetActionBar
+      <div className="print:hidden">
+        <WorksheetActionBar
         submitted={submitted}
         submitting={submitting}
         savingDraft={savingDraft}
@@ -286,37 +309,40 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
         onEdit={handleEdit}
         onDraftSave={handleDraftSave}
         onSubmit={handleSubmit}
-      />
+        />
+      </div>
 
       {(submitError || draftError) && (
-        <p className="whitespace-pre-line text-center text-sm text-red-600">{submitError || draftError}</p>
+        <p className="whitespace-pre-line text-center text-sm text-red-600 print:hidden">{submitError || draftError}</p>
       )}
 
       {draftMessage && !submitted && (
-        <p className="text-center text-sm text-amber-700">{draftMessage}</p>
+        <p className="text-center text-sm text-amber-700 print:hidden">{draftMessage}</p>
       )}
 
       {isDraft && !submitted && !draftMessage && submissionId && (
-        <p className="text-center text-sm text-amber-700">임시 저장된 활동지입니다. 이어서 작성한 뒤 제출하세요.</p>
+        <p className="text-center text-sm text-amber-700 print:hidden">임시 저장된 활동지입니다. 이어서 작성한 뒤 제출하세요.</p>
       )}
 
       {submitted && (
-        <p className="text-center text-sm text-green-600">
+        <p className="text-center text-sm text-green-600 print:hidden">
           제출 완료! {aiRating ? "AI 피드백을 확인하고 " : ""}공유 링크로 활동지를 보여줄 수 있습니다.
         </p>
       )}
 
       {!isStudent && !submitted && (
-        <p className="text-center text-sm text-amber-700">학생 로그인 후 제출할 수 있습니다.</p>
+        <p className="text-center text-sm text-amber-700 print:hidden">학생 로그인 후 제출할 수 있습니다.</p>
       )}
 
-      <PeerFeedbackSection
-        targetType="worksheet"
-        templateId={templateId}
-        templateName={template.name}
-        ownDocId={submissionId}
-        enabled={submitted && Boolean(submissionId) && isStudent}
-      />
+      <div className="print:hidden">
+        <PeerFeedbackSection
+          targetType="worksheet"
+          templateId={templateId}
+          templateName={template.name}
+          ownDocId={submissionId}
+          enabled={submitted && Boolean(submissionId) && isStudent}
+        />
+      </div>
     </div>
   );
 }

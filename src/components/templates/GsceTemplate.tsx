@@ -485,18 +485,6 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
             ))}
           </ul>
         </section>
-
-        {!readOnly && (
-          <div className="mt-4 flex justify-end print:hidden">
-            <button
-              type="button"
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              onClick={() => window.print()}
-            >
-              최종 결과 저장 및 PDF 출력
-            </button>
-          </div>
-        )}
       </SectionBox>
     </div>
   );

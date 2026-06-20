@@ -59,17 +59,6 @@ export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: Tem
             ))}
           </div>
 
-          {!readOnly && (
-            <div className="flex justify-end print:hidden">
-              <button
-                type="button"
-                className="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
-                onClick={() => window.print()}
-              >
-                작성 완료 및 인쇄(PDF)
-              </button>
-            </div>
-          )}
         </div>
       </div>
     </div>

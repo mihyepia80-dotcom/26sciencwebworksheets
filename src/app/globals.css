@@ -53,6 +53,31 @@ body {
     resize: none;
   }
 
+  .worksheet-print-area input,
+  .worksheet-print-area textarea,
+  .worksheet-print-area select {
+    border-color: #cbd5e1 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .worksheet-print-area textarea {
+    overflow: visible !important;
+    resize: none !important;
+  }
+
+  .worksheet-print-area section,
+  .worksheet-print-area .rounded-xl,
+  .worksheet-print-area .rounded-lg {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .worksheet-print-area button {
+    display: none !important;
+  }
+
   .gsce-worksheet button,
   .gsce-worksheet .no-print {
     display: none !important;
