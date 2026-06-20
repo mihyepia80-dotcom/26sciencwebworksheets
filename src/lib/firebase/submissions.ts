@@ -172,6 +172,14 @@ export async function listSubmissions(max = 100): Promise<WorksheetSubmission[]>
     .filter((s) => s.status === "submitted");
 }
 
+/** 교사용: 제출·임시저장 포함 최근 활동지 목록 */
+export async function listTeacherSubmissions(max = 200): Promise<WorksheetSubmission[]> {
+  const snapshot = await getDocs(
+    query(collection(getClientDb(), "submissions"), orderBy("updatedAt", "desc"), limit(max)),
+  );
+  return snapshot.docs.map((doc) => mapSubmissionDoc(doc.id, doc.data()));
+}
+
 function submissionSortTime(submission: WorksheetSubmission): number {
   const ts = submission.updatedAt ?? submission.submittedAt;
   return ts?.toMillis() ?? 0;

@@ -16,10 +16,19 @@ if (!existsSync(keyPath)) {
 
 process.env.GOOGLE_APPLICATION_CREDENTIALS = keyPath;
 
-const result = spawnSync(
-  "npx",
-  ["firebase-tools", "deploy", "--only", "firestore", "--project", projectId],
-  { stdio: "inherit", shell: true, cwd: root },
-);
+const only = process.argv[2] ?? "firestore";
+const args = [
+  "firebase-tools",
+  "deploy",
+  "--only",
+  only,
+  "--project",
+  projectId,
+  "--non-interactive",
+];
+
+console.log(`firebase deploy --only ${only} --project ${projectId} --non-interactive`);
+
+const result = spawnSync("npx", args, { stdio: "inherit", shell: true, cwd: root });
 
 process.exit(result.status ?? 1);

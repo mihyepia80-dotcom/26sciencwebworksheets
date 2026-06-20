@@ -156,10 +156,23 @@ export interface AwardBadgeInput {
 }
 
 export async function awardStudentBadge(input: AwardBadgeInput): Promise<string> {
-  const ref = await addDoc(collection(getClientDb(), "studentBadges"), {
-    ...input,
+  const payload: Record<string, unknown> = {
+    studentUid: input.studentUid,
+    studentName: input.studentName,
+    grade: input.grade,
+    classNo: input.classNo,
+    studentNo: input.studentNo,
+    badgeId: input.badgeId,
+    badgeLabel: input.badgeLabel,
+    iconKey: input.iconKey,
+    awardedBy: input.awardedBy,
     awardedAt: serverTimestamp(),
-  });
+  };
+
+  const note = input.note?.trim();
+  if (note) payload.note = note;
+
+  const ref = await addDoc(collection(getClientDb(), "studentBadges"), payload);
   return ref.id;
 }
 

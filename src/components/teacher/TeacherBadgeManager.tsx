@@ -126,7 +126,7 @@ export function TeacherBadgeManager() {
         badgeLabel: badge.label,
         iconKey: badge.iconKey,
         awardedBy: user.uid,
-        note: awardNote.trim() || undefined,
+        ...(awardNote.trim() ? { note: awardNote.trim() } : {}),
       });
       setMessage(`${studentDisplay(student)}에게 「${badge.label}」 배지를 부여했습니다.`);
       setAwardNote("");

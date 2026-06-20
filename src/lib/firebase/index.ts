@@ -9,6 +9,7 @@ export {
   deleteSubmission,
   getSubmission,
   listSubmissions,
+  listTeacherSubmissions,
   listStudentSubmissions,
   type WorksheetSubmission,
   type WorksheetSubmissionStatus,

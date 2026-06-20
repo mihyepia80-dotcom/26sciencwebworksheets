@@ -3,6 +3,8 @@
 import type { ComponentType } from "react";
 import type { TemplateProps } from "@/lib/types";
 import { WorksheetClosingSection } from "@/components/worksheet/WorksheetClosingSection";
+import { WorksheetContentBanner } from "@/components/worksheet/WorksheetContentBanner";
+import { TEMPLATES_WITH_BUILTIN_CONTENT } from "@/lib/worksheet-content/build-schemas";
 import {
   SeeThinkWonderTemplate,
   ThinkPuzzleExploreTemplate,
@@ -128,6 +130,9 @@ export function TemplateRenderer({ templateId, ...props }: TemplateProps & { tem
   }
   return (
     <div className="worksheet-body">
+      {!TEMPLATES_WITH_BUILTIN_CONTENT.has(templateId) && (
+        <WorksheetContentBanner templateId={templateId} />
+      )}
       <Component {...props} />
       <WorksheetClosingSection templateId={templateId} {...props} />
     </div>

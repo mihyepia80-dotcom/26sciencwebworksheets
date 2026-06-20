@@ -27,23 +27,27 @@ export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: Tem
         </div>
 
         <div className="space-y-6">
-          {CSQ_SECTIONS.map(({ key, badge, badgeClass, title, guide, placeholder, rows, focusClass }) => (
+          {CSQ_SECTIONS.map(({ key, badge, badgeClass, title, guide, placeholder, rows, focusClass }) => {
+            const guideText = get(`guide_${key}`) || guide;
+            const placeholderText = get(`hint_${key}`) || placeholder;
+            return (
             <div key={key} className="rounded-xl border border-slate-200 p-5 shadow-sm print:shadow-none">
               <div className="mb-2 flex items-center gap-2">
                 <span className={`rounded-sm px-2 py-0.5 text-xs font-bold text-white ${badgeClass}`}>{badge}</span>
                 <span className="text-base font-bold text-slate-800">{title}</span>
               </div>
-              <p className="mb-3 text-xs text-slate-500">{guide}</p>
+              <p className="mb-3 text-xs text-slate-500">{guideText}</p>
               <textarea
                 className={`w-full resize-y rounded-lg border border-slate-200 p-3 text-sm text-slate-700 focus:outline-none disabled:bg-slate-50 ${focusClass}`}
                 rows={rows}
                 value={v(values, key)}
                 disabled={readOnly}
-                placeholder={placeholder}
+                placeholder={placeholderText}
                 onChange={(e) => onChange(key, e.target.value)}
               />
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

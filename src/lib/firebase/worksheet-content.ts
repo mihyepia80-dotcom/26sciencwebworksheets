@@ -44,11 +44,16 @@ export async function publishWorksheetContent(
   fields: Record<string, string>,
   teacherUid: string,
 ): Promise<void> {
+  const trimmed: Record<string, string> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value.trim()) trimmed[key] = value.trim();
+  }
+
   await setDoc(
     doc(getClientDb(), "worksheetContent", templateId),
     {
       templateId,
-      fields,
+      fields: trimmed,
       updatedBy: teacherUid,
       updatedAt: serverTimestamp(),
     },

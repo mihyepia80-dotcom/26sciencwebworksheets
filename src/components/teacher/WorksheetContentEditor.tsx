@@ -1,30 +1,86 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import { reviseWorksheetContentWithAi } from "@/lib/ai/worksheet-content-client";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
 import { publishWorksheetContent, getWorksheetContent } from "@/lib/firebase/worksheet-content";
 import {
   WORKSHEET_CONTENT_SCHEMAS,
   getDefaultWorksheetContent,
+  type WorksheetContentFieldDef,
   type WorksheetContentSchema,
 } from "@/lib/worksheet-content/registry";
 
 const INPUT = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
 
+const MAIN_KEYS = new Set(["unit", "topic", "writingGuide", "reminder1", "reminder2"]);
+
+function groupFields(fields: WorksheetContentFieldDef[]) {
+  const main: WorksheetContentFieldDef[] = [];
+  const extra: WorksheetContentFieldDef[] = [];
+  const hints: WorksheetContentFieldDef[] = [];
+
+  for (const field of fields) {
+    if (MAIN_KEYS.has(field.key)) main.push(field);
+    else if (field.key.startsWith("hint_")) hints.push(field);
+    else extra.push(field);
+  }
+
+  return { main, extra, hints };
+}
+
+function FieldEditor({
+  field,
+  value,
+  onChange,
+}: {
+  field: WorksheetContentFieldDef;
+  value: string;
+  onChange: (key: string, value: string) => void;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-slate-600">{field.label}</label>
+      {field.multiline ? (
+        <textarea
+          className={`${INPUT} min-h-[80px] resize-y leading-relaxed`}
+          rows={3}
+          value={value}
+          onChange={(e) => onChange(field.key, e.target.value)}
+        />
+      ) : (
+        <input
+          type="text"
+          className={INPUT}
+          value={value}
+          onChange={(e) => onChange(field.key, e.target.value)}
+        />
+      )}
+    </div>
+  );
+}
+
 export function WorksheetContentEditor() {
   const { user, role } = useAuth();
   const [selectedId, setSelectedId] = useState(WORKSHEET_CONTENT_SCHEMAS[0]?.templateId ?? "");
   const [fields, setFields] = useState<Record<string, string>>({});
+  const [aiInstruction, setAiInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const schema: WorksheetContentSchema | undefined = WORKSHEET_CONTENT_SCHEMAS.find(
     (s) => s.templateId === selectedId,
+  );
+
+  const fieldGroups = useMemo(
+    () => (schema ? groupFields(schema.fields) : { main: [], extra: [], hints: [] }),
+    [schema],
   );
 
   const loadContent = useCallback(async (templateId: string) => {
@@ -47,6 +103,10 @@ export function WorksheetContentEditor() {
     if (selectedId) void loadContent(selectedId);
   }, [selectedId, loadContent]);
 
+  const handleFieldChange = (key: string, value: string) => {
+    setFields((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handlePublish = async () => {
     if (!user || role !== "teacher" || !selectedId) return;
     setSaving(true);
@@ -67,6 +127,29 @@ export function WorksheetContentEditor() {
     if (!selectedId) return;
     if (!window.confirm("코드 기본값으로 되돌릴까요? (저장 전까지 학생에게 반영되지 않습니다)")) return;
     setFields(getDefaultWorksheetContent(selectedId));
+  };
+
+  const handleAiRevise = async () => {
+    if (!schema || aiLoading) return;
+    setAiLoading(true);
+    setError("");
+    setMessage("");
+    try {
+      const result = await reviseWorksheetContentWithAi({
+        templateId: schema.templateId,
+        templateName: schema.templateName,
+        fields,
+        instruction: aiInstruction,
+        topic: fields.topic,
+        unit: fields.unit,
+      });
+      setFields((prev) => ({ ...prev, ...result.fields }));
+      setMessage("AI가 문구를 수정했습니다. 내용을 확인한 뒤 배포하세요.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "AI 수정 실패");
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   if (role !== "teacher") {
@@ -105,28 +188,75 @@ export function WorksheetContentEditor() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {schema && !loading && (
-        <div className="space-y-4">
-          {schema.fields.map((field) => (
-            <div key={field.key}>
-              <label className="mb-1 block text-xs font-medium text-slate-600">{field.label}</label>
-              {field.multiline ? (
-                <textarea
-                  className={`${INPUT} min-h-[80px] resize-y leading-relaxed`}
-                  rows={3}
+        <div className="space-y-6">
+          <section className="rounded-xl border border-violet-200 bg-violet-50/40 p-4">
+            <h3 className="text-sm font-bold text-violet-900">AI로 문구 수정</h3>
+            <p className="mt-1 text-xs text-violet-800/80">
+              단원·주제에 맞게 안내 문구를 다듬습니다. 아래에 추가 지시를 적으면 반영됩니다.
+            </p>
+            <textarea
+              className={`${INPUT} mt-3 min-h-[72px] resize-y`}
+              rows={2}
+              placeholder="예: 용해와 용액 단원에 맞게 초등 5학년 수준으로 쉽게 수정해 주세요."
+              value={aiInstruction}
+              onChange={(e) => setAiInstruction(e.target.value)}
+            />
+            <button
+              type="button"
+              disabled={aiLoading}
+              onClick={() => void handleAiRevise()}
+              className="mt-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-60"
+            >
+              {aiLoading ? "AI 수정 중…" : "AI로 문구 수정"}
+            </button>
+          </section>
+
+          {fieldGroups.main.length > 0 && (
+            <section className="space-y-4">
+              <h3 className="text-sm font-bold text-slate-800">기본 안내 문구</h3>
+              {fieldGroups.main.map((field) => (
+                <FieldEditor
+                  key={field.key}
+                  field={field}
                   value={fields[field.key] ?? ""}
-                  onChange={(e) => setFields((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                  onChange={handleFieldChange}
                 />
-              ) : (
-                <input
-                  type="text"
-                  className={INPUT}
+              ))}
+            </section>
+          )}
+
+          {fieldGroups.extra.length > 0 && (
+            <section className="space-y-4">
+              <h3 className="text-sm font-bold text-slate-800">학습지 전용 문구</h3>
+              {fieldGroups.extra.map((field) => (
+                <FieldEditor
+                  key={field.key}
+                  field={field}
                   value={fields[field.key] ?? ""}
-                  onChange={(e) => setFields((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                  onChange={handleFieldChange}
                 />
-              )}
-            </div>
-          ))}
-          <div className="flex flex-wrap gap-2 pt-2">
+              ))}
+            </section>
+          )}
+
+          {fieldGroups.hints.length > 0 && (
+            <section className="space-y-4">
+              <h3 className="text-sm font-bold text-slate-800">입력 칸 안내 (placeholder)</h3>
+              <p className="text-xs text-slate-500">
+                학생 입력 칸에 표시될 예시·힌트 문구입니다. (템플릿별 연동 범위는 점진 확대 중)
+              </p>
+              {fieldGroups.hints.map((field) => (
+                <FieldEditor
+                  key={field.key}
+                  field={field}
+                  value={fields[field.key] ?? ""}
+                  onChange={handleFieldChange}
+                />
+              ))}
+            </section>
+          )}
+
+          <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
             <button
               type="button"
               disabled={saving}

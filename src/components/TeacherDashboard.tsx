@@ -13,15 +13,17 @@ import {
   deleteSubmission,
   getFirebaseErrorMessage,
   isFirebaseConfigured,
-  listSubmissions,
+  listTeacherSubmissions,
   signOutUser,
 } from "@/lib/firebase";
 import { getMetaFieldLabel } from "@/lib/meta-labels";
 import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 
-function formatSubmittedAt(submission: WorksheetSubmission): string {
-  if (!submission.submittedAt) return "-";
-  return submission.submittedAt.toDate().toLocaleString("ko-KR");
+function formatActivityAt(submission: WorksheetSubmission): string {
+  const ts = submission.submittedAt ?? submission.updatedAt;
+  if (!ts) return "-";
+  const label = submission.status === "draft" ? "수정" : "제출";
+  return `${ts.toDate().toLocaleString("ko-KR")} (${label})`;
 }
 
 function studentLabel(meta: WorksheetSubmission["meta"]): string {
@@ -64,7 +66,7 @@ export function TeacherDashboard() {
     setListLoading(true);
     setListError("");
 
-    listSubmissions()
+    listTeacherSubmissions()
       .then((items) => {
         if (!cancelled) setSubmissions(items);
       })
@@ -184,12 +186,16 @@ export function TeacherDashboard() {
 
       {!listLoading && !listError && submissions.length === 0 && (
         <p className="mt-8 rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
-          아직 제출된 활동지가 없습니다.
+          아직 학생 활동지가 없습니다.
         </p>
       )}
 
       {!listLoading && !listError && submissions.length > 0 && (
-        <TeacherDailyTable submissions={submissions} />
+        <TeacherDailyTable
+          submissions={submissions}
+          onDelete={(s) => void handleDelete(s)}
+          deletingId={deletingId}
+        />
       )}
 
       {!listLoading && !listError && submissions.length > 0 && (
@@ -217,7 +223,7 @@ export function TeacherDashboard() {
                   </p>
                 </div>
                 <div className="shrink-0 text-right text-xs text-slate-500">
-                  <p>{formatSubmittedAt(submission)}</p>
+                  <p>{formatActivityAt(submission)}</p>
                   <p className="mt-1">{open ? "접기" : "펼치기"}</p>
                 </div>
               </button>
