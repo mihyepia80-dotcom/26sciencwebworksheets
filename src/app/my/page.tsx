@@ -80,10 +80,10 @@ export default function MyWorksheetsPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold text-slate-800">내 탐구보고서</h2>
             <Link
-              href="/inquiry-report"
+              href="/workspace"
               className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700"
             >
-              새 보고서 작성
+              탐구 활동실
             </Link>
           </div>
 
@@ -133,7 +133,7 @@ export default function MyWorksheetsPage() {
                       {memberNames && <p className="text-slate-600">모둠원: {memberNames}</p>}
                       <div className="mt-4 flex justify-end">
                         <Link
-                          href={`/inquiry-report?report=${report.id}`}
+                          href={`/workspace?report=${report.id}`}
                           className="rounded-lg border border-violet-200 px-4 py-2 text-sm text-violet-700 hover:bg-violet-50"
                         >
                           {report.status === "submitted" ? "보기" : "이어서 작성"}
@@ -186,7 +186,7 @@ export default function MyWorksheetsPage() {
                     </span>
                     <p className="mt-2">{formatDate(submission)}</p>
                     <Link
-                      href={`/templates/${submission.templateId}?submission=${submission.id}`}
+                      href={`/workspace?template=${submission.templateId}&submission=${submission.id}`}
                       className="mt-2 inline-block rounded border border-blue-200 px-2 py-1 text-blue-700 hover:bg-blue-50"
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -200,7 +200,7 @@ export default function MyWorksheetsPage() {
                   <div className="border-t border-slate-100 px-4 py-4 text-sm">
                     <div className="mb-4 flex justify-end">
                       <Link
-                        href={`/templates/${submission.templateId}?submission=${submission.id}`}
+                        href={`/workspace?template=${submission.templateId}&submission=${submission.id}`}
                         className="rounded-lg border border-blue-200 px-4 py-2 text-sm text-blue-700 hover:bg-blue-50"
                       >
                         {submission.status === "submitted" ? "보기" : "이어서 작성"}

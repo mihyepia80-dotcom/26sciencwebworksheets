@@ -23,16 +23,30 @@ import { useWorksheetLoader } from "@/hooks/useWorksheetLoader";
 import { useWorksheetSubmit } from "@/hooks/useWorksheetSubmit";
 import { getTemplateById } from "@/lib/templates/registry";
 import { formatTemplateTitle, getGlobalSequenceNumber } from "@/lib/templates/curriculum";
-import { DEFAULT_META, type WorksheetMeta } from "@/lib/types";
+import { DEFAULT_META, type Answers, type WorksheetMeta } from "@/lib/types";
+import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 import { useWorksheetState } from "@/lib/useWorksheetState";
 
 interface WorksheetViewerProps {
   templateId: string;
+  embedded?: boolean;
+  linkedReportId?: string;
+  editSubmissionId?: string | null;
+  onDraftSaved?: (submission: WorksheetSubmission) => void;
+  onSubmitted?: (submission: WorksheetSubmission) => void;
 }
 
-export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
+export function WorksheetViewer({
+  templateId,
+  embedded = false,
+  linkedReportId: linkedReportIdProp,
+  editSubmissionId: editSubmissionIdProp,
+  onDraftSaved,
+  onSubmitted,
+}: WorksheetViewerProps) {
   const searchParams = useSearchParams();
-  const editSubmissionId = searchParams.get("submission");
+  const editSubmissionId = editSubmissionIdProp ?? searchParams.get("submission");
+  const linkedReportId = linkedReportIdProp;
 
   const { user, role, studentProfile } = useAuth();
   const template = getTemplateById(templateId);
@@ -51,6 +65,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
   const [isDraft, setIsDraft] = useState(false);
   const [aiFeedback, setAiFeedback] = useState("");
   const [aiRating, setAiRating] = useState<AiRating | null>(null);
+  const [linkedInstanceNo, setLinkedInstanceNo] = useState<number | undefined>();
 
   const { aiQuota, setAiQuota } = useAiQuota(user?.uid, isStudent);
   const { getProgress, loading: progressLoading } = useStudentTemplateProgress(isStudent);
@@ -80,6 +95,8 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       aiFeedback: string;
       aiRating: AiRating | null;
       status: "draft" | "submitted";
+      linkedReportId?: string;
+      instanceNo?: number;
     }) => {
       setSubmissionId(data.submissionId);
       setMeta(data.meta);
@@ -89,6 +106,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       const isSubmitted = data.status === "submitted";
       setSubmitted(isSubmitted);
       setIsDraft(!isSubmitted);
+      setLinkedInstanceNo(data.instanceNo);
     },
     [setAll],
   );
@@ -97,9 +115,46 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
     editSubmissionId,
     templateId,
     studentUid: user?.uid,
+    linkedReportId,
     enabled: isStudent,
     onLoaded: handleLoaded,
   });
+
+  const buildSavePayload = useCallback(() => {
+    if (!user || !template) return null;
+    return {
+      templateId,
+      templateName: template.name,
+      meta,
+      values,
+      studentUid: user.uid,
+      ...(linkedReportId ? { linkedReportId, instanceNo: linkedInstanceNo } : {}),
+    };
+  }, [linkedInstanceNo, linkedReportId, meta, template, templateId, user, values]);
+
+  const notifyParent = useCallback(
+    (id: string, status: "draft" | "submitted") => {
+      if (!user || !template) return;
+      const submission: WorksheetSubmission = {
+        id,
+        templateId,
+        templateName: template.name,
+        meta,
+        values,
+        studentUid: user.uid,
+        status,
+        submittedAt: null,
+        updatedAt: null,
+        linkedReportId,
+        instanceNo: linkedInstanceNo,
+        aiFeedback: aiFeedback || undefined,
+        aiRating: aiRating ?? undefined,
+      };
+      if (status === "draft") onDraftSaved?.(submission);
+      else onSubmitted?.(submission);
+    },
+    [aiFeedback, aiRating, linkedInstanceNo, linkedReportId, meta, onDraftSaved, onSubmitted, template, templateId, user, values],
+  );
 
   const handleSubmitSuccess = useCallback(
     (result: { submissionId: string; aiFeedback: string; aiRating: AiRating | null }) => {
@@ -108,15 +163,20 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       if (result.aiRating) setAiRating(result.aiRating);
       setSubmitted(true);
       setIsDraft(false);
+      notifyParent(result.submissionId, "submitted");
     },
-    [],
+    [notifyParent],
   );
 
-  const handleDraftSuccess = useCallback((result: { submissionId: string }) => {
-    setSubmissionId(result.submissionId);
-    setIsDraft(true);
-    setSubmitted(false);
-  }, []);
+  const handleDraftSuccess = useCallback(
+    (result: { submissionId: string }) => {
+      setSubmissionId(result.submissionId);
+      setIsDraft(true);
+      setSubmitted(false);
+      notifyParent(result.submissionId, "draft");
+    },
+    [notifyParent],
+  );
 
   const { savingDraft, draftMessage, draftError, saveDraft, clearDraftFeedback } = useWorksheetDraft({
     onSuccess: handleDraftSuccess,
@@ -150,19 +210,11 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       setSubmitError("학생 로그인 후 임시 저장할 수 있습니다.");
       return;
     }
+    const payload = buildSavePayload();
+    if (!payload) return;
     clearDraftFeedback();
     clearError();
-    void saveDraft(
-      {
-        templateId,
-        templateName: template.name,
-        meta,
-        values,
-        studentUid: user.uid,
-      },
-      submissionId,
-      submitted,
-    );
+    void saveDraft(payload, submissionId, submitted);
   };
 
   const handleSubmit = () => {
@@ -170,18 +222,9 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
       setSubmitError("학생 로그인 후 제출할 수 있습니다.");
       return;
     }
-    submit(
-      {
-        templateId,
-        templateName: template.name,
-        meta,
-        values,
-        studentUid: user.uid,
-      },
-      submissionId,
-      aiFeedback,
-      aiRating,
-    );
+    const payload = buildSavePayload();
+    if (!payload) return;
+    submit(payload, submissionId, aiFeedback, aiRating);
   };
 
   const handleEdit = () => {
@@ -192,22 +235,24 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-16 text-center text-sm text-slate-500">
+      <div className={`text-center text-sm text-slate-500 ${embedded ? "py-8" : "mx-auto max-w-5xl px-4 py-16"}`}>
         활동지 불러오는 중...
       </div>
     );
   }
 
   return (
-    <div className={`mx-auto space-y-4 px-4 py-6 print:max-w-none print:space-y-0 print:p-0 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}>
-      <div className="flex items-center justify-between print:hidden">
-        <Link href="/" className="text-sm text-blue-600 hover:underline">
-          ← 템플릿 목록
-        </Link>
-        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
-          순번 {getGlobalSequenceNumber(template)}
-        </span>
-      </div>
+    <div className={`space-y-4 print:max-w-none print:space-y-0 print:p-0 ${embedded ? "" : `mx-auto px-4 py-6 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}`}>
+      {!embedded && (
+        <div className="flex items-center justify-between print:hidden">
+          <Link href="/" className="text-sm text-blue-600 hover:underline">
+            ← 템플릿 목록
+          </Link>
+          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
+            순번 {getGlobalSequenceNumber(template)}
+          </span>
+        </div>
+      )}
 
       <div className="print:hidden">
         <WorksheetGuidanceBanner templateId={template.id} aiQuota={aiQuota} studentMode={isStudent} />
@@ -215,7 +260,7 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
 
       {loadError && <p className="text-sm text-red-600 print:hidden">{loadError}</p>}
 
-      {isStudent && (
+      {isStudent && !embedded && (
         <div className="print:hidden lg:hidden">
           <WorksheetProgressNav
             variant="tabs"
@@ -226,8 +271,8 @@ export function WorksheetViewer({ templateId }: WorksheetViewerProps) {
         </div>
       )}
 
-      <div className={isStudent ? "grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]" : ""}>
-        {isStudent && (
+      <div className={isStudent && !embedded ? "grid items-start gap-6 lg:grid-cols-[240px_minmax(0,1fr)]" : ""}>
+        {isStudent && !embedded && (
           <div className="hidden print:hidden lg:block">
             <WorksheetProgressNav
               variant="sidebar"

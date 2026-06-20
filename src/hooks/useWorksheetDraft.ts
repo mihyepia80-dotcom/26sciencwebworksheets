@@ -7,6 +7,7 @@ import {
   saveSubmissionDraft,
   updateSubmissionDraft,
 } from "@/lib/firebase";
+import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 
 interface DraftPayload {
@@ -15,6 +16,8 @@ interface DraftPayload {
   meta: WorksheetMeta;
   values: Answers;
   studentUid: string;
+  linkedReportId?: string;
+  instanceNo?: number;
 }
 
 interface UseWorksheetDraftOptions {

@@ -6,6 +6,9 @@ export {
   updateSubmission,
   updateSubmissionDraft,
   findStudentDraftForTemplate,
+  findStudentDraftForReport,
+  listSubmissionsForReport,
+  getNextInstanceNo,
   deleteSubmission,
   getSubmission,
   listSubmissions,
@@ -45,6 +48,8 @@ export {
   listStudentInquiryReports,
   listAllInquiryReports,
   deleteInquiryReport,
+  getOrCreateStudentDraftReport,
+  linkSubmissionToReport,
   type InquiryReportDoc,
 } from "./inquiry-reports";
 export {

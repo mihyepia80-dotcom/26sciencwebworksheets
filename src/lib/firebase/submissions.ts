@@ -32,6 +32,8 @@ export interface WorksheetSubmission {
   status: WorksheetSubmissionStatus;
   submittedAt: Timestamp | null;
   updatedAt: Timestamp | null;
+  linkedReportId?: string;
+  instanceNo?: number;
   aiFeedback?: string;
   aiRating?: AiRating;
 }
@@ -42,6 +44,8 @@ export interface SaveSubmissionInput {
   meta: WorksheetMeta;
   values: Answers;
   studentUid: string;
+  linkedReportId?: string;
+  instanceNo?: number;
   aiFeedback?: string;
   aiRating?: AiRating;
 }
@@ -69,6 +73,8 @@ function mapSubmissionDoc(id: string, data: Record<string, unknown>): WorksheetS
     updatedAt: (data.updatedAt as Timestamp | null) ?? null,
     aiFeedback: data.aiFeedback ? String(data.aiFeedback) : undefined,
     aiRating: validRating,
+    linkedReportId: data.linkedReportId ? String(data.linkedReportId) : undefined,
+    instanceNo: typeof data.instanceNo === "number" ? data.instanceNo : undefined,
   };
 }
 
@@ -93,6 +99,8 @@ function buildSubmissionDoc(input: SaveSubmissionInput, status: WorksheetSubmiss
 
   if (input.aiFeedback) doc.aiFeedback = input.aiFeedback;
   if (input.aiRating) doc.aiRating = input.aiRating;
+  if (input.linkedReportId) doc.linkedReportId = input.linkedReportId;
+  if (typeof input.instanceNo === "number") doc.instanceNo = input.instanceNo;
   return doc;
 }
 
@@ -136,6 +144,68 @@ export async function findStudentDraftForTemplate(
   const first = snapshot.docs[0];
   if (!first) return null;
   return mapSubmissionDoc(first.id, first.data());
+}
+
+export async function findStudentDraftForReport(
+  studentUid: string,
+  templateId: string,
+  reportId: string,
+  submissionId?: string | null,
+): Promise<WorksheetSubmission | null> {
+  if (submissionId) {
+    const doc = await getSubmission(submissionId);
+    if (doc && doc.studentUid === studentUid && doc.linkedReportId === reportId) return doc;
+  }
+
+  const snapshot = await getDocs(
+    query(
+      collection(getClientDb(), "submissions"),
+      where("studentUid", "==", studentUid),
+      where("linkedReportId", "==", reportId),
+      where("templateId", "==", templateId),
+      where("status", "==", "draft"),
+      limit(20),
+    ),
+  );
+
+  const drafts = snapshot.docs.map((d) => mapSubmissionDoc(d.id, d.data()));
+  if (drafts.length === 0) return null;
+  drafts.sort((a, b) => (b.instanceNo ?? 0) - (a.instanceNo ?? 0));
+  return drafts[0];
+}
+
+export async function listSubmissionsForReport(reportId: string): Promise<WorksheetSubmission[]> {
+  const snapshot = await getDocs(
+    query(
+      collection(getClientDb(), "submissions"),
+      where("linkedReportId", "==", reportId),
+      orderBy("updatedAt", "desc"),
+      limit(100),
+    ),
+  );
+  return snapshot.docs.map((d) => mapSubmissionDoc(d.id, d.data()));
+}
+
+export async function getNextInstanceNo(
+  studentUid: string,
+  templateId: string,
+  reportId: string,
+): Promise<number> {
+  const snapshot = await getDocs(
+    query(
+      collection(getClientDb(), "submissions"),
+      where("studentUid", "==", studentUid),
+      where("linkedReportId", "==", reportId),
+      where("templateId", "==", templateId),
+      limit(50),
+    ),
+  );
+  let max = 0;
+  for (const d of snapshot.docs) {
+    const n = Number(d.data().instanceNo ?? 0);
+    if (n > max) max = n;
+  }
+  return max + 1;
 }
 
 export async function updateSubmissionDraft(

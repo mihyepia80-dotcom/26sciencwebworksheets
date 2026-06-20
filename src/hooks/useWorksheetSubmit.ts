@@ -18,6 +18,8 @@ interface SubmitPayload {
   meta: WorksheetMeta;
   values: Answers;
   studentUid: string;
+  linkedReportId?: string;
+  instanceNo?: number;
 }
 
 interface UseWorksheetSubmitOptions {

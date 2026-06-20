@@ -15,7 +15,7 @@ import {
   where,
   type Timestamp,
 } from "firebase/firestore";
-import type { InquiryReportForm } from "@/lib/inquiry-report/types";
+import { EMPTY_INQUIRY_REPORT, type InquiryReportForm } from "@/lib/inquiry-report/types";
 import { getClientDb } from "./client";
 
 export type InquiryReportStatus = "draft" | "submitted";
@@ -26,6 +26,7 @@ export interface InquiryReportDoc extends InquiryReportForm {
   status: InquiryReportStatus;
   submittedAt: Timestamp | null;
   updatedAt: Timestamp | null;
+  linkedSubmissionIds?: string[];
 }
 
 function str(data: Record<string, unknown>, key: string, fallback = ""): string {
@@ -82,6 +83,9 @@ function mapDoc(id: string, data: Record<string, unknown>): InquiryReportDoc {
     visualDescription: str(data, "visualDescription"),
     submittedAt: (data.submittedAt as Timestamp | null) ?? null,
     updatedAt: (data.updatedAt as Timestamp | null) ?? null,
+    linkedSubmissionIds: Array.isArray(data.linkedSubmissionIds)
+      ? data.linkedSubmissionIds.map(String)
+      : [],
   };
 }
 
@@ -110,6 +114,7 @@ export async function createInquiryReportDraft(
   const ref = await addDoc(collection(getClientDb(), "inquiryReports"), {
     ...toFirestorePayload(form, studentUid, "draft", grade, classNo),
     submittedAt: null,
+    linkedSubmissionIds: [],
   });
   return ref.id;
 }
@@ -173,4 +178,39 @@ function inquiryReportSortTime(report: InquiryReportDoc): number {
 
 export async function deleteInquiryReport(reportId: string): Promise<void> {
   await deleteDoc(doc(getClientDb(), "inquiryReports", reportId));
+}
+
+export async function getOrCreateStudentDraftReport(
+  studentUid: string,
+  grade = "",
+  classNo = "",
+): Promise<string> {
+  const snap = await getDocs(
+    query(
+      collection(getClientDb(), "inquiryReports"),
+      where("studentUid", "==", studentUid),
+      where("status", "==", "draft"),
+      orderBy("updatedAt", "desc"),
+      limit(1),
+    ),
+  );
+  const existing = snap.docs[0];
+  if (existing) return existing.id;
+  return createInquiryReportDraft(
+    EMPTY_INQUIRY_REPORT,
+    studentUid,
+    grade,
+    classNo,
+  );
+}
+
+export async function linkSubmissionToReport(reportId: string, submissionId: string): Promise<void> {
+  const snap = await getDoc(doc(getClientDb(), "inquiryReports", reportId));
+  if (!snap.exists()) return;
+  const current = (snap.data().linkedSubmissionIds as string[] | undefined) ?? [];
+  if (current.includes(submissionId)) return;
+  await updateDoc(doc(getClientDb(), "inquiryReports", reportId), {
+    linkedSubmissionIds: [...current, submissionId],
+    updatedAt: serverTimestamp(),
+  });
 }

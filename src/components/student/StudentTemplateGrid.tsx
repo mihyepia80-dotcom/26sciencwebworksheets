@@ -4,10 +4,12 @@ import { useStudentTemplateProgress } from "@/hooks/useStudentTemplateProgress";
 import { getSortedTemplates } from "@/lib/templates/registry";
 import { getProgressVisualFromProgress } from "@/lib/student-progress/rating-styles";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { formatTemplateTitle, getGlobalSequenceNumber, getTemplateOrderInCategory } from "@/lib/templates/curriculum";
 import { getCategoryGroups } from "@/lib/templates/registry";
 
 export function StudentTemplateGrid() {
+  const router = useRouter();
   const templates = getSortedTemplates();
   const groups = getCategoryGroups();
   const { loading, getProgress, summary, isStudent } = useStudentTemplateProgress();
@@ -74,11 +76,11 @@ export function StudentTemplateGrid() {
               const stageOrder = getTemplateOrderInCategory(t, group.id);
               const seqNo = getGlobalSequenceNumber(t);
               return (
-                <Link
+                <div
                   key={`${group.id}-${t.id}`}
-                  href={`/templates/${t.id}`}
                   className={`group relative flex flex-col rounded-xl border p-4 shadow-sm transition hover:shadow-md ${style.card}`}
                 >
+                  <Link href={`/workspace?template=${t.id}`} className="flex flex-1 flex-col">
                   <div className="mb-2 flex flex-wrap items-center gap-1.5 pr-16">
                     <span className="rounded bg-white/80 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
                       {seqNo}
@@ -110,7 +112,16 @@ export function StudentTemplateGrid() {
                   {t.aiFeatureLabel && (
                     <p className="mt-2 text-xs font-medium text-violet-700">[{t.aiFeatureLabel}]</p>
                   )}
-                </Link>
+                  </Link>
+                  <button
+                    type="button"
+                    title="같은 유형 활동지 추가"
+                    onClick={() => router.push(`/workspace?template=${t.id}&new=1`)}
+                    className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 bg-white text-lg font-bold text-blue-600 shadow-sm hover:bg-blue-50"
+                  >
+                    +
+                  </button>
+                </div>
               );
             })}
           </div>

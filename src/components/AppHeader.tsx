@@ -28,10 +28,10 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
         <div className="flex flex-wrap gap-2">
           {role === "student" && (
             <Link
-              href="/inquiry-report"
+              href="/workspace"
               className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-700 hover:bg-violet-100"
             >
-              탐구보고서
+              탐구 활동실
             </Link>
           )}
           {role === "student" && (

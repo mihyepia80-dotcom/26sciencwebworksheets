@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import type { AiRating } from "@/lib/ai/feedback";
-import { findStudentDraftForTemplate, getSubmission } from "@/lib/firebase";
+import {
+  findStudentDraftForReport,
+  findStudentDraftForTemplate,
+  getSubmission,
+} from "@/lib/firebase";
 import type { WorksheetSubmissionStatus } from "@/lib/firebase/submissions";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 
@@ -13,12 +17,15 @@ interface LoadedSubmission {
   aiFeedback: string;
   aiRating: AiRating | null;
   status: WorksheetSubmissionStatus;
+  linkedReportId?: string;
+  instanceNo?: number;
 }
 
 interface UseWorksheetLoaderOptions {
   editSubmissionId: string | null;
   templateId: string;
   studentUid: string | undefined;
+  linkedReportId?: string;
   enabled: boolean;
   onLoaded: (data: LoadedSubmission) => void;
 }
@@ -27,6 +34,7 @@ export function useWorksheetLoader({
   editSubmissionId,
   templateId,
   studentUid,
+  linkedReportId,
   enabled,
   onLoaded,
 }: UseWorksheetLoaderOptions) {
@@ -47,7 +55,16 @@ export function useWorksheetLoader({
       try {
         let submission = editSubmissionId ? await getSubmission(editSubmissionId) : null;
 
-        if (!editSubmissionId) {
+        if (!submission && linkedReportId) {
+          submission = await findStudentDraftForReport(
+            studentUid,
+            templateId,
+            linkedReportId,
+            editSubmissionId,
+          );
+        }
+
+        if (!submission && !linkedReportId) {
           submission = await findStudentDraftForTemplate(studentUid, templateId);
         }
 
@@ -67,6 +84,8 @@ export function useWorksheetLoader({
           aiFeedback: submission.aiFeedback ?? "",
           aiRating: submission.aiRating ?? null,
           status: submission.status,
+          linkedReportId: submission.linkedReportId,
+          instanceNo: submission.instanceNo,
         });
       } catch {
         if (!cancelled) setLoadError("활동지를 불러오지 못했습니다.");
@@ -80,7 +99,7 @@ export function useWorksheetLoader({
     return () => {
       cancelled = true;
     };
-  }, [editSubmissionId, enabled, studentUid, templateId, onLoaded]);
+  }, [editSubmissionId, enabled, linkedReportId, studentUid, templateId, onLoaded]);
 
   return { loading, loadError };
 }
