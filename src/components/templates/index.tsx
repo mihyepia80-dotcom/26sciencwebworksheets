@@ -25,7 +25,6 @@ import {
   SixThinkingHatsTemplate,
   PeelTheFruitTemplate,
   CircleOfViewpointsTemplate,
-  GsceTemplate,
   StopLightTemplate,
   YChartTemplate,
   TChartTemplate,
@@ -50,6 +49,7 @@ import { HexagonKeywordsTemplate } from "./HexagonKeywordsTemplate";
 import { MandalartTemplate } from "./MandalartTemplate";
 import { CompassPointsTemplate } from "./CompassPointsTemplate";
 import { ThreeTwoOneReflectionTemplate } from "./ThreeTwoOneReflectionTemplate";
+import { GsceTemplate } from "./GsceTemplate";
 import {
   CircleTreeMapTemplate,
   MultiFlowMapTemplate,

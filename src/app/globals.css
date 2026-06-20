@@ -52,4 +52,14 @@ body {
     overflow: visible !important;
     resize: none;
   }
+
+  .gsce-worksheet button,
+  .gsce-worksheet .no-print {
+    display: none !important;
+  }
+
+  .gsce-worksheet section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }

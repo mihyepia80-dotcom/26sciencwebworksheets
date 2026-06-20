@@ -476,29 +476,6 @@ export function CircleOfViewpointsTemplate({ values, onChange, readOnly }: Templ
   );
 }
 
-/* ── GSCE ── */
-export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
-  const quadrants = [
-    { key: "generate", label: "Generate — 아이디어 떠올리기", color: "border-blue-300" },
-    { key: "sort", label: "Sort — 아이디어 분류하기", color: "border-purple-300" },
-    { key: "connect", label: "Connect — 아이디어 연결하기", color: "border-blue-300" },
-    { key: "elaborate", label: "Elaborate — 아이디어 확장하기", color: "border-purple-300" },
-  ];
-  return (
-    <SectionBox title="Generate · Sort · Connect · Elaborate" color="blue">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {quadrants.map(({ key, label, color }) => (
-          <div key={key} className={`rounded border-2 ${color} bg-white p-2`}>
-            <TextAreaField label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={5} readOnly={readOnly} />
-          </div>
-        ))}
-      </div>
-      <TextAreaField label="글쓰기 상황" value={v(values, "writingContext")} onChange={(val) => onChange("writingContext", val)} rows={3} readOnly={readOnly} className="mt-3" />
-      <TextAreaField label="활동 사례" value={v(values, "activityCase")} onChange={(val) => onChange("activityCase", val)} rows={3} readOnly={readOnly} className="mt-3" />
-    </SectionBox>
-  );
-}
-
 /* ── Stop Light ── */
 export function StopLightTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (

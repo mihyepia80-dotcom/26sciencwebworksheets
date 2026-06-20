@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>G-S-C-E 사고 루틴 — 용해와 용액</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css");
+    body { font-family: "Pretendard", "Noto Sans KR", sans-serif; }
+    .chip { cursor: grab; user-select: none; touch-action: none; }
+    .chip:active { cursor: grabbing; }
+    .drop-zone.drag-over { outline: 2px dashed #6366f1; outline-offset: 2px; }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .print-card { break-inside: avoid; page-break-inside: avoid; border-color: #cbd5e1 !important; }
+      textarea, input { border: 1px solid #cbd5e1 !important; background: white !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <header class="mb-6 print-card rounded-2xl border border-blue-100 bg-white p-6 shadow-sm">
+      <h1 class="text-xl font-bold text-blue-900 sm:text-2xl">G-S-C-E 사고 루틴 — 용해와 용액</h1>
+      <p class="mt-2 text-sm text-slate-600">생성(Generate) · 분류(Sort) · 연결(Connect) · 정교화(Elaborate)</p>
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <label class="text-xs font-semibold text-slate-600">학년<input id="grade" type="text" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="5" /></label>
+        <label class="text-xs font-semibold text-slate-600">반<input id="classNo" type="text" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="3" /></label>
+        <label class="text-xs font-semibold text-slate-600">번호<input id="studentNo" type="text" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="12" /></label>
+        <label class="text-xs font-semibold text-slate-600">이름<input id="studentName" type="text" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="홍길동" /></label>
+      </div>
+    </header>
+
+    <section class="print-card mb-6 rounded-2xl border border-blue-200 bg-blue-50/50 p-5">
+      <h2 class="text-sm font-bold text-blue-900">1단계 — 생성하기 (Generate)</h2>
+      <p class="mt-1 text-xs text-slate-600">기본 과학 단어를 확인하고, 필요하면 새 포스트잇을 추가하세요.</p>
+      <div class="no-print mt-3 flex flex-wrap gap-2">
+        <input id="newWord" type="text" class="min-w-[160px] flex-1 rounded-lg border border-blue-200 bg-white px-3 py-2 text-sm" placeholder="새 단어 입력" />
+        <button type="button" id="addWordBtn" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">새 포스트잇 추가</button>
+      </div>
+      <div id="poolZone" class="drop-zone mt-4 min-h-[100px] rounded-xl border-2 border-dashed border-slate-300 bg-white p-3" data-zone="pool">
+        <p class="mb-2 text-xs font-bold text-slate-700">단어 보관함</p>
+        <div id="poolChips" class="flex flex-wrap gap-2"></div>
+      </div>
+    </section>
+
+    <section class="print-card mb-6 rounded-2xl border border-purple-200 bg-purple-50/40 p-5">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-bold text-purple-900">2~3단계 — 분류·연결하기 (Sort & Connect)</h2>
+          <p class="mt-1 text-xs text-slate-600">단어를 드래그하여 분류한 뒤, 연결 모드에서 두 칩을 클릭해 관계를 입력하세요.</p>
+        </div>
+        <button type="button" id="connectModeBtn" class="no-print rounded-lg border border-purple-300 bg-white px-3 py-1.5 text-xs font-semibold text-purple-800">연결 모드 시작</button>
+      </div>
+      <div id="board" class="relative mt-4 grid gap-4 md:grid-cols-2">
+        <div id="causeZone" class="drop-zone min-h-[140px] rounded-xl border-2 border-dashed border-violet-300 bg-violet-50/60 p-3" data-zone="cause">
+          <p class="mb-2 text-xs font-bold text-violet-900">[원인 / 실험 조건]</p>
+          <div class="flex flex-wrap gap-2"></div>
+        </div>
+        <div id="resultZone" class="drop-zone min-h-[140px] rounded-xl border-2 border-dashed border-sky-300 bg-sky-50/60 p-3" data-zone="result">
+          <p class="mb-2 text-xs font-bold text-sky-900">[결과 / 관찰 현상]</p>
+          <div class="flex flex-wrap gap-2"></div>
+        </div>
+        <svg id="connSvg" class="pointer-events-none absolute inset-0 h-full w-full overflow-visible" aria-hidden></svg>
+      </div>
+      <ul id="connList" class="mt-3 space-y-1 text-xs text-slate-700"></ul>
+      <div id="relationPanel" class="no-print mt-3 hidden rounded-lg border border-amber-200 bg-amber-50 p-3">
+        <p class="mb-2 text-xs font-semibold text-amber-900">두 단어 사이의 관계를 입력하세요</p>
+        <input id="relationInput" type="text" class="mb-2 w-full rounded border border-amber-200 px-3 py-2 text-sm" placeholder="예: 온도가 높을수록 더 많이 녹는다" />
+        <div class="flex gap-2">
+          <button type="button" id="saveConnBtn" class="rounded bg-amber-600 px-3 py-1.5 text-xs text-white">연결 저장</button>
+          <button type="button" id="cancelConnBtn" class="rounded border border-slate-300 px-3 py-1.5 text-xs">취소</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="print-card mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/40 p-5">
+      <h2 class="text-sm font-bold text-emerald-900">4단계 — 정교화하기 (Elaborate)</h2>
+      <div class="mt-4 space-y-4">
+        <label class="block text-xs font-bold text-slate-700">메모 A — 용질의 종류 측면<textarea id="elaborateA" rows="4" class="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm" placeholder="설탕과 소금(백반) 실험 결과를 비교하며 서술하세요."></textarea></label>
+        <label class="block text-xs font-bold text-slate-700">메모 B — 물의 온도 측면<textarea id="elaborateB" rows="4" class="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm" placeholder="따뜻한 물과 차가운 물 실험 결과를 바탕으로 서술하세요."></textarea></label>
+        <label class="block text-xs font-bold text-slate-700">메모 C — 변인 통제 측면<textarea id="elaborateC" rows="4" class="mt-1 w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm" placeholder="같게 유지한 조건과 달리 한 조건을 명확히 구분하여 서술하세요."></textarea></label>
+      </div>
+    </section>
+
+    <section class="print-card mb-6 rounded-2xl border border-slate-200 bg-white p-5">
+      <h2 class="text-sm font-bold text-slate-800">최종 한 줄 결론 (Headline)</h2>
+      <input id="headline" type="text" class="mt-3 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="오늘 실험에서 발견한 핵심을 한 문장으로 정리하세요" />
+      <h3 class="mt-5 text-xs font-bold text-slate-700">나의 글 최종 점검 (셀프 체크리스트)</h3>
+      <ul class="mt-2 space-y-2 text-sm">
+        <li><label class="flex gap-2"><input type="checkbox" id="checkTerms" /><span>용질, 용매, 용해, 용액 등 과학적 용어를 정확하게 사용하였는가?</span></label></li>
+        <li><label class="flex gap-2"><input type="checkbox" id="checkVariable" /><span>다르게 한 조건과 같게 한 조건이 명확히 드러나게 썼는가?</span></label></li>
+        <li><label class="flex gap-2"><input type="checkbox" id="checkCausal" /><span>문장이 "~이다", "~때문이다"와 같이 논리적인 인과 관계를 갖추고 있는가?</span></label></li>
+      </ul>
+    </section>
+
+    <div class="no-print flex justify-end gap-2">
+      <button type="button" id="saveBtn" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">로컬 저장</button>
+      <button type="button" id="printBtn" class="rounded-lg bg-slate-800 px-4 py-2 text-sm font-medium text-white hover:bg-slate-900">최종 결과 저장 및 PDF 출력</button>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "gsce-worksheet-v1";
+    const DEFAULT_WORDS = ["용질의 종류", "물의 온도", "변인 통제", "설탕", "백반", "50 mL", "따뜻한 물", "차가운 물", "용해량"];
+
+    let state = {
+      chips: DEFAULT_WORDS.map((text, i) => ({ id: "default-" + i, text, custom: false })),
+      pool: DEFAULT_WORDS.map((_, i) => "default-" + i),
+      cause: [],
+      result: [],
+      connections: [],
+    };
+
+    let connectMode = false;
+    let connectFrom = null;
+    let pendingConnect = null;
+    let draggedId = null;
+
+    const $ = (id) => document.getElementById(id);
+    const userFields = ["grade", "classNo", "studentNo", "studentName"];
+    const textFields = ["elaborateA", "elaborateB", "elaborateC", "headline"];
+    const checkFields = ["checkTerms", "checkVariable", "checkCausal"];
+
+    function chipEl(chip) {
+      const el = document.createElement("div");
+      el.className = "chip rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-sm shadow-sm";
+      el.textContent = chip.text;
+      el.dataset.chipId = chip.id;
+      el.draggable = true;
+      el.addEventListener("dragstart", (e) => {
+        if (connectMode) { e.preventDefault(); return; }
+        draggedId = chip.id;
+        e.dataTransfer.setData("text/plain", chip.id);
+      });
+      el.addEventListener("click", () => onChipClick(chip.id));
+      return el;
+    }
+
+    function zoneContainer(zone) {
+      if (zone === "pool") return $("poolChips");
+      return $(zone + "Zone").querySelector("div.flex");
+    }
+
+    function findZone(chipId) {
+      if (state.pool.includes(chipId)) return "pool";
+      if (state.cause.includes(chipId)) return "cause";
+      if (state.result.includes(chipId)) return "result";
+      return null;
+    }
+
+    function moveChip(chipId, target) {
+      state.pool = state.pool.filter((id) => id !== chipId);
+      state.cause = state.cause.filter((id) => id !== chipId);
+      state.result = state.result.filter((id) => id !== chipId);
+      state.connections = state.connections.filter((c) => c.fromId !== chipId && c.toId !== chipId);
+      state[target].push(chipId);
+    }
+
+    function renderChips() {
+      ["pool", "cause", "result"].forEach((zone) => {
+        const container = zoneContainer(zone);
+        container.innerHTML = "";
+        const ids = state[zone];
+        ids.forEach((id) => {
+          const chip = state.chips.find((c) => c.id === id);
+          if (chip) container.appendChild(chipEl(chip));
+        });
+        if (ids.length === 0 && zone !== "pool") {
+          const hint = document.createElement("span");
+          hint.className = "text-xs text-slate-400";
+          hint.textContent = "여기로 단어를 놓으세요";
+          container.appendChild(hint);
+        }
+      });
+      renderConnections();
+    }
+
+    function renderConnections() {
+      const list = $("connList");
+      list.innerHTML = "";
+      state.connections.forEach((c) => {
+        const from = state.chips.find((x) => x.id === c.fromId)?.text ?? "";
+        const to = state.chips.find((x) => x.id === c.toId)?.text ?? "";
+        const li = document.createElement("li");
+        li.className = "flex flex-wrap items-center gap-2 rounded border border-indigo-100 bg-indigo-50/50 px-2 py-1";
+        li.innerHTML = `<span class="font-medium text-violet-800">${from}</span><span class="text-indigo-500">→</span><span class="font-medium text-sky-800">${to}</span>${c.label ? `<span>(${c.label})</span>` : ""}<button type="button" class="no-print ml-auto text-red-500" data-del="${c.id}">삭제</button>`;
+        li.querySelector("button").addEventListener("click", () => {
+          state.connections = state.connections.filter((x) => x.id !== c.id);
+          saveAll();
+          renderChips();
+        });
+        list.appendChild(li);
+      });
+
+      const svg = $("connSvg");
+      const board = $("board");
+      svg.innerHTML = "<defs><marker id='arrow' markerWidth='8' markerHeight='8' refX='6' refY='3' orient='auto'><path d='M0,0 L0,6 L6,3 z' fill='#6366f1'/></marker></defs>";
+      const rect = board.getBoundingClientRect();
+      state.connections.forEach((c) => {
+        const fromEl = board.querySelector(`[data-chip-id="${c.fromId}"]`);
+        const toEl = board.querySelector(`[data-chip-id="${c.toId}"]`);
+        if (!fromEl || !toEl) return;
+        const fr = fromEl.getBoundingClientRect();
+        const tr = toEl.getBoundingClientRect();
+        const x1 = fr.left + fr.width / 2 - rect.left;
+        const y1 = fr.top + fr.height / 2 - rect.top;
+        const x2 = tr.left + tr.width / 2 - rect.left;
+        const y2 = tr.top + tr.height / 2 - rect.top;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+        line.setAttribute("stroke", "#6366f1"); line.setAttribute("stroke-width", "2");
+        line.setAttribute("marker-end", "url(#arrow)");
+        svg.appendChild(line);
+        if (c.label) {
+          const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          text.setAttribute("x", (x1 + x2) / 2);
+          text.setAttribute("y", (y1 + y2) / 2 - 6);
+          text.setAttribute("text-anchor", "middle");
+          text.setAttribute("fill", "#4338ca");
+          text.setAttribute("font-size", "10");
+          text.textContent = c.label;
+          svg.appendChild(text);
+        }
+      });
+    }
+
+    function onChipClick(chipId) {
+      if (!connectMode) return;
+      const zone = findZone(chipId);
+      if (zone === "pool") return;
+      if (!connectFrom) { connectFrom = { id: chipId, zone }; highlightChip(chipId); return; }
+      if (connectFrom.id === chipId) { connectFrom = null; renderChips(); return; }
+      if (connectFrom.zone === zone) { connectFrom = { id: chipId, zone }; renderChips(); highlightChip(chipId); return; }
+      pendingConnect = { fromId: connectFrom.id, toId: chipId };
+      $("relationPanel").classList.remove("hidden");
+      $("relationInput").focus();
+    }
+
+    function highlightChip(chipId) {
+      renderChips();
+      const el = document.querySelector(`[data-chip-id="${chipId}"]`);
+      if (el) { el.classList.add("ring-2", "ring-amber-400", "bg-amber-50"); }
+    }
+
+    document.querySelectorAll(".drop-zone").forEach((zoneEl) => {
+      zoneEl.addEventListener("dragover", (e) => { e.preventDefault(); zoneEl.classList.add("drag-over"); });
+      zoneEl.addEventListener("dragleave", () => zoneEl.classList.remove("drag-over"));
+      zoneEl.addEventListener("drop", (e) => {
+        e.preventDefault();
+        zoneEl.classList.remove("drag-over");
+        const chipId = e.dataTransfer.getData("text/plain") || draggedId;
+        const target = zoneEl.dataset.zone;
+        if (!chipId || !target || findZone(chipId) === target) return;
+        moveChip(chipId, target);
+        saveAll();
+        renderChips();
+      });
+    });
+
+    $("addWordBtn").addEventListener("click", () => {
+      const text = $("newWord").value.trim();
+      if (!text) return;
+      const id = "custom-" + Date.now();
+      state.chips.push({ id, text, custom: true });
+      state.pool.push(id);
+      $("newWord").value = "";
+      saveAll();
+      renderChips();
+    });
+
+    $("connectModeBtn").addEventListener("click", () => {
+      connectMode = !connectMode;
+      connectFrom = null;
+      pendingConnect = null;
+      $("relationPanel").classList.add("hidden");
+      $("connectModeBtn").textContent = connectMode ? "연결 모드 종료" : "연결 모드 시작";
+      $("connectModeBtn").className = connectMode
+        ? "no-print rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-white"
+        : "no-print rounded-lg border border-purple-300 bg-white px-3 py-1.5 text-xs font-semibold text-purple-800";
+      renderChips();
+    });
+
+    $("saveConnBtn").addEventListener("click", () => {
+      if (!pendingConnect) return;
+      state.connections.push({
+        id: "conn-" + Date.now(),
+        fromId: pendingConnect.fromId,
+        toId: pendingConnect.toId,
+        label: $("relationInput").value.trim(),
+      });
+      pendingConnect = null;
+      connectFrom = null;
+      connectMode = false;
+      $("relationPanel").classList.add("hidden");
+      $("relationInput").value = "";
+      $("connectModeBtn").textContent = "연결 모드 시작";
+      $("connectModeBtn").className = "no-print rounded-lg border border-purple-300 bg-white px-3 py-1.5 text-xs font-semibold text-purple-800";
+      saveAll();
+      renderChips();
+    });
+
+    $("cancelConnBtn").addEventListener("click", () => {
+      pendingConnect = null;
+      connectFrom = null;
+      $("relationPanel").classList.add("hidden");
+      renderChips();
+    });
+
+    function saveAll() {
+      const data = {
+        user: Object.fromEntries(userFields.map((f) => [f, $(f).value])),
+        state,
+        text: Object.fromEntries(textFields.map((f) => [f, $(f).value])),
+        checks: Object.fromEntries(checkFields.map((f) => [f, $(f).checked])),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
+
+    function loadAll() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        userFields.forEach((f) => { if (data.user?.[f]) $(f).value = data.user[f]; });
+        if (data.state) state = data.state;
+        textFields.forEach((f) => { if (data.text?.[f]) $(f).value = data.text[f]; });
+        checkFields.forEach((f) => { if (data.checks?.[f]) $(f).checked = data.checks[f]; });
+      } catch (_) {}
+    }
+
+    userFields.forEach((f) => $(f).addEventListener("input", saveAll));
+    textFields.forEach((f) => $(f).addEventListener("input", saveAll));
+    checkFields.forEach((f) => $(f).addEventListener("change", saveAll));
+    $("saveBtn").addEventListener("click", () => { saveAll(); alert("로컬 저장되었습니다."); });
+    $("printBtn").addEventListener("click", () => { saveAll(); window.print(); });
+    window.addEventListener("resize", renderConnections);
+
+    loadAll();
+    renderChips();
+  </script>
+</body>
+</html>
