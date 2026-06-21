@@ -308,7 +308,7 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
 
   return (
     <div className="gsce-worksheet space-y-6 print:space-y-4">
-      <SectionBox title="생성·분류·연결·정교화(G-S-C-E) — 용해와 용액" color="blue">
+      <SectionBox title="생성·분류·연결·정교화 — 용해와 용액" color="blue">
         <p className="mb-4 text-sm leading-relaxed text-slate-600">
           오늘 수행한 실험 과정과 결과를 떠올리며, 단어를 생성하고 분류·연결한 뒤 과학적 문장으로 정교화해 봅시다.
         </p>
@@ -316,7 +316,7 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
         {/* 1단계: 생성 */}
         <section className="mb-6 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
           <h3 className="mb-1 text-base font-bold text-blue-900">1단계 — 생성하기</h3>
-          <p className="mb-3 text-xs text-slate-600">기본 과학 단어를 확인하고, 필요하면 새 포스트잇 단어를 추가하세요.</p>
+          <p className="mb-3 text-base text-slate-600">기본 과학 단어를 확인하고, 필요하면 새 포스트잇 단어를 추가하세요.</p>
           {!readOnly && (
             <div className="mb-3 flex flex-wrap gap-2 print:hidden">
               <input
@@ -354,7 +354,7 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-bold text-purple-900">2~3단계 — 분류·연결하기</h3>
-              <p className="mt-1 text-xs text-slate-600">
+              <p className="mt-1 text-base text-slate-600">
                 단어를 원인/조건과 결과/관찰 영역으로 드래그한 뒤, 연결 모드에서 두 칩을 클릭해 관계를 적으세요.
               </p>
             </div>
@@ -409,10 +409,10 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
 
           {pendingConnect && !readOnly && (
             <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 print:hidden">
-              <p className="mb-2 text-xs font-semibold text-amber-900">두 단어 사이의 관계를 입력하세요</p>
+              <p className="mb-2 text-base font-semibold text-amber-900">두 단어 사이의 관계를 입력하세요</p>
               <input
                 type="text"
-                className="mb-2 w-full rounded border border-amber-200 px-3 py-2 text-sm"
+                className="ui-input mb-2"
                 placeholder="예: 온도가 높을수록 더 많이 녹는다"
                 value={relationInput}
                 onChange={(e) => setRelationInput(e.target.value)}
@@ -450,7 +450,7 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
                 label={title}
                 value={v(values, key)}
                 onChange={(val) => onChange(key, val)}
-                rows={4}
+                rows={6}
                 readOnly={readOnly}
                 placeholder={guide}
               />

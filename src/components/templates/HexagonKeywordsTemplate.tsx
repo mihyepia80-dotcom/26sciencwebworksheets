@@ -35,7 +35,7 @@ function HexCell({
 }) {
   return (
     <textarea
-      className={`hex-cell resize-none border-2 border-amber-400 bg-white p-2 text-center text-xs leading-tight focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-300 ${className}`}
+      className={`hex-cell input-compact resize-none border-2 border-amber-400 bg-white p-3 text-center text-base leading-snug focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-300 ${className}`}
       value={value}
       disabled={readOnly}
       placeholder={placeholder}
@@ -62,7 +62,7 @@ export function HexagonKeywordsTemplate({ values, onChange, readOnly }: Template
 
   return (
     <SectionBox title="사고하기 — 육각형 핵심 단어 연결하기" color="yellow">
-      <p className="mb-3 text-xs text-slate-600">
+      <p className="mb-3 text-base text-slate-600">
         주제에서 중요한 키워드를 육각형 칸에 써 보세요.{" "}
         <strong>가운데</strong>에는 가장 중요한 단어를 넣습니다. 각 한글 기호(가~타)는 두
         키워드가 <strong>맞닿는 변</strong>을 뜻합니다.

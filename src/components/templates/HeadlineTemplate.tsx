@@ -14,7 +14,7 @@ export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) 
         <div className="mb-6 border-b border-slate-200 pb-6 text-center">
           <p className="text-xs font-medium text-slate-500">{get("unit")}</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">
-            헤드라인
+            표제 만들기
           </h2>
           <p className="mt-2 text-base text-slate-600">{get("topic")}</p>
         </div>
@@ -33,7 +33,7 @@ export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) 
 
         <div className="space-y-6">
           <div className="rounded-xl border border-slate-200 p-5 shadow-sm print:shadow-none">
-            <label className="ui-label">헤드라인 뽑기</label>
+            <label className="ui-label">표제 작성</label>
             <p className="mb-3 text-base text-slate-600">
               탐구 내용의 핵심 본질과 가치를 한 줄로 관통하는 제목을 작성하세요.
             </p>
@@ -50,7 +50,7 @@ export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) 
           <div className="rounded-xl border border-slate-200 p-5 shadow-sm print:shadow-none">
             <label className="ui-label">이유 서술하기</label>
             <p className="mb-3 text-base text-slate-600">
-              왜 그렇게 헤드라인을 뽑았는지, 과학적 사실(실험·조사 데이터)과 인과 관계를 담아 서술하세요.
+              왜 그렇게 표제를 정했는지, 과학적 사실(실험·조사 데이터)과 인과 관계를 담아 서술하세요.
             </p>
             <textarea
               className="ui-textarea min-h-[12rem]"

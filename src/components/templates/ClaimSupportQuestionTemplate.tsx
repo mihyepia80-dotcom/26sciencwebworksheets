@@ -14,12 +14,12 @@ export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: Tem
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 print:shadow-none">
         <div className="mb-6 border-b border-slate-200 pb-6 text-center">
           <h2 className="text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">과학과 성장 포트폴리오</h2>
-          <p className="mt-1 text-base text-slate-600">주장·근거·질문(CSQ) 기반 과학 성찰 글쓰기</p>
+          <p className="mt-1 text-base text-slate-600">주장·근거·질문 기반 과학 성찰 글쓰기</p>
         </div>
 
         <div className="mb-8 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
           <h3 className="mb-2 text-sm font-bold text-indigo-900">나의 탐구 데이터 핵심 메모</h3>
-          <ul className="list-disc space-y-1 pl-4 text-xs text-indigo-800">
+          <ul className="list-disc space-y-1 pl-4 text-base text-indigo-800">
             {memos.map((item) => (
               <li key={item}>{item}</li>
             ))}

@@ -99,7 +99,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   {
     id: "five-why",
     order: 3,
-    name: "5WHY's",
+    name: "5번 왜",
     nameEn: "5WHY 활동지",
     category: "concept-deepening",
     description: "5번의 왜 질문",
@@ -244,10 +244,10 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   {
     id: "four-cs",
     order: 7,
-    name: "The 4 C's",
+    name: "4C (연결·도전·개념·변화)",
     nameEn: "연결·도전·개념·변화",
     category: "concept-synthesis",
-    description: "Connections·Challenge·Concepts·Changes",
+    description: "연결·도전·개념·변화 네 가지로 정리하기",
     aiFeatureLabel: "개념 매핑 보고서",
     aiFeature:
       "기존 지식과의 연결, 해결 과제, 핵심 개념, 인식의 변화를 4개 영역으로 구조화하여 대단원 마무리 글쓰기 템플릿으로 활용합니다.",
@@ -281,7 +281,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   {
     id: "scamper",
     order: 2,
-    name: "SCAMPER",
+    name: "스캠퍼",
     nameEn: "스캠퍼",
     category: "concept-deepening",
     description: "가설 확장·변형",
@@ -417,7 +417,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
     name: "+1 Routine",
     nameEn: "플러스 원",
     category: "student-exchange",
-    description: "Plus One 협력 루틴",
+    description: "플러스 원 협력 루틴",
     aiFeatureLabel: "지식 이어달리기",
     aiFeature:
       "다른 사람이 쓴 탐구 글 위에 마우스를 올리고 과학적 아이디어나 반박 데이터를 '+1' 레이어로 얹어 글을 공동 진화시키는 기능입니다.",
@@ -438,7 +438,7 @@ export const TEMPLATE_REGISTRY: TemplateDefinition[] = [
   {
     id: "leaderless-discussion",
     order: 9,
-    name: "The Leaderless Discussion",
+    name: "리더 없는 토론",
     nameEn: "리더 없는 토론",
     category: "student-exchange",
     description: "데이터 기반 자율 토론",

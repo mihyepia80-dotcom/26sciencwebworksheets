@@ -114,7 +114,7 @@ export function ThinkPuzzleExploreTemplate({ values, onChange, readOnly }: Templ
         {cols.map(({ key, title, hint, ex }) => (
           <div key={key} className="rounded border border-lime-300 bg-white">
             <div className="bg-lime-300 px-3 py-2 text-sm font-bold">{title}</div>
-            <div className="space-y-1 px-3 py-2 text-xs text-slate-500">
+            <div className="space-y-1 px-3 py-2 text-sm text-slate-600">
               <p>{hint}</p>
               <p className="italic">{ex}</p>
             </div>
@@ -148,7 +148,7 @@ export function FourCsTemplate({ values, onChange, readOnly }: TemplateProps) {
 /* ── 5 Why ── */
 export function FiveWhyTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="5WHY 활동지" color="yellow">
+    <SectionBox title="5번 왜 활동지" color="yellow">
       <TextAreaField label="주제" value={v(values, "mainTopic")} onChange={(val) => onChange("mainTopic", val)} rows={3} readOnly={readOnly} className="mb-4" />
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map((n) => (
@@ -202,13 +202,13 @@ export function PlusOneTemplate({ values, onChange, readOnly }: TemplateProps) {
     reflect: "5. 성찰하기",
   };
   return (
-    <SectionBox title="Plus One (플러스 원)" color="purple">
+    <SectionBox title="플러스 원" color="purple">
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
         <TextAreaField value={v(values, "workspace")} onChange={(val) => onChange("workspace", val)} rows={12} readOnly={readOnly} placeholder="생각을 자유롭게 기록하세요" />
         <div className="space-y-2">
           {steps.map((s) => (
             <div key={s} className="rounded border border-slate-200 bg-white p-2">
-              <p className="text-xs font-bold text-slate-700">{labels[s]}</p>
+              <p className="text-sm font-bold text-slate-700">{labels[s]}</p>
               {s === "reflect" && (
                 <TextAreaField value={v(values, "reflect")} onChange={(val) => onChange("reflect", val)} rows={3} readOnly={readOnly} className="mt-1" />
               )}
@@ -283,7 +283,7 @@ export function ChalkTalkTemplate(props: TemplateProps) {
 
 export function HotSpotsTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="핫스팟(눈에 띄는 부분)" color="blue">
+    <SectionBox title="눈에 띄는 부분" color="blue">
       <p className="mb-3 text-sm text-slate-600">사진에서 눈에 띄는 부분과 궁금한 점을 적어보세요.</p>
       {[1, 2].map((n) => (
         <TextAreaField key={n} label={`활동사례 ${n}`} value={v(values, `case${n}`)} onChange={(val) => onChange(`case${n}`, val)} rows={4} readOnly={readOnly} className="mb-3" placeholder="나는 여기가 눈에 띄었어요. 왜냐하면…" />
@@ -313,7 +313,7 @@ export function ZoomInTemplate({ values, onChange, readOnly }: TemplateProps) {
 export function BrainstormingTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
     <SectionBox title="브레인스토밍" color="pink">
-      <div className="mb-4 rounded bg-slate-50 p-3 text-xs text-slate-600">
+      <div className="mb-4 rounded bg-slate-50 p-3 text-sm text-slate-600">
         <p className="font-bold">4가지 원칙: 자유로운 분위기 · 질보다 양 · 비판금지 · 결합과 개선</p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
@@ -340,7 +340,7 @@ export function StarburstingTemplate({ values, onChange, readOnly }: TemplatePro
   const items = ["who", "what", "when", "where", "why", "how"];
   const labels: Record<string, string> = { who: "누가", what: "무엇", when: "언제", where: "어디", why: "왜", how: "어떻게" };
   return (
-    <SectionBox title="스타버스팅 (5W1H)" color="blue">
+    <SectionBox title="스타버스팅 (누가·무엇·언제·어디·왜·어떻게)" color="blue">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((key) => (
           <TextAreaField key={key} label={labels[key]} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={3} readOnly={readOnly} />
@@ -533,7 +533,7 @@ export function Brainwriting635Template({ values, onChange, readOnly }: Template
   return (
     <SectionBox title="브레인라이팅 6-3-5" color="purple">
       <TextAreaField label="탐구 문제" value={v(values, "issue")} onChange={(val) => onChange("issue", val)} rows={4} readOnly={readOnly} className="mb-3" />
-      <p className="mb-2 text-xs text-slate-500">6명 × 3아이디어 × 6라운드</p>
+      <p className="mb-2 text-sm text-slate-500">6명 × 3아이디어 × 6라운드</p>
       <GridInput keys={gridKeys} values={values} onChange={onChange} cols={3} readOnly={readOnly} />
       <div className="mt-3 grid gap-3 md:grid-cols-3">
         <TextAreaField label="연결·결합" value={v(values, "connect")} onChange={(val) => onChange("connect", val)} rows={3} readOnly={readOnly} />
@@ -689,7 +689,7 @@ export function ScamperTemplate({ values, onChange, readOnly }: TemplateProps) {
   ] as const;
 
   return (
-    <SectionBox title="SCAMPER — 아이디어 확장·변형" color="yellow">
+    <SectionBox title="스캠퍼 — 아이디어 확장·변형" color="yellow">
       <TextAreaField
         label="아이디어 (바꿀 대상)"
         value={v(values, "conclusion")}
@@ -708,12 +708,12 @@ export function ScamperTemplate({ values, onChange, readOnly }: TemplateProps) {
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-lg font-bold">
                   {letter}
                 </span>
-                <p className="text-center text-xs font-bold leading-tight">{title}</p>
+                <p className="text-center text-sm font-bold leading-tight">{title}</p>
               </div>
               <div className="flex flex-1 flex-col p-2">
-                <p className={`mb-2 rounded px-2 py-1.5 text-[11px] leading-snug ${badge}`}>{hint}</p>
+                <p className={`mb-2 rounded px-2 py-1.5 text-sm leading-snug ${badge}`}>{hint}</p>
                 <textarea
-                  className="ui-textarea min-h-[10rem] flex-1 border-white px-3 py-3 text-slate-800 focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-300 disabled:bg-slate-50"
+                  className="ui-textarea input-compact min-h-[12rem] flex-1 border-white px-3 py-3 text-lg leading-relaxed text-slate-800 focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-300 disabled:bg-slate-50"
                   value={v(values, key)}
                   disabled={readOnly}
                   placeholder={hint}

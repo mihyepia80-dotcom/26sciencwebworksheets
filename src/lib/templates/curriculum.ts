@@ -147,7 +147,7 @@ export const TEMPLATE_CURRICULUM: Record<string, TemplateCurriculumMeta> = {
   "five-why": {
     category: "concept-synthesis",
     order: 8,
-    name: "5WHY's",
+    name: "5번 왜",
     nameEn: "5 Whys",
   },
   scamper: {

@@ -38,7 +38,7 @@ function BubbleInput({
   return (
     <div className="relative flex flex-col items-center">
       <textarea
-        className={`${sizeClass} resize-none rounded-full border-2 p-2 text-center text-xs leading-tight focus:outline-none focus:ring-2 focus:ring-pink-300 ${colorClass}`}
+        className={`${sizeClass} input-compact resize-none rounded-full border-2 p-3 text-center text-base leading-snug focus:outline-none focus:ring-2 focus:ring-pink-300 ${colorClass}`}
         value={value}
         disabled={readOnly}
         placeholder={placeholder}
@@ -127,20 +127,20 @@ export function DoubleBubbleMapTemplate({ values, onChange, readOnly }: Template
 
   return (
     <SectionBox title="사고하기 — 더블 버블 맵" color="pink">
-      <p className="mb-4 text-xs text-slate-600">
+      <p className="mb-4 text-base text-slate-600">
         두 개념어를 비교·대조하며 개념을 넓혀 가세요. <strong>+</strong>로 동그라미를 추가하고, 필요 없으면{" "}
         <strong>삭제</strong>하세요.
       </p>
 
       <div className="flex flex-col items-center gap-5">
         <div className="w-full max-w-md">
-          <p className="mb-2 text-center text-xs font-semibold text-pink-800">개념어 A</p>
+          <p className="mb-2 text-center text-base font-semibold text-pink-800">첫 번째 개념</p>
           <div className="flex justify-center">
             <BubbleInput
               value={v(values, "subjectA")}
-              placeholder="개념어 A"
+              placeholder="첫 번째 개념"
               readOnly={readOnly}
-              sizeClass="h-28 w-28 sm:h-32 sm:w-32 text-sm font-semibold"
+              sizeClass="h-32 w-32 sm:h-36 sm:w-36 text-lg font-semibold"
               colorClass="border-pink-300 bg-pink-100"
               canRemove={false}
               onChange={(val) => onChange("subjectA", val)}
@@ -149,46 +149,46 @@ export function DoubleBubbleMapTemplate({ values, onChange, readOnly }: Template
         </div>
 
         <div className="w-full">
-          <p className="mb-2 text-center text-xs font-semibold text-pink-700">A만의 특징</p>
+          <p className="mb-2 text-center text-base font-semibold text-pink-700">첫 번째 개념만의 특징</p>
           {renderBubbleRow(
             "uniqueA",
             counts.uniqueA,
-            "A만의 특징",
-            "h-20 w-20",
+            "첫 번째 개념만의 특징",
+            "h-24 w-24 sm:h-28 sm:w-28",
             "border-pink-200 bg-pink-50",
           )}
         </div>
 
         <div className="w-full border-y border-violet-100 py-4">
-          <p className="mb-2 text-center text-xs font-semibold text-violet-800">공통점</p>
+          <p className="mb-2 text-center text-base font-semibold text-violet-800">공통점</p>
           {renderBubbleRow(
             "shared",
             counts.shared,
             "공통점",
-            "h-20 w-20",
+            "h-24 w-24 sm:h-28 sm:w-28",
             "border-violet-200 bg-violet-50",
           )}
         </div>
 
         <div className="w-full">
-          <p className="mb-2 text-center text-xs font-semibold text-pink-700">B만의 특징</p>
+          <p className="mb-2 text-center text-base font-semibold text-pink-700">두 번째 개념만의 특징</p>
           {renderBubbleRow(
             "uniqueB",
             counts.uniqueB,
-            "B만의 특징",
-            "h-20 w-20",
+            "두 번째 개념만의 특징",
+            "h-24 w-24 sm:h-28 sm:w-28",
             "border-pink-200 bg-pink-50",
           )}
         </div>
 
         <div className="w-full max-w-md">
-          <p className="mb-2 text-center text-xs font-semibold text-pink-800">개념어 B</p>
+          <p className="mb-2 text-center text-base font-semibold text-pink-800">두 번째 개념</p>
           <div className="flex justify-center">
             <BubbleInput
               value={v(values, "subjectB")}
-              placeholder="개념어 B"
+              placeholder="두 번째 개념"
               readOnly={readOnly}
-              sizeClass="h-28 w-28 sm:h-32 sm:w-32 text-sm font-semibold"
+              sizeClass="h-32 w-32 sm:h-36 sm:w-36 text-lg font-semibold"
               colorClass="border-pink-300 bg-pink-100"
               canRemove={false}
               onChange={(val) => onChange("subjectB", val)}

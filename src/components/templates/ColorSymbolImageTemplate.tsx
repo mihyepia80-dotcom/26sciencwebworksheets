@@ -12,9 +12,9 @@ export function ColorSymbolImageTemplate({ values, onChange, readOnly }: Templat
     <div className="csi-worksheet mx-auto max-w-3xl">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 print:shadow-none">
         <div className="mb-6 border-b border-slate-200 pb-6 text-center">
-          <p className="text-xs font-medium text-slate-500">{get("unit")}</p>
+          <p className="text-sm font-medium text-slate-500">{get("unit")}</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">
-            색상·기호·이미지(CSI) — 생각 성찰
+            색상·기호·이미지 — 생각 성찰
           </h2>
           <p className="mt-2 text-sm text-slate-600">{get("topic")}</p>
         </div>
@@ -54,12 +54,12 @@ export function ColorSymbolImageTemplate({ values, onChange, readOnly }: Templat
                   </span>
                   <span className="text-sm font-bold text-slate-800 sm:text-base">{title}</span>
                 </div>
-                <p className="mb-3 text-xs leading-relaxed text-slate-500">{question}</p>
+                <p className="mb-3 text-base leading-relaxed text-slate-600">{question}</p>
 
                 {imageOnly ? (
                   <textarea
-                    className={`w-full resize-y rounded-lg border border-slate-200 p-3 text-sm leading-relaxed text-slate-800 focus:outline-none disabled:bg-slate-50 ${focusClass}`}
-                    rows={4}
+                    className={`ui-textarea ${focusClass}`}
+                    rows={5}
                     value={v(values, reasonKey)}
                     disabled={readOnly}
                     placeholder={reasonPlaceholder}
@@ -80,7 +80,7 @@ export function ColorSymbolImageTemplate({ values, onChange, readOnly }: Templat
                       )}
                       <input
                         type="text"
-                        className={`w-full rounded-lg border border-slate-200 p-2 text-sm text-slate-800 focus:outline-none disabled:bg-slate-50 ${focusClass}`}
+                        className={`ui-input ${focusClass}`}
                         value={v(values, textKey)}
                         disabled={readOnly}
                         placeholder={textPlaceholder}
@@ -88,8 +88,8 @@ export function ColorSymbolImageTemplate({ values, onChange, readOnly }: Templat
                       />
                     </div>
                     <textarea
-                      className={`w-full resize-y rounded-lg border border-slate-200 p-3 text-sm leading-relaxed text-slate-800 focus:outline-none disabled:bg-slate-50 ${focusClass}`}
-                      rows={3}
+                      className={`ui-textarea ${focusClass}`}
+                      rows={5}
                       value={v(values, reasonKey)}
                       disabled={readOnly}
                       placeholder={reasonPlaceholder}

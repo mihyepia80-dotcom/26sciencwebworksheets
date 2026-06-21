@@ -26,7 +26,7 @@ export function TextField({ label, value, onChange, placeholder, readOnly, class
   );
 }
 
-export function TextAreaField({ label, value, onChange, placeholder, rows = 5, readOnly, className = "" }: FieldProps) {
+export function TextAreaField({ label, value, onChange, placeholder, rows = 6, readOnly, className = "" }: FieldProps) {
   return (
     <div className={`flex flex-col ${className}`}>
       {label && <label className="ui-label">{label}</label>}
@@ -111,7 +111,7 @@ export function GridInput({
       {keys.map((key) => (
         <textarea
           key={key}
-          className={`ui-textarea min-h-[6rem] ${cellClass}`}
+          className={`ui-textarea min-h-[9rem] ${cellClass}`}
           value={values[key] ?? ""}
           disabled={readOnly}
           onChange={(e) => onChange(key, e.target.value)}

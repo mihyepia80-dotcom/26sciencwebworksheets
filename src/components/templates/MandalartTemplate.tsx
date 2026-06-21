@@ -27,7 +27,7 @@ function GridCell({
 
   return (
     <textarea
-      className={`min-h-[6rem] w-full resize-none border border-amber-300 p-2 text-center text-sm leading-snug focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-300 sm:min-h-[84px] ${
+      className={`ui-textarea input-compact min-h-[5.5rem] w-full resize-none border border-amber-300 p-3 text-center text-lg leading-snug focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-300 sm:min-h-[6.5rem] ${
         isCenter
           ? "bg-amber-100 font-bold text-amber-900 placeholder:text-amber-700/60"
           : "bg-white text-slate-800 placeholder:text-slate-400"
@@ -69,9 +69,9 @@ export function MandalartTemplate({ values, onChange, readOnly }: TemplateProps)
         <h3 className="mb-2 text-sm font-bold text-amber-900">
           위에 적은 것을 구체적으로 예를 들어 설명하기
         </h3>
-        <label className="mb-1 block text-xs font-semibold text-amber-800">세부내용</label>
+        <label className="ui-label text-amber-800">세부내용</label>
         <textarea
-          className="mandalart-ruled min-h-[180px] w-full resize-y rounded-lg border border-amber-200 bg-white/90 p-3 text-base leading-7 text-slate-800 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-300"
+          className="mandalart-ruled ui-textarea min-h-[12rem] w-full resize-y rounded-lg border border-amber-200 bg-white/90 text-lg leading-8 text-slate-800 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-300"
           value={v(values, "details")}
           disabled={readOnly}
           placeholder="위 칸에 적은 내용을 예를 들어 자세히 설명하세요"
