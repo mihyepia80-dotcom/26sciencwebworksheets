@@ -330,7 +330,7 @@ export function InquiryWorkspace() {
 
       <div
         className={`mx-auto grid w-full max-w-[1600px] flex-1 gap-0 ${
-          panelFocus === "split" ? "lg:grid-cols-2" : "grid-cols-1"
+          panelFocus === "split" ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]" : "grid-cols-1"
         }`}
       >
         {showWorksheet && (
@@ -379,7 +379,7 @@ export function InquiryWorkspace() {
                 )}
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
               {activeTemplateId ? (
                 <WorksheetViewer
                   key={`${activeTemplateId}-${activeSubmissionId ?? "new"}`}

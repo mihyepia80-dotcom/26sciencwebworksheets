@@ -69,6 +69,36 @@
     line-height: 1.6;
   }
 
+  /* 탐구 활동실 2분할 — 왼쪽 임베디드 활동지 */
+  [data-worksheet-embedded="true"] .worksheet-print-area .ui-textarea,
+  [data-worksheet-embedded="true"] .worksheet-print-area textarea:not(.input-compact):not(.hex-cell):not([rows="1"]):not([rows="2"]) {
+    min-height: 11rem;
+    font-size: 1.1875rem;
+    line-height: 1.75;
+  }
+
+  [data-worksheet-embedded="true"] .worksheet-print-area .ui-input,
+  [data-worksheet-embedded="true"] .worksheet-print-area input[type="text"]:not(.input-compact) {
+    font-size: 1.1875rem;
+  }
+
+  [data-worksheet-embedded="true"] .worksheet-print-area [class*="sm:grid-cols"],
+  [data-worksheet-embedded="true"] .worksheet-print-area [class*="md:grid-cols"],
+  [data-worksheet-embedded="true"] .worksheet-print-area [class*="lg:grid-cols"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  [data-worksheet-embedded="true"] .worksheet-print-area .flex.min-w-\[980px\] {
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  [data-worksheet-embedded="true"] .worksheet-print-area .flex.min-w-\[980px\] > div {
+    min-width: 0;
+    flex: none;
+    width: 100%;
+  }
+
   .ui-btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
   }

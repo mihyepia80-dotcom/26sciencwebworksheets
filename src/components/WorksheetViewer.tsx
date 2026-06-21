@@ -26,6 +26,7 @@ import { formatTemplateTitle, getGlobalSequenceNumber } from "@/lib/templates/cu
 import { DEFAULT_META, type Answers, type WorksheetMeta } from "@/lib/types";
 import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 import { useWorksheetState } from "@/lib/useWorksheetState";
+import { getMinFieldChars } from "@/lib/worksheet-validation";
 
 interface WorksheetViewerProps {
   templateId: string;
@@ -242,7 +243,10 @@ export function WorksheetViewer({
   }
 
   return (
-    <div className={`space-y-4 print:max-w-none print:space-y-0 print:p-0 ${embedded ? "" : `mx-auto px-4 py-6 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}`}>
+    <div
+      data-worksheet-embedded={embedded ? "true" : undefined}
+      className={`print:max-w-none print:space-y-0 print:p-0 ${embedded ? "worksheet-embedded-shell space-y-3" : `mx-auto space-y-4 px-4 py-6 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}`}
+    >
       {!embedded && (
         <div className="flex items-center justify-between print:hidden">
           <Link href="/" className="ui-link">
@@ -254,9 +258,17 @@ export function WorksheetViewer({
         </div>
       )}
 
-      <div className="print:hidden">
-        <WorksheetGuidanceBanner templateId={template.id} aiQuota={aiQuota} studentMode={isStudent} />
-      </div>
+      {!embedded && (
+        <div className="print:hidden">
+          <WorksheetGuidanceBanner templateId={template.id} aiQuota={aiQuota} studentMode={isStudent} />
+        </div>
+      )}
+
+      {embedded && isStudent && (
+        <p className="print:hidden rounded-lg border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-sm leading-relaxed text-blue-900">
+          본문 칸은 <strong>{getMinFieldChars(template.id)}자 이상</strong> 한글로 작성하세요. 임시 저장 후 제출할 수 있습니다.
+        </p>
+      )}
 
       {loadError && <p className="text-sm text-red-600 print:hidden">{loadError}</p>}
 
@@ -315,22 +327,26 @@ export function WorksheetViewer({
         )}
 
         {isStudent ? (
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="min-w-0">
-              <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
-            </div>
-            {guided.visible && (
-              <div className="lg:sticky lg:top-4 lg:self-start print:hidden">
-                <TeacherGuidedQuestionsSidebar
-                  meta={meta}
-                  questions={guided.teacherReferenceQuestions}
-                  loading={guided.loading}
-                  error={guided.error}
-                  hasTeacherGuide={guided.source === "pinned" && guided.teacherReferenceQuestions.some((q) => q.trim())}
-                />
+          embedded ? (
+            <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+          ) : (
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
+              <div className="min-w-0">
+                <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
               </div>
-            )}
-          </div>
+              {guided.visible && (
+                <div className="lg:sticky lg:top-4 lg:self-start print:hidden">
+                  <TeacherGuidedQuestionsSidebar
+                    meta={meta}
+                    questions={guided.teacherReferenceQuestions}
+                    loading={guided.loading}
+                    error={guided.error}
+                    hasTeacherGuide={guided.source === "pinned" && guided.teacherReferenceQuestions.some((q) => q.trim())}
+                  />
+                </div>
+              )}
+            </div>
+          )
         ) : (
           <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
         )}
