@@ -34,8 +34,13 @@ import {
 
 type PanelFocus = "split" | "worksheet" | "report";
 
-const TEXTAREA =
-  "w-full resize-y rounded-lg border border-slate-200 p-2.5 text-sm focus:border-violet-400 focus:outline-none";
+const TEXTAREA = "ui-textarea";
+
+function panelToggle(active: boolean, activeClass: string) {
+  return active
+    ? `${activeClass} text-white shadow-sm`
+    : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50";
+}
 
 export function InquiryWorkspace() {
   const router = useRouter();
@@ -268,9 +273,9 @@ export function InquiryWorkspace() {
 
   if (role !== "student") {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p className="text-sm text-slate-600">학생 로그인 후 탐구 활동실을 이용할 수 있습니다.</p>
-        <Link href="/login" className="mt-4 inline-block text-sm text-blue-600 hover:underline">
+      <div className="mx-auto max-w-lg px-5 py-20 text-center">
+        <p className="text-base text-slate-600">학생 로그인 후 탐구 활동실을 이용할 수 있습니다.</p>
+        <Link href="/login" className="ui-link mt-4 inline-block">
           로그인
         </Link>
       </div>
@@ -278,50 +283,46 @@ export function InquiryWorkspace() {
   }
 
   if (initLoading) {
-    return <p className="py-20 text-center text-sm text-slate-500">탐구 활동실을 준비하는 중…</p>;
+    return <p className="py-24 text-center text-base text-slate-500">탐구 활동실을 준비하는 중…</p>;
   }
 
   const showWorksheet = panelFocus === "split" || panelFocus === "worksheet";
   const showReport = panelFocus === "split" || panelFocus === "report";
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-100">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-sm text-blue-600 hover:underline">
+    <div className="flex min-h-screen flex-col bg-[var(--color-bg)]">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white">
+        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-4 px-5 py-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <Link href="/" className="ui-link shrink-0">
               ← 홈
             </Link>
-            <h1 className="text-lg font-bold text-slate-900">탐구 활동실</h1>
-            <span className="text-xs text-slate-500">사고 활동지 + 탐구보고서</span>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">탐구 활동실</h1>
+              <p className="text-sm text-slate-500">사고 활동지 · 탐구보고서</p>
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setPanelFocus("split")}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-                panelFocus === "split" ? "bg-slate-800 text-white" : "border border-slate-300 text-slate-600"
-              }`}
+              className={`ui-btn-sm rounded-xl px-4 py-2 text-sm font-medium ${panelToggle(panelFocus === "split", "bg-slate-800")}`}
             >
               2분할
             </button>
             <button
               type="button"
               onClick={() => setPanelFocus("worksheet")}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-                panelFocus === "worksheet" ? "bg-blue-600 text-white" : "border border-slate-300 text-slate-600"
-              }`}
+              className={`ui-btn-sm rounded-xl px-4 py-2 text-sm font-medium ${panelToggle(panelFocus === "worksheet", "bg-blue-600")}`}
             >
-              활동지 최대화
+              활동지
             </button>
             <button
               type="button"
               onClick={() => setPanelFocus("report")}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-                panelFocus === "report" ? "bg-violet-600 text-white" : "border border-slate-300 text-slate-600"
-              }`}
+              className={`ui-btn-sm rounded-xl px-4 py-2 text-sm font-medium ${panelToggle(panelFocus === "report", "bg-violet-600")}`}
             >
-              탐구보고서 최대화
+              탐구보고서
             </button>
           </div>
         </div>
@@ -333,11 +334,11 @@ export function InquiryWorkspace() {
         }`}
       >
         {showWorksheet && (
-          <section className="flex min-h-0 flex-col border-r border-slate-200 bg-white">
-            <div className="border-b border-slate-100 px-4 py-2">
-              <h2 className="text-sm font-bold text-slate-800">사고 활동지</h2>
-              <p className="text-xs text-slate-500">활동지를 작성한 뒤 오른쪽 탐구보고서를 완성하세요.</p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+          <section className="flex min-h-0 flex-col border-r border-slate-200/80 bg-white">
+            <div className="border-b border-slate-100 px-5 py-4">
+              <h2 className="text-lg font-bold text-slate-800">사고 활동지</h2>
+              <p className="mt-1 text-sm text-slate-500">작성 후 오른쪽 탐구보고서를 완성하세요.</p>
+              <div className="mt-3 flex flex-wrap gap-2">
                 {worksheets.map((w) => {
                   const tpl = getTemplateById(w.templateId);
                   const label = tpl ? formatTemplateTitle(tpl) : w.templateName;
@@ -354,7 +355,7 @@ export function InquiryWorkspace() {
                           { scroll: false },
                         );
                       }}
-                      className={`rounded-full px-2.5 py-1 text-xs ${
+                      className={`ui-chip ${
                         w.id === activeSubmissionId
                           ? "bg-blue-100 font-semibold text-blue-800"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -371,14 +372,14 @@ export function InquiryWorkspace() {
                     type="button"
                     title="같은 유형 활동지 추가"
                     onClick={() => void handleAddSameTemplate(activeTemplateId)}
-                    className="rounded-full border border-dashed border-blue-300 px-2.5 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50"
+                    className="ui-chip border border-dashed border-blue-300 font-semibold text-blue-600 hover:bg-blue-50"
                   >
                     + 같은 유형
                   </button>
                 )}
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4">
               {activeTemplateId ? (
                 <WorksheetViewer
                   key={`${activeTemplateId}-${activeSubmissionId ?? "new"}`}
@@ -390,7 +391,7 @@ export function InquiryWorkspace() {
                   onSubmitted={handleWorksheetSaved}
                 />
               ) : (
-                <p className="py-12 text-center text-sm text-slate-500">
+                <p className="py-16 text-center text-base text-slate-500">
                   홈에서 사고 활동지를 선택하거나 + 버튼으로 추가하세요.
                 </p>
               )}
@@ -399,18 +400,18 @@ export function InquiryWorkspace() {
         )}
 
         {showReport && (
-          <section className="flex min-h-0 flex-col bg-slate-50">
-            <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2">
+          <section className="flex min-h-0 flex-col bg-slate-50/80">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-5 py-4">
               <div>
-                <h2 className="text-sm font-bold text-violet-900">탐구보고서</h2>
-                <p className="text-xs text-slate-500">중복 문항을 통합한 9개 섹션</p>
+                <h2 className="text-lg font-bold text-violet-900">탐구보고서</h2>
+                <p className="text-sm text-slate-500">9개 섹션으로 정리된 보고서</p>
               </div>
               <div className="flex gap-2">
                 <button
                   type="button"
                   disabled={reportSaving || reportSubmitted}
                   onClick={() => void handleSaveReport()}
-                  className="rounded border border-slate-300 bg-white px-3 py-1 text-xs hover:bg-slate-50 disabled:opacity-60"
+                  className="ui-btn-secondary ui-btn-sm"
                 >
                   {reportSaving ? "저장 중…" : "저장"}
                 </button>
@@ -418,35 +419,35 @@ export function InquiryWorkspace() {
                   type="button"
                   disabled={reportSubmitting || reportSubmitted}
                   onClick={() => void handleSubmitReport()}
-                  className="rounded bg-violet-600 px-3 py-1 text-xs font-medium text-white hover:bg-violet-700 disabled:opacity-60"
+                  className="ui-btn-accent ui-btn-sm"
                 >
                   {reportSubmitted ? "제출됨" : reportSubmitting ? "제출 중…" : "제출"}
                 </button>
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-4">
-              <div className="mx-auto max-w-xl space-y-4 pb-16">
-                <section className="rounded-xl border border-slate-200 bg-white p-4">
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <label className="text-xs">
-                      <span className="mb-1 block font-medium text-slate-600">단원명</span>
-                      <input className="w-full rounded border px-2 py-1.5 text-sm" value={form.unitName} disabled={reportSubmitted} onChange={(e) => patchForm("unitName", e.target.value)} />
+            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+              <div className="mx-auto max-w-xl space-y-5 pb-16">
+                <section className="ui-card p-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label>
+                      <span className="ui-label">단원명</span>
+                      <input className="ui-input" value={form.unitName} disabled={reportSubmitted} onChange={(e) => patchForm("unitName", e.target.value)} />
                     </label>
-                    <label className="text-xs">
-                      <span className="mb-1 block font-medium text-slate-600">차시명</span>
-                      <input className="w-full rounded border px-2 py-1.5 text-sm" value={form.lessonName} disabled={reportSubmitted} onChange={(e) => patchForm("lessonName", e.target.value)} />
+                    <label>
+                      <span className="ui-label">차시명</span>
+                      <input className="ui-input" value={form.lessonName} disabled={reportSubmitted} onChange={(e) => patchForm("lessonName", e.target.value)} />
                     </label>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    <input className="w-12 rounded border px-1 py-1 text-center" placeholder="모둠" value={form.groupNo} disabled={reportSubmitted} onChange={(e) => patchForm("groupNo", e.target.value)} />
-                    <input className="rounded border px-2 py-1" placeholder="기록자" value={form.recorder} disabled={reportSubmitted} onChange={(e) => patchForm("recorder", e.target.value)} />
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <input className="ui-input w-20 text-center" placeholder="모둠" value={form.groupNo} disabled={reportSubmitted} onChange={(e) => patchForm("groupNo", e.target.value)} />
+                    <input className="ui-input min-w-[8rem] flex-1" placeholder="기록자" value={form.recorder} disabled={reportSubmitted} onChange={(e) => patchForm("recorder", e.target.value)} />
                   </div>
                 </section>
 
                 {CONSOLIDATED_INQUIRY_SECTIONS.map((s) => (
-                  <section key={s.id} className="rounded-xl border border-slate-200 bg-white p-4">
-                    <p className="mb-1 text-[10px] font-medium uppercase text-slate-400">{s.group}</p>
-                    <h3 className="mb-2 text-sm font-bold text-slate-800">
+                  <section key={s.id} className="ui-card p-5">
+                    <p className="mb-1 text-sm font-medium text-slate-400">{s.group}</p>
+                    <h3 className="mb-3 text-base font-bold text-slate-800">
                       {s.num}. {s.label}
                     </h3>
                     {s.id === "process" ? (
@@ -523,7 +524,7 @@ export function InquiryWorkspace() {
       </div>
 
       {(message || error) && (
-        <div className="border-t border-slate-200 bg-white px-4 py-2 text-center text-sm">
+        <div className="border-t border-slate-200/80 bg-white px-5 py-3 text-center text-base">
           {message && <p className="text-emerald-700">{message}</p>}
           {error && <p className="whitespace-pre-line text-red-600">{error}</p>}
         </div>

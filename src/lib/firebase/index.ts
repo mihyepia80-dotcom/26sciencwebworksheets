@@ -37,7 +37,9 @@ export {
   getStudentProfile,
   checkIsStudent,
   buildStudentEmail,
+  listStudentsForTeacher,
   type StudentProfile,
+  type StudentRecord,
 } from "./student-auth";
 export { getFirebaseErrorMessage, getStudentFirebaseErrorMessage } from "./errors";
 export { createShareLink, getShareByToken, type ShareRecord } from "./shares";

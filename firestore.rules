@@ -34,7 +34,10 @@ service cloud.firestore {
         && data.targetType in ['worksheet', 'inquiry-report']
         && data.differentPoint is string && data.differentPoint.size() <= 2000
         && data.goodPoint is string && data.goodPoint.size() <= 2000
-        && data.curiousPoint is string && data.curiousPoint.size() <= 2000;
+        && data.curiousPoint is string && data.curiousPoint.size() <= 2000
+        && isSameClass(data.targetUid)
+        && data.grade == studentData(request.auth.uid).grade
+        && data.classNo == studentData(request.auth.uid).classNo;
     }
 
     function isValidSubmissionData(data) {
@@ -103,10 +106,9 @@ service cloud.firestore {
     }
 
     match /students/{uid} {
-      allow read: if request.auth != null && (
-        request.auth.uid == uid
-        || (isStudent() && isSameClass(uid))
-      );
+      allow read: if isTeacher()
+        || request.auth.uid == uid
+        || (isStudent() && isSameClass(uid));
       allow create, update: if request.auth != null && request.auth.uid == uid && isStudent();
       allow delete: if false;
     }

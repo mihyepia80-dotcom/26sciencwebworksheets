@@ -235,7 +235,7 @@ export function WorksheetViewer({
 
   if (loading) {
     return (
-      <div className={`text-center text-sm text-slate-500 ${embedded ? "py-8" : "mx-auto max-w-5xl px-4 py-16"}`}>
+      <div className={`text-center text-base text-slate-500 ${embedded ? "py-10" : "mx-auto max-w-5xl px-5 py-20"}`}>
         활동지 불러오는 중...
       </div>
     );
@@ -245,10 +245,10 @@ export function WorksheetViewer({
     <div className={`space-y-4 print:max-w-none print:space-y-0 print:p-0 ${embedded ? "" : `mx-auto px-4 py-6 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}`}>
       {!embedded && (
         <div className="flex items-center justify-between print:hidden">
-          <Link href="/" className="text-sm text-blue-600 hover:underline">
-            ← 템플릿 목록
+          <Link href="/" className="ui-link">
+            ← 홈
           </Link>
-          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
+          <span className="ui-chip bg-slate-100 text-slate-600">
             순번 {getGlobalSequenceNumber(template)}
           </span>
         </div>

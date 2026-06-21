@@ -6,6 +6,7 @@ import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
 import { TeacherDailyTable } from "@/components/TeacherDailyTable";
 import { TeacherInquiryReports } from "@/components/TeacherInquiryReports";
 import { TeacherPeerFeedbacks } from "@/components/TeacherPeerFeedbacks";
+import { TeacherClassRoster } from "@/components/teacher/TeacherClassRoster";
 import { TeacherAwardBadgeQuick } from "@/components/teacher/TeacherAwardBadgeQuick";
 import { AiFeedbackCard } from "@/components/AiFeedbackCard";
 import { useAuth } from "@/components/AuthProvider";
@@ -183,6 +184,8 @@ export function TeacherDashboard() {
 
       {listLoading && <p className="mt-8 text-sm text-slate-500">불러오는 중...</p>}
       {listError && <p className="mt-8 text-sm text-red-600">{listError}</p>}
+
+      {!listLoading && !listError && <TeacherClassRoster submissions={submissions} />}
 
       {!listLoading && !listError && submissions.length === 0 && (
         <p className="mt-8 rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">

@@ -15,7 +15,7 @@ export function CircleTreeMapTemplate({ values, onChange, readOnly }: TemplatePr
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <div className="relative flex h-48 w-48 items-center justify-center rounded-full border-2 border-pink-200 bg-pink-50">
               <textarea
-                className="absolute inset-4 resize-none rounded-full border border-pink-200 bg-white p-2 text-center text-xs focus:outline-none"
+                className="absolute inset-4 resize-none rounded-full border border-pink-200 bg-white p-2 text-center text-base focus:outline-none"
                 style={{ width: "60%", height: "60%", borderRadius: "50%" }}
                 value={v(values, "circleCenter")}
                 disabled={readOnly}
@@ -23,7 +23,7 @@ export function CircleTreeMapTemplate({ values, onChange, readOnly }: TemplatePr
                 onChange={(e) => onChange("circleCenter", e.target.value)}
               />
               <textarea
-                className="h-full w-full resize-none rounded-full bg-transparent p-6 text-xs focus:outline-none"
+                className="h-full w-full resize-none rounded-full bg-transparent p-6 text-base focus:outline-none"
                 value={v(values, "circleOuter")}
                 disabled={readOnly}
                 placeholder="관련 생각들"
@@ -55,7 +55,7 @@ export function CircleTreeMapTemplate({ values, onChange, readOnly }: TemplatePr
 export function MultiFlowMapTemplate({ values, onChange, readOnly }: TemplateProps) {
   const box = (key: string) => (
     <textarea
-      className="min-h-[64px] w-full resize-y rounded border-2 border-pink-200 bg-pink-50 p-2 text-sm focus:outline-none"
+      className="min-h-[6rem] w-full resize-y rounded border-2 border-pink-200 bg-pink-50 p-3 text-base focus:outline-none"
       value={v(values, key)}
       disabled={readOnly}
       onChange={(e) => onChange(key, e.target.value)}
@@ -88,7 +88,7 @@ export function BridgeMapTemplate({ values, onChange, readOnly }: TemplateProps)
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <TextAreaField value={v(values, `bridgeTop${n}`)} onChange={(val) => onChange(`bridgeTop${n}`, val)} rows={2} readOnly={readOnly} placeholder="위" />
             <div className="text-2xl text-slate-400">⟷</div>
-            <TextAreaField value={v(values, `bridgeBottom${n}`)} onChange={(val) => onChange(`bridgeBottom${n}`, val)} rows={2} readOnly={readOnly} placeholder="아래 (as)" />
+            <TextAreaField value={v(values, `bridgeBottom${n}`)} onChange={(val) => onChange(`bridgeBottom${n}`, val)} rows={2} readOnly={readOnly} placeholder="아래" />
           </div>
         </div>
       ))}
@@ -99,7 +99,7 @@ export function BridgeMapTemplate({ values, onChange, readOnly }: TemplateProps)
 /* ── Window Map ── */
 export function WindowMapTemplate({ values, onChange, readOnly }: TemplateProps) {
   const cell = (key: string) => (
-    <textarea className="min-h-[60px] w-full resize-y border border-slate-300 bg-white p-1 text-xs focus:outline-none" value={v(values, key)} disabled={readOnly} onChange={(e) => onChange(key, e.target.value)} />
+    <textarea className="min-h-[6rem] w-full resize-y border border-slate-300 bg-white p-3 text-base focus:outline-none" value={v(values, key)} disabled={readOnly} onChange={(e) => onChange(key, e.target.value)} />
   );
   return (
     <SectionBox title="윈도우맵" color="pink">
@@ -119,10 +119,10 @@ export function WindowMapTemplate({ values, onChange, readOnly }: TemplateProps)
 /* ── SWOT ── */
 export function SwotTemplate({ values, onChange, readOnly }: TemplateProps) {
   const q = [
-    { key: "strength", label: "Strength (강점)" },
-    { key: "weakness", label: "Weakness (약점)" },
-    { key: "opportunity", label: "Opportunity (기회)" },
-    { key: "threat", label: "Threat (위협)" },
+    { key: "strength", label: "강점" },
+    { key: "weakness", label: "약점" },
+    { key: "opportunity", label: "기회" },
+    { key: "threat", label: "위협" },
   ];
   return (
     <SectionBox title="SWOT 기법" color="pink">
@@ -149,7 +149,7 @@ export function FrayerModelTemplate({ values, onChange, readOnly }: TemplateProp
       <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50 p-3 text-xs text-violet-900">
         <p className="font-bold">중심 개념</p>
         <p className="mt-1 text-violet-800">{FRAYER_FIELD_GUIDES.concept.student}</p>
-        <p className="mt-2 text-violet-600">AI: {FRAYER_FIELD_GUIDES.concept.aiRole}</p>
+        <p className="mt-2 text-violet-600">도움말: {FRAYER_FIELD_GUIDES.concept.aiRole}</p>
       </div>
       <div className="relative grid grid-cols-2 gap-0 rounded border-2 border-orange-200 bg-orange-50">
         {quadrants.map(({ key, label }) => {
@@ -158,7 +158,7 @@ export function FrayerModelTemplate({ values, onChange, readOnly }: TemplateProp
             <div key={key} className="border border-orange-200 p-2 pt-6">
               <span className="text-xs font-bold text-slate-600">{label}</span>
               <p className="mt-1 text-[11px] leading-snug text-slate-500">{guide.student}</p>
-              <p className="mt-1 text-[10px] text-violet-600">AI: {guide.aiRole}</p>
+              <p className="mt-1 text-[10px] text-violet-600">도움말: {guide.aiRole}</p>
               <TextAreaField
                 value={v(values, key)}
                 onChange={(val) => onChange(key, val)}
@@ -168,7 +168,7 @@ export function FrayerModelTemplate({ values, onChange, readOnly }: TemplateProp
               />
               {key === "nonExamples" && !readOnly && (
                 <div className="mt-2">
-                  <p className="mb-1 text-[10px] font-medium text-blue-700">AI 추천 칩</p>
+                  <p className="mb-1 text-[10px] font-medium text-blue-700">추천 예시</p>
                   <GuideChips
                     chips={FRAYER_NONEXAMPLE_CHIPS}
                     onSelect={(text) => {
@@ -184,7 +184,7 @@ export function FrayerModelTemplate({ values, onChange, readOnly }: TemplateProp
         <div className="absolute left-1/2 top-1/2 z-10 w-28 -translate-x-1/2 -translate-y-1/2 rounded border-2 border-slate-400 bg-white p-2 text-center">
           <span className="text-xs font-bold">중심 개념</span>
           <textarea
-            className="mt-1 w-full resize-none text-xs focus:outline-none"
+            className="mt-1 w-full resize-none text-base focus:outline-none"
             rows={2}
             placeholder="용해, 산화…"
             value={v(values, "concept")}
@@ -205,11 +205,11 @@ export function HoneycombQuestionsTemplate({ values, onChange, readOnly }: Templ
   return (
     <SectionBox title="벌집 질문" color="yellow">
       <div className="mx-auto grid max-w-sm grid-cols-3 gap-1 place-items-center">
-        <textarea className="hex-cell col-start-1 row-start-1 border-2 border-slate-800 p-2 text-xs" value={v(values, "left1")} disabled={readOnly} onChange={(e) => onChange("left1", e.target.value)} />
-        <textarea className="hex-cell col-start-1 row-start-2 border-2 border-slate-800 p-2 text-xs" value={v(values, "left2")} disabled={readOnly} onChange={(e) => onChange("left2", e.target.value)} />
-        <textarea className="hex-cell col-start-2 row-span-2 row-start-1 self-center border-2 border-slate-800 p-2 text-xs" value={v(values, "center")} disabled={readOnly} onChange={(e) => onChange("center", e.target.value)} />
-        <textarea className="hex-cell col-start-3 row-start-1 border-2 border-slate-800 p-2 text-xs" value={v(values, "right1")} disabled={readOnly} onChange={(e) => onChange("right1", e.target.value)} />
-        <textarea className="hex-cell col-start-3 row-start-2 border-2 border-slate-800 p-2 text-xs" value={v(values, "right2")} disabled={readOnly} onChange={(e) => onChange("right2", e.target.value)} />
+        <textarea className="hex-cell ui-textarea text-base text-center col-start-1 row-start-1 border-2 border-slate-800 p-2 text-xs" value={v(values, "left1")} disabled={readOnly} onChange={(e) => onChange("left1", e.target.value)} />
+        <textarea className="hex-cell ui-textarea text-base text-center col-start-1 row-start-2 border-2 border-slate-800 p-2 text-xs" value={v(values, "left2")} disabled={readOnly} onChange={(e) => onChange("left2", e.target.value)} />
+        <textarea className="hex-cell ui-textarea text-base text-center col-start-2 row-span-2 row-start-1 self-center border-2 border-slate-800 p-2 text-xs" value={v(values, "center")} disabled={readOnly} onChange={(e) => onChange("center", e.target.value)} />
+        <textarea className="hex-cell ui-textarea text-base text-center col-start-3 row-start-1 border-2 border-slate-800 p-2 text-xs" value={v(values, "right1")} disabled={readOnly} onChange={(e) => onChange("right1", e.target.value)} />
+        <textarea className="hex-cell ui-textarea text-base text-center col-start-3 row-start-2 border-2 border-slate-800 p-2 text-xs" value={v(values, "right2")} disabled={readOnly} onChange={(e) => onChange("right2", e.target.value)} />
       </div>
       <TextAreaField label="종합" value={v(values, "summary")} onChange={(val) => onChange("summary", val)} rows={4} readOnly={readOnly} className="mt-4" />
     </SectionBox>

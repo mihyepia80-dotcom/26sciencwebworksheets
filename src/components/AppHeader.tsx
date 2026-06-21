@@ -13,11 +13,11 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
   };
 
   return (
-    <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-start justify-between gap-4 px-4 py-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">{title}</h1>
-          {subtitle && <p className="mt-2 text-slate-600">{subtitle}</p>}
+    <header className="border-b border-slate-200/80 bg-white">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5 px-5 py-6">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
+          {subtitle && <p className="mt-1.5 text-base text-slate-600">{subtitle}</p>}
           {role === "student" && studentProfile && (
             <p className="mt-1 text-sm text-slate-500">
               {studentProfile.grade}학년 {studentProfile.classNo}반 · {studentProfile.studentNo}번{" "}
@@ -25,41 +25,28 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
             </p>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <nav className="flex flex-wrap items-center gap-2">
           {role === "student" && (
-            <Link
-              href="/workspace"
-              className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-700 hover:bg-violet-100"
-            >
-              탐구 활동실
-            </Link>
-          )}
-          {role === "student" && (
-            <Link
-              href="/my"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:border-blue-300 hover:text-blue-700"
-            >
-              내 활동지
-            </Link>
+            <>
+              <Link href="/workspace" className="ui-btn-accent ui-btn-sm">
+                탐구 활동실
+              </Link>
+              <Link href="/my" className="ui-btn-secondary ui-btn-sm">
+                내 활동지
+              </Link>
+            </>
           )}
           {role === "teacher" && (
-            <Link
-              href="/teacher"
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:border-blue-300 hover:text-blue-700"
-            >
+            <Link href="/teacher" className="ui-btn-secondary ui-btn-sm">
               교사 대시보드
             </Link>
           )}
           {user && (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
-            >
+            <button type="button" onClick={handleLogout} className="ui-btn-ghost ui-btn-sm">
               로그아웃
             </button>
           )}
-        </div>
+        </nav>
       </div>
     </header>
   );

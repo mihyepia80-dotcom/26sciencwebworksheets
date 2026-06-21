@@ -2,18 +2,107 @@
 
 @theme {
   --font-sans: "Pretendard", "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --color-surface: #ffffff;
+  --color-bg: #f4f6f9;
+  --color-border: #e2e8f0;
+  --color-text: #1e293b;
+  --color-text-muted: #64748b;
+  --color-primary: #2563eb;
+  --color-accent: #7c3aed;
+}
+
+@layer components {
+  .page-main {
+    @apply mx-auto max-w-6xl px-5 py-10;
+  }
+
+  .page-main-narrow {
+    @apply mx-auto max-w-4xl px-5 py-10;
+  }
+
+  .ui-card {
+    @apply rounded-2xl border border-slate-200/90 bg-white shadow-sm;
+  }
+
+  .ui-section-title {
+    @apply text-xl font-bold tracking-tight text-slate-900;
+  }
+
+  .ui-section-desc {
+    @apply mt-1 text-base text-slate-600;
+  }
+
+  .ui-label {
+    @apply mb-1.5 block text-sm font-semibold text-slate-700;
+  }
+
+  .ui-input {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-base text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50;
+  }
+
+  .ui-textarea {
+    @apply min-h-[8rem] w-full resize-y rounded-xl border border-slate-200 bg-white px-4 py-3 text-base leading-relaxed text-slate-800 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:bg-slate-50;
+  }
+
+  .ui-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .ui-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 bg-blue-600 text-white hover:bg-blue-700;
+  }
+
+  .ui-btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 bg-violet-600 text-white hover:bg-violet-700;
+  }
+
+  .ui-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-slate-200 bg-white text-slate-700 hover:bg-slate-50;
+  }
+
+  .ui-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent text-slate-600 hover:bg-slate-100;
+  }
+
+  .ui-btn-sm {
+    @apply px-3.5 py-2 text-sm;
+  }
+
+  .ui-chip {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-sm font-medium;
+  }
+
+  .ui-link {
+    @apply text-base font-medium text-blue-600 hover:text-blue-700 hover:underline;
+  }
+
+  .ui-banner {
+    @apply rounded-xl border border-blue-100 bg-blue-50/80 px-5 py-3.5 text-base leading-relaxed text-blue-900;
+  }
+
+  .ui-status {
+    @apply inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-medium;
+  }
+
+  .ui-status-success {
+    @apply inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-medium bg-emerald-50 text-emerald-700;
+  }
+
+  .ui-status-warn {
+    @apply inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-medium bg-amber-50 text-amber-800;
+  }
 }
 
 .hex-cell {
-  width: 80px;
-  height: 70px;
+  width: 100px;
+  height: 88px;
   clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
 }
 
 @media (min-width: 640px) {
   .hex-cell {
-    width: 100px;
-    height: 86px;
+    width: 120px;
+    height: 104px;
   }
 }
 
@@ -31,8 +120,10 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: #f8fafc;
-  color: #1e293b;
+  font-size: 16px;
+  line-height: 1.6;
+  background-color: var(--color-bg);
+  color: var(--color-text);
 }
 
 @media print {

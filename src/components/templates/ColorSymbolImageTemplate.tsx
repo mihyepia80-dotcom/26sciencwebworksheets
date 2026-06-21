@@ -14,7 +14,7 @@ export function ColorSymbolImageTemplate({ values, onChange, readOnly }: Templat
         <div className="mb-6 border-b border-slate-200 pb-6 text-center">
           <p className="text-xs font-medium text-slate-500">{get("unit")}</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">
-            CSI (색상·기호·이미지) — Visible Thinking
+            색상·기호·이미지(CSI) — 생각 성찰
           </h2>
           <p className="mt-2 text-sm text-slate-600">{get("topic")}</p>
         </div>

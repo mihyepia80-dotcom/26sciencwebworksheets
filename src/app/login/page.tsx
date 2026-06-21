@@ -32,78 +32,47 @@ export default function LoginPage() {
 
   if (!isFirebaseConfigured()) {
     return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="text-xl font-bold">Firebase 설정 필요</h1>
-        <p className="mt-3 text-sm text-slate-600">`.env` 파일에 Firebase 환경 변수를 입력하세요.</p>
+      <div className="mx-auto max-w-md px-5 py-20 text-center">
+        <h1 className="text-2xl font-bold">Firebase 설정 필요</h1>
+        <p className="mt-3 text-base text-slate-600">`.env` 파일에 Firebase 환경 변수를 입력하세요.</p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-12">
+    <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-16">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-slate-900">사고도구 톡톡</h1>
-        <p className="mt-2 text-sm text-slate-600">학생 로그인 후 사고도구 학습지를 작성하세요</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">사고도구 톡톡</h1>
+        <p className="mt-2 text-base text-slate-600">학생 로그인 후 사고도구 학습지를 작성하세요</p>
       </div>
 
-      <form
-        onSubmit={handleStudentLogin}
-        className="mt-8 space-y-3 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-      >
-        <h2 className="text-sm font-bold text-slate-800">학생 로그인</h2>
-        <div className="grid grid-cols-3 gap-2">
-          <input
-            className="rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-            placeholder="학년"
-            value={grade}
-            onChange={(e) => setGrade(e.target.value)}
-            required
-          />
-          <input
-            className="rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-            placeholder="반"
-            value={classNo}
-            onChange={(e) => setClassNo(e.target.value)}
-            required
-          />
-          <input
-            className="rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-            placeholder="번호"
-            value={studentNo}
-            onChange={(e) => setStudentNo(e.target.value)}
-            required
-          />
+      <form onSubmit={handleStudentLogin} className="ui-card mt-10 space-y-4 p-6">
+        <h2 className="text-lg font-bold text-slate-800">학생 로그인</h2>
+        <div className="grid grid-cols-3 gap-3">
+          <input className="ui-input" placeholder="학년" value={grade} onChange={(e) => setGrade(e.target.value)} required />
+          <input className="ui-input" placeholder="반" value={classNo} onChange={(e) => setClassNo(e.target.value)} required />
+          <input className="ui-input" placeholder="번호" value={studentNo} onChange={(e) => setStudentNo(e.target.value)} required />
         </div>
-        <input
-          className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-          placeholder="이름"
-          value={studentName}
-          onChange={(e) => setStudentName(e.target.value)}
-          required
-        />
+        <input className="ui-input" placeholder="이름" value={studentName} onChange={(e) => setStudentName(e.target.value)} required />
         <input
           type="password"
-          className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
+          className="ui-input"
           placeholder="암호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-        >
+        <button type="submit" disabled={loading} className="ui-btn-primary w-full">
           {loading ? "로그인 중..." : "학생으로 시작하기"}
         </button>
       </form>
 
-      <div className="mt-6">
-        <h2 className="mb-3 text-sm font-bold text-slate-800">교사 로그인</h2>
+      <div className="mt-8">
+        <h2 className="mb-4 text-lg font-bold text-slate-800">교사 로그인</h2>
         <TeacherLoginPanel onSuccess={() => router.replace("/teacher")} />
       </div>
 
-      {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-6 text-center text-base text-red-600">{error}</p>}
     </div>
   );
 }

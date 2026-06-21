@@ -33,7 +33,7 @@ const SECTIONS = [
 
 export function ThreeTwoOneReflectionTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="사고하기 — 3-2-1 연결 (3-2-1 Bridge)" color="yellow">
+    <SectionBox title="3-2-1 연결" color="yellow">
       <div className="mb-4 overflow-hidden rounded-lg border border-yellow-200 text-xs sm:text-sm">
         <div className="grid grid-cols-1 border-b border-yellow-200 bg-yellow-50 md:grid-cols-3">
           <div className="border-yellow-200 p-3 font-bold text-yellow-900 md:border-r">활용팁</div>
@@ -74,7 +74,7 @@ export function ThreeTwoOneReflectionTemplate({ values, onChange, readOnly }: Te
                       value={v(values, fieldKey)}
                       onChange={(val) => onChange(fieldKey, val)}
                       placeholder={placeholder}
-                      rows={2}
+                      rows={4}
                       readOnly={readOnly}
                       className="flex-1 bg-white"
                     />
@@ -86,13 +86,13 @@ export function ThreeTwoOneReflectionTemplate({ values, onChange, readOnly }: Te
         ))}
 
         <div className="rounded-xl border-2 border-dashed border-yellow-300 bg-white p-4">
-          <h3 className="mb-2 text-sm font-bold text-slate-800">Bridge — 탐구 전후 연결</h3>
-          <p className="mb-2 text-xs text-slate-500">탐구 전과 후의 생각이 어떻게 연결·변화했는지 적어보세요.</p>
+          <h3 className="mb-2 text-base font-bold text-slate-800">탐구 전후 연결</h3>
+          <p className="mb-3 text-base text-slate-600">탐구 전과 후의 생각이 어떻게 연결·변화했는지 적어보세요.</p>
           <TextAreaField
             value={v(values, "selfReflection")}
             onChange={(val) => onChange("selfReflection", val)}
             placeholder="수업 전 생각과 수업 후 생각을 비교해 연결해 보세요"
-            rows={5}
+            rows={6}
             readOnly={readOnly}
             className="bg-[linear-gradient(transparent_1.4rem,#fde68a_1.45rem)] bg-[length:100%_1.5rem]"
           />

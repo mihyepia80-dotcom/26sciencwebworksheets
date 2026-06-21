@@ -11,7 +11,7 @@ export const CSI_WRITING_GUIDE =
 
 export const CSI_SECTIONS = [
   {
-    badge: "Color",
+    badge: "색",
     badgeClass: "bg-rose-600",
     title: "나를 표현하는 색상",
     panelClass: "border-slate-200 bg-rose-50/30",
@@ -26,7 +26,7 @@ export const CSI_SECTIONS = [
     imageOnly: false,
   },
   {
-    badge: "Symbol",
+    badge: "기호",
     badgeClass: "bg-blue-600",
     title: "본질을 담은 기호",
     panelClass: "border-slate-200 bg-blue-50/30",
@@ -41,7 +41,7 @@ export const CSI_SECTIONS = [
     imageOnly: false,
   },
   {
-    badge: "Image",
+    badge: "그림",
     badgeClass: "bg-amber-600",
     title: "머릿속의 이미지 묘사",
     panelClass: "border-slate-200 bg-amber-50/30",

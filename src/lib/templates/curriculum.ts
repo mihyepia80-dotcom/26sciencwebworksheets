@@ -342,5 +342,5 @@ export function getGlobalSequenceNumber(def: TemplateDefinition): number {
 }
 
 export function formatTemplateTitle(def: TemplateDefinition): string {
-  return def.nameEn ? `${def.name} (${def.nameEn})` : def.name;
+  return def.name;
 }

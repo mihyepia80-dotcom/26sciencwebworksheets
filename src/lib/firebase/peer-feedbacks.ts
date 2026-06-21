@@ -15,6 +15,7 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import type { StudentProfile } from "@/lib/firebase/student-auth";
+import { getStudentProfile } from "@/lib/firebase/student-auth";
 import type { PeerFeedbackForm, PeerFeedbackTargetType } from "@/lib/peer-feedback/types";
 import { getClientDb } from "./client";
 
@@ -112,61 +113,36 @@ export async function findClassmateWorkDocId(
   templateId: string,
   targetUid: string,
 ): Promise<string | null> {
-  if (targetType === "worksheet") {
-    if (grade && classNo) {
-      const byClass = await getDocs(
-        query(
-          collection(getClientDb(), "submissions"),
-          where("grade", "==", grade),
-          where("classNo", "==", classNo),
-          where("templateId", "==", templateId),
-          where("studentUid", "==", targetUid),
-          where("status", "==", "submitted"),
-          orderBy("submittedAt", "desc"),
-          limit(1),
-        ),
-      );
-      if (byClass.docs[0]) return byClass.docs[0].id;
-    }
+  if (!grade.trim() || !classNo.trim()) return null;
 
-    const byStudent = await getDocs(
+  if (targetType === "worksheet") {
+    const byClass = await getDocs(
       query(
         collection(getClientDb(), "submissions"),
-        where("studentUid", "==", targetUid),
+        where("grade", "==", grade),
+        where("classNo", "==", classNo),
         where("templateId", "==", templateId),
+        where("studentUid", "==", targetUid),
         where("status", "==", "submitted"),
         orderBy("submittedAt", "desc"),
         limit(1),
       ),
     );
-    return byStudent.docs[0]?.id ?? null;
+    return byClass.docs[0]?.id ?? null;
   }
 
-  if (grade && classNo) {
-    const byClass = await getDocs(
-      query(
-        collection(getClientDb(), "inquiryReports"),
-        where("grade", "==", grade),
-        where("classNo", "==", classNo),
-        where("studentUid", "==", targetUid),
-        where("status", "==", "submitted"),
-        orderBy("updatedAt", "desc"),
-        limit(1),
-      ),
-    );
-    if (byClass.docs[0]) return byClass.docs[0].id;
-  }
-
-  const byStudent = await getDocs(
+  const byClass = await getDocs(
     query(
       collection(getClientDb(), "inquiryReports"),
+      where("grade", "==", grade),
+      where("classNo", "==", classNo),
       where("studentUid", "==", targetUid),
       where("status", "==", "submitted"),
       orderBy("updatedAt", "desc"),
       limit(1),
     ),
   );
-  return byStudent.docs[0]?.id ?? null;
+  return byClass.docs[0]?.id ?? null;
 }
 
 export async function hasAuthorSubmittedSameKind(
@@ -231,6 +207,15 @@ export async function createPeerFeedback(input: {
   templateName: string;
   form: PeerFeedbackForm;
 }): Promise<string> {
+  const targetProfile = await getStudentProfile(input.target.uid);
+  if (
+    !targetProfile ||
+    targetProfile.grade !== input.author.grade ||
+    targetProfile.classNo !== input.author.classNo
+  ) {
+    throw new Error("같은 반 학생에게만 피드백을 남길 수 있습니다.");
+  }
+
   const ref = await addDoc(collection(getClientDb(), "peerFeedbacks"), {
     authorUid: input.author.uid,
     authorName: input.author.studentName,

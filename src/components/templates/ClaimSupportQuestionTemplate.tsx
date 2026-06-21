@@ -14,7 +14,7 @@ export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: Tem
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 print:shadow-none">
         <div className="mb-6 border-b border-slate-200 pb-6 text-center">
           <h2 className="text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">과학과 성장 포트폴리오</h2>
-          <p className="mt-1 text-sm text-slate-500">CSQ 루틴 기반 과학 성찰 글쓰기 (용액의 진하기 비교)</p>
+          <p className="mt-1 text-base text-slate-600">주장·근거·질문(CSQ) 기반 과학 성찰 글쓰기</p>
         </div>
 
         <div className="mb-8 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
@@ -36,9 +36,9 @@ export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: Tem
                 <span className={`rounded-sm px-2 py-0.5 text-xs font-bold text-white ${badgeClass}`}>{badge}</span>
                 <span className="text-base font-bold text-slate-800">{title}</span>
               </div>
-              <p className="mb-3 text-xs text-slate-500">{guideText}</p>
+              <p className="mb-3 text-base text-slate-600">{guideText}</p>
               <textarea
-                className={`w-full resize-y rounded-lg border border-slate-200 p-3 text-sm text-slate-700 focus:outline-none disabled:bg-slate-50 ${focusClass}`}
+                className={`ui-textarea ${focusClass}`}
                 rows={rows}
                 value={v(values, key)}
                 disabled={readOnly}

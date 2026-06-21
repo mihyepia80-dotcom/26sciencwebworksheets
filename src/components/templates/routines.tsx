@@ -9,7 +9,7 @@ import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 const STW_SECTIONS = {
   see: {
     icon: "👁",
-    title: "SEE",
+    title: "보기",
     subtitle: "자료를 관찰한 토대로 글쓰기",
     placeholder: "관찰한 내용을 적어보세요",
     guides: [
@@ -24,7 +24,7 @@ const STW_SECTIONS = {
   },
   think: {
     icon: "💡",
-    title: "THINK",
+    title: "생각하기",
     subtitle: "자료를 본 후 나의 생각(주관적) 쓰기",
     placeholder: "생각과 느낌을 적어보세요",
     guides: [
@@ -37,7 +37,7 @@ const STW_SECTIONS = {
   },
   wonder: {
     icon: "❓",
-    title: "WONDER",
+    title: "궁금해하기",
     subtitle: "나의 생각(상상)이 담긴 궁금한 점을 쓰기",
     placeholder: "궁금한 점을 적어보세요",
     guides: [
@@ -55,7 +55,7 @@ const STW_SECTIONS = {
 
 export function SeeThinkWonderTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="See / Think / Wonder" color="blue">
+    <SectionBox title="보기·생각하기·궁금해하기" color="blue">
       <div className="grid gap-4 lg:grid-cols-3">
         {(Object.keys(STW_SECTIONS) as Array<keyof typeof STW_SECTIONS>).map((key) => {
           const section = STW_SECTIONS[key];
@@ -64,12 +64,12 @@ export function SeeThinkWonderTemplate({ values, onChange, readOnly }: TemplateP
               <div className="mb-3 flex items-center gap-2">
                 <span className="text-xl">{section.icon}</span>
                 <div>
-                  <h3 className="text-sm font-bold uppercase text-slate-800">{section.title}</h3>
-                  <p className="text-xs text-slate-500">{section.subtitle}</p>
+                  <h3 className="text-base font-bold text-slate-800">{section.title}</h3>
+                  <p className="text-sm text-slate-600">{section.subtitle}</p>
                 </div>
               </div>
               {!readOnly && (
-                <ol className="mb-3 space-y-1 text-xs text-slate-500">
+                <ol className="mb-3 space-y-1.5 text-sm text-slate-600">
                   {section.guides.map((g, i) => (
                     <li key={i} className="flex gap-1">
                       <span className="shrink-0 text-slate-400">{i + 1}.</span>
@@ -104,12 +104,12 @@ export function SeeThinkWonderTemplate({ values, onChange, readOnly }: TemplateP
 /* ── Think Puzzle Explore ── */
 export function ThinkPuzzleExploreTemplate({ values, onChange, readOnly }: TemplateProps) {
   const cols = [
-    { key: "think", title: "Think (생각하기)", hint: "나는 이 주제에 대해 이미 무엇을 알고 있나요?", ex: "예: '나는 ___에 대해 이런 것을 알고 있어요.'" },
-    { key: "puzzle", title: "Puzzle (궁금한 점)", hint: "이 주제에서 무엇이 궁금한가요?", ex: "예: '나는 ___이 왜 그런지 궁금해요.'" },
-    { key: "explore", title: "Explore (탐구하기)", hint: "더 알아보기 위해 무엇을 할 수 있을까요?", ex: "예: '책을 찾아보거나 선생님께 물어보고 싶어요.'" },
+    { key: "think", title: "생각하기", hint: "나는 이 주제에 대해 이미 무엇을 알고 있나요?", ex: "예: '나는 ___에 대해 이런 것을 알고 있어요.'" },
+    { key: "puzzle", title: "궁금한 점", hint: "이 주제에서 무엇이 궁금한가요?", ex: "예: '나는 ___이 왜 그런지 궁금해요.'" },
+    { key: "explore", title: "탐구하기", hint: "더 알아보기 위해 무엇을 할 수 있을까요?", ex: "예: '책을 찾아보거나 선생님께 물어보고 싶어요.'" },
   ];
   return (
-    <SectionBox title="Think · Puzzle · Explore" color="green">
+    <SectionBox title="생각하기·퍼즐·탐색하기" color="green">
       <div className="grid gap-3 md:grid-cols-3">
         {cols.map(({ key, title, hint, ex }) => (
           <div key={key} className="rounded border border-lime-300 bg-white">
@@ -129,13 +129,13 @@ export function ThinkPuzzleExploreTemplate({ values, onChange, readOnly }: Templ
 /* ── 4Cs ── */
 export function FourCsTemplate({ values, onChange, readOnly }: TemplateProps) {
   const items = [
-    { key: "connections", label: "Connections (연결)", ph: "텍스트와 내 삶·학습의 연결점은?" },
-    { key: "challenge", label: "Challenge (도전)", ph: "의문이나 반박하고 싶은 점은?" },
-    { key: "concepts", label: "Concepts (개념)", ph: "기억할 핵심 개념은?" },
-    { key: "changes", label: "Changes (변화)", ph: "태도·사고·행동의 변화는?" },
+    { key: "connections", label: "연결", ph: "텍스트와 내 삶·학습의 연결점은?" },
+    { key: "challenge", label: "도전", ph: "의문이나 반박하고 싶은 점은?" },
+    { key: "concepts", label: "개념", ph: "기억할 핵심 개념은?" },
+    { key: "changes", label: "변화", ph: "태도·사고·행동의 변화는?" },
   ];
   return (
-    <SectionBox title="The 4 C's" color="blue">
+    <SectionBox title="4가지 C (연결·도전·개념·변화)" color="blue">
       <div className="grid gap-3 sm:grid-cols-2">
         {items.map(({ key, label, ph }) => (
           <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} placeholder={ph} rows={4} readOnly={readOnly} />
@@ -149,13 +149,13 @@ export function FourCsTemplate({ values, onChange, readOnly }: TemplateProps) {
 export function FiveWhyTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
     <SectionBox title="5WHY 활동지" color="yellow">
-      <TextAreaField label="주제" value={v(values, "mainTopic")} onChange={(val) => onChange("mainTopic", val)} rows={1} readOnly={readOnly} className="mb-4" />
+      <TextAreaField label="주제" value={v(values, "mainTopic")} onChange={(val) => onChange("mainTopic", val)} rows={3} readOnly={readOnly} className="mb-4" />
       <div className="space-y-3">
         {[1, 2, 3, 4, 5].map((n) => (
           <div key={n} className="grid gap-2 rounded border border-sky-200 bg-white p-3 md:grid-cols-[60px_1fr_1fr]">
-            <span className="flex items-center text-sm font-bold text-sky-700">{n} why</span>
-            <TextAreaField label="질문" value={v(values, `q${n}`)} onChange={(val) => onChange(`q${n}`, val)} rows={2} readOnly={readOnly} />
-            <TextAreaField label="답" value={v(values, `a${n}`)} onChange={(val) => onChange(`a${n}`, val)} rows={2} readOnly={readOnly} />
+            <span className="flex items-center text-sm font-bold text-sky-700">{n}번째 왜</span>
+            <TextAreaField label="질문" value={v(values, `q${n}`)} onChange={(val) => onChange(`q${n}`, val)} rows={4} readOnly={readOnly} />
+            <TextAreaField label="답" value={v(values, `a${n}`)} onChange={(val) => onChange(`a${n}`, val)} rows={4} readOnly={readOnly} />
           </div>
         ))}
       </div>
@@ -164,16 +164,16 @@ export function FiveWhyTemplate({ values, onChange, readOnly }: TemplateProps) {
   );
 }
 
-/* ── Step Inside ── */
+/* ── 안으로 들어가기 ── */
 export function StepInsideTemplate({ values, onChange, readOnly }: TemplateProps) {
   const prompts = [
-    { key: "see", q: "What can this person or thing see, observe, or notice?" },
-    { key: "know", q: "What might they know, understand, hold true, or believe?" },
-    { key: "care", q: "What might they care deeply about?" },
-    { key: "wonder", q: "What might they wonder about or question?" },
+    { key: "see", q: "이 사람이나 사물은 무엇을 보거나 관찰할 수 있을까?" },
+    { key: "know", q: "무엇을 알고 있거나, 이해하거나, 믿고 있을까?" },
+    { key: "care", q: "무엇을 중요하게 여길까?" },
+    { key: "wonder", q: "무엇이 궁금하거나 의문일까?" },
   ];
   return (
-    <SectionBox title="Step Inside" color="orange">
+    <SectionBox title="안으로 들어가기" color="orange">
       {prompts.map(({ key, q }) => (
         <TextAreaField key={key} label={q} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={3} readOnly={readOnly} className="mb-3" />
       ))}
@@ -184,9 +184,9 @@ export function StepInsideTemplate({ values, onChange, readOnly }: TemplateProps
 /* ── I Used to Think ── */
 export function IUsedToThinkTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="I Used to Think… Now I Think…" color="yellow">
-      <TextAreaField label="I used to think… (예전에는…)" value={v(values, "usedToThink")} onChange={(val) => onChange("usedToThink", val)} rows={5} readOnly={readOnly} className="mb-4" />
-      <TextAreaField label="Now I think… (지금은…)" value={v(values, "nowThink")} onChange={(val) => onChange("nowThink", val)} rows={5} readOnly={readOnly} />
+    <SectionBox title="예전에는… 지금은…" color="yellow">
+      <TextAreaField label="예전에는 이렇게 생각했다" value={v(values, "usedToThink")} onChange={(val) => onChange("usedToThink", val)} rows={5} readOnly={readOnly} className="mb-4" />
+      <TextAreaField label="지금은 이렇게 생각한다" value={v(values, "nowThink")} onChange={(val) => onChange("nowThink", val)} rows={5} readOnly={readOnly} />
     </SectionBox>
   );
 }
@@ -195,11 +195,11 @@ export function IUsedToThinkTemplate({ values, onChange, readOnly }: TemplatePro
 export function PlusOneTemplate({ values, onChange, readOnly }: TemplateProps) {
   const steps = ["recall", "addOne", "repeat", "review", "reflect"];
   const labels: Record<string, string> = {
-    recall: "RECALL — 기억나는 핵심 내용",
-    addOne: "PASS RIGHT & ADD 1 — 하나 추가하기",
-    repeat: "REPEAT — 2번 이상 반복",
-    review: "REVIEW — 다른 사람의 추가 검토",
-    reflect: "REFLECT — 성찰",
+    recall: "1. 기억하기 — 핵심 내용 떠올리기",
+    addOne: "2. 옆으로 넘기며 하나 추가하기",
+    repeat: "3. 반복하기 — 두 번 이상",
+    review: "4. 검토하기 — 다른 사람 내용 살펴보기",
+    reflect: "5. 성찰하기",
   };
   return (
     <SectionBox title="Plus One (플러스 원)" color="purple">
@@ -223,7 +223,7 @@ export function PlusOneTemplate({ values, onChange, readOnly }: TemplateProps) {
 /* ── Give 3 Feedback ── */
 export function Give3FeedbackTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Give 3 Feedback Routine" color="blue">
+    <SectionBox title="세 가지 피드백 루틴" color="blue">
       {[1, 2, 3].map((n) => (
         <TextAreaField key={n} label={`피드백 ${n}`} value={v(values, `feedback${n}`)} onChange={(val) => onChange(`feedback${n}`, val)} rows={3} readOnly={readOnly} className="mb-3" />
       ))}
@@ -231,21 +231,21 @@ export function Give3FeedbackTemplate({ values, onChange, readOnly }: TemplatePr
   );
 }
 
-/* ── Ladder of Feedback ── */
+/* ── 피드백 사다리 ── */
 export function LadderOfFeedbackTemplate({ values, onChange, readOnly }: TemplateProps) {
   const steps = [
-    { key: "clarify", label: "Clarify (명확히)", color: "bg-red-200", ph: "I wonder…" },
-    { key: "value", label: "Value (가치)", color: "bg-purple-200", ph: "I value…" },
-    { key: "concerns", label: "Questions & Concerns", color: "bg-blue-200", ph: "I wonder…" },
-    { key: "suggest", label: "Suggest (제안)", color: "bg-green-200", ph: "What about adding…" },
-    { key: "thank", label: "Thank (감사)", color: "bg-yellow-200", ph: "Thank you for…" },
+    { key: "clarify", label: "명확히 하기", color: "bg-red-200", ph: "궁금한 점은…" },
+    { key: "value", label: "가치 찾기", color: "bg-purple-200", ph: "가치 있다고 느낀 점은…" },
+    { key: "concerns", label: "질문과 우려", color: "bg-blue-200", ph: "궁금한 점은…" },
+    { key: "suggest", label: "제안하기", color: "bg-green-200", ph: "이렇게 추가하면 어떨까…" },
+    { key: "thank", label: "감사 표현", color: "bg-yellow-200", ph: "고마운 점은…" },
   ];
   return (
-    <SectionBox title="Ladder of Feedback" color="pink">
+    <SectionBox title="피드백 사다리" color="pink">
       <div className="space-y-2">
         {steps.map(({ key, label, color, ph }) => (
           <div key={key} className={`rounded-lg border border-slate-200 ${color} p-1`}>
-            <TextAreaField label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} placeholder={ph} rows={2} readOnly={readOnly} className="bg-white/80 p-2 rounded" />
+            <TextAreaField label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} placeholder={ph} rows={4} readOnly={readOnly} className="bg-white/80 p-2 rounded" />
           </div>
         ))}
       </div>
@@ -253,7 +253,7 @@ export function LadderOfFeedbackTemplate({ values, onChange, readOnly }: Templat
   );
 }
 
-/* ── Chalk Talk / Hot Spots / Zoom In / Brainstorming — activity sheets ── */
+/* ── 분필 토론 / 핫스팟(눈에 띄는 부분) / 줌인(확대하기) / Brainstorming — activity sheets ── */
 export function ActivitySheetTemplate({
   values,
   onChange,
@@ -271,7 +271,7 @@ export function ActivitySheetTemplate({
 
 export function ChalkTalkTemplate(props: TemplateProps) {
   return (
-    <SectionBox title="Chalk Talk" color="blue">
+    <SectionBox title="분필 토론" color="blue">
       <ActivitySheetTemplate {...props} fields={[
         { key: "writingContext", label: getMetaFieldLabel("writingContext") },
         { key: "activityExample", label: "활동 사례" },
@@ -283,7 +283,7 @@ export function ChalkTalkTemplate(props: TemplateProps) {
 
 export function HotSpotsTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Hot Spots" color="blue">
+    <SectionBox title="핫스팟(눈에 띄는 부분)" color="blue">
       <p className="mb-3 text-sm text-slate-600">사진에서 눈에 띄는 부분과 궁금한 점을 적어보세요.</p>
       {[1, 2].map((n) => (
         <TextAreaField key={n} label={`활동사례 ${n}`} value={v(values, `case${n}`)} onChange={(val) => onChange(`case${n}`, val)} rows={4} readOnly={readOnly} className="mb-3" placeholder="나는 여기가 눈에 띄었어요. 왜냐하면…" />
@@ -299,7 +299,7 @@ export function ZoomInTemplate({ values, onChange, readOnly }: TemplateProps) {
     { key: "step3", label: "3. 전체 이미지 — 처음 생각과 뭐가 다른가요?" },
   ];
   return (
-    <SectionBox title="Zoom In" color="blue">
+    <SectionBox title="줌인(확대하기)" color="blue">
       <div className="grid gap-3 md:grid-cols-3">
         {steps.map(({ key, label }) => (
           <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={5} readOnly={readOnly} />
@@ -329,7 +329,7 @@ export function BrainstormingTemplate({ values, onChange, readOnly }: TemplatePr
 export function ExaggerationTemplate({ values, onChange, readOnly }: TemplateProps) {
   const chips = ["만약 1000배 커진다면?", "만약 1000배 작아진다면?", "만약 1000배 빨라진다면?", "만약 사용자가 1000배 늘어난다면?"];
   return (
-    <SectionBox title="과장하기 Exaggeration" color="blue">
+    <SectionBox title="과장하기" color="blue">
       {!readOnly && <GuideChips chips={chips} onSelect={(t) => onChange("content", v(values, "content") ? `${v(values, "content")}\n${t}` : t)} />}
       <TextAreaField value={v(values, "content")} onChange={(val) => onChange("content", val)} rows={8} readOnly={readOnly} className="mt-3" placeholder="과장된 질문과 아이디어를 적어보세요" />
     </SectionBox>
@@ -338,7 +338,7 @@ export function ExaggerationTemplate({ values, onChange, readOnly }: TemplatePro
 
 export function StarburstingTemplate({ values, onChange, readOnly }: TemplateProps) {
   const items = ["who", "what", "when", "where", "why", "how"];
-  const labels: Record<string, string> = { who: "Who (누가)", what: "What (무엇)", when: "When (언제)", where: "Where (어디)", why: "Why (왜)", how: "How (어떻게)" };
+  const labels: Record<string, string> = { who: "누가", what: "무엇", when: "언제", where: "어디", why: "왜", how: "어떻게" };
   return (
     <SectionBox title="스타버스팅 (5W1H)" color="blue">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -354,8 +354,8 @@ export function StarburstingTemplate({ values, onChange, readOnly }: TemplatePro
 export function QuestionTypesTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
     <SectionBox title="질문의 종류" color="green">
-      <TextAreaField label="탐구질문" value={v(values, "inquiry")} onChange={(val) => onChange("inquiry", val)} rows={2} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="AI 활용 (프롬프트)" value={v(values, "aiPrompt")} onChange={(val) => onChange("aiPrompt", val)} rows={2} readOnly={readOnly} className="mb-3" />
+      <TextAreaField label="탐구질문" value={v(values, "inquiry")} onChange={(val) => onChange("inquiry", val)} rows={4} readOnly={readOnly} className="mb-3" />
+      <TextAreaField label="AI 활용 질문" value={v(values, "aiPrompt")} onChange={(val) => onChange("aiPrompt", val)} rows={4} readOnly={readOnly} className="mb-3" />
       <div className="grid gap-3 md:grid-cols-3">
         {[
           { key: "fact", label: "사실 질문" },
@@ -384,7 +384,7 @@ export function QuestionBankTemplate({ values, onChange, readOnly }: TemplatePro
       {QB_SECTIONS.map(({ key, title, qs }) => (
         <SectionBox key={key} title={title} color="green">
           {qs.map((q, i) => (
-            <TextAreaField key={i} label={q} value={v(values, `${key}_${i}`)} onChange={(val) => onChange(`${key}_${i}`, val)} rows={2} readOnly={readOnly} className="mb-2" />
+            <TextAreaField key={i} label={q} value={v(values, `${key}_${i}`)} onChange={(val) => onChange(`${key}_${i}`, val)} rows={4} readOnly={readOnly} className="mb-2" />
           ))}
         </SectionBox>
       ))}
@@ -405,7 +405,7 @@ export function SixThinkingHatsTemplate({ values, onChange, readOnly }: Template
   ];
   return (
     <SectionBox title="육색 사고 기법" color="purple">
-      <TextAreaField label="발명품 이름" value={v(values, "invention")} onChange={(val) => onChange("invention", val)} rows={1} readOnly={readOnly} className="mb-4" />
+      <TextAreaField label="발명품 이름" value={v(values, "invention")} onChange={(val) => onChange("invention", val)} rows={3} readOnly={readOnly} className="mb-4" />
       {sections.map(({ key, label }) => (
         <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={3} readOnly={readOnly} className="mb-2" />
       ))}
@@ -413,18 +413,18 @@ export function SixThinkingHatsTemplate({ values, onChange, readOnly }: Template
   );
 }
 
-/* ── Peel the Fruit ── */
+/* ── 과일 껍질 벗기기 ── */
 export function PeelTheFruitTemplate({ values, onChange, readOnly }: TemplateProps) {
   const layers = [
-    { key: "outside", label: "Outside Skin — 무엇이 보이나요?" },
-    { key: "under", label: "Under the Skin — 궁금한 점은?" },
-    { key: "building", label: "Building Explanations — 진짜 무엇에 관한 것?" },
-    { key: "connection", label: "Making a Connection — 내 삶과의 연결?" },
-    { key: "viewpoints", label: "Different Viewpoints — 다른 관점은?" },
-    { key: "heart", label: "Capturing the Heart — 핵심 메시지는?" },
+    { key: "outside", label: "겉껍질 — 무엇이 보이나요?" },
+    { key: "under", label: "속껍질 — 궁금한 점은?" },
+    { key: "building", label: "설명 쌓기 — 진짜 무엇에 관한 것?" },
+    { key: "connection", label: "연결 만들기 — 내 삶과의 연결?" },
+    { key: "viewpoints", label: "다른 관점 — 다른 시각은?" },
+    { key: "heart", label: "핵심 담기 — 가장 중요한 메시지는?" },
   ];
   return (
-    <SectionBox title="Peel the Fruit" color="orange">
+    <SectionBox title="과일 껍질 벗기기" color="orange">
       <div className="grid gap-3 md:grid-cols-2">
         {layers.map(({ key, label }) => (
           <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={4} readOnly={readOnly} />
@@ -438,10 +438,10 @@ export function PeelTheFruitTemplate({ values, onChange, readOnly }: TemplatePro
 export function CircleOfViewpointsTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
     <SectionBox title="관점의 원" color="orange">
-      <TextAreaField label="중심 주제" value={v(values, "centerTopic")} onChange={(val) => onChange("centerTopic", val)} rows={1} readOnly={readOnly} className="mb-4" />
-      <TextAreaField label="1. 관점 정하기 — I am thinking from the point of view of…" value={v(values, "viewpoint")} onChange={(val) => onChange("viewpoint", val)} rows={2} readOnly={readOnly} className="mb-2" />
-      <TextAreaField label="2. I think… Because…" value={v(values, "think")} onChange={(val) => onChange("think", val)} rows={3} readOnly={readOnly} className="mb-2" />
-      <TextAreaField label="3. A question or concern from this viewpoint…" value={v(values, "concern")} onChange={(val) => onChange("concern", val)} rows={3} readOnly={readOnly} />
+      <TextAreaField label="중심 주제" value={v(values, "centerTopic")} onChange={(val) => onChange("centerTopic", val)} rows={3} readOnly={readOnly} className="mb-4" />
+      <TextAreaField label="1. 관점 정하기 — 나는 ~의 입장에서 생각한다" value={v(values, "viewpoint")} onChange={(val) => onChange("viewpoint", val)} rows={4} readOnly={readOnly} className="mb-2" />
+      <TextAreaField label="2. 생각과 이유 — 나는 ~라고 생각한다. 왜냐하면…" value={v(values, "think")} onChange={(val) => onChange("think", val)} rows={3} readOnly={readOnly} className="mb-2" />
+      <TextAreaField label="3. 이 관점에서의 질문이나 걱정" value={v(values, "concern")} onChange={(val) => onChange("concern", val)} rows={3} readOnly={readOnly} />
     </SectionBox>
   );
 }
@@ -449,7 +449,7 @@ export function CircleOfViewpointsTemplate({ values, onChange, readOnly }: Templ
 /* ── Stop Light ── */
 export function StopLightTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Red·Yellow·Green Light — AI 퇴고 엔진" color="pink">
+    <SectionBox title="신호등 퇴고 (빨강·노랑·초록)" color="pink">
       <TextAreaField
         label="탐구 글 초고"
         value={v(values, "draft")}
@@ -497,15 +497,15 @@ export function StopLightTemplate({ values, onChange, readOnly }: TemplateProps)
   );
 }
 
-/* ── Y Chart / T Chart ── */
+/* ── Y형 차트 / T형 차트 ── */
 export function YChartTemplate({ values, onChange, readOnly }: TemplateProps) {
   const sections = [
-    { key: "looks", label: "Looks like (보이는 것)" },
-    { key: "sounds", label: "Sounds like (들리는 것)" },
-    { key: "feels", label: "Feels like (느껴지는 것)" },
+    { key: "looks", label: "보이는 것" },
+    { key: "sounds", label: "들리는 것" },
+    { key: "feels", label: "느껴지는 것" },
   ];
   return (
-    <SectionBox title="Y Chart" color="purple">
+    <SectionBox title="Y형 차트" color="purple">
       <div className="grid gap-3 md:grid-cols-3">
         {sections.map(({ key, label }) => (
           <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={5} readOnly={readOnly} />
@@ -518,10 +518,10 @@ export function YChartTemplate({ values, onChange, readOnly }: TemplateProps) {
 
 export function TChartTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="T Chart" color="pink">
+    <SectionBox title="T형 차트" color="pink">
       <div className="grid gap-3 md:grid-cols-2">
-        <TextAreaField label="What I Know (알게 된 것)" value={v(values, "know")} onChange={(val) => onChange("know", val)} rows={8} readOnly={readOnly} />
-        <TextAreaField label="What I Want to Know (알고 싶은 것)" value={v(values, "want")} onChange={(val) => onChange("want", val)} rows={8} readOnly={readOnly} />
+        <TextAreaField label="알게 된 것" value={v(values, "know")} onChange={(val) => onChange("know", val)} rows={8} readOnly={readOnly} />
+        <TextAreaField label="알고 싶은 것" value={v(values, "want")} onChange={(val) => onChange("want", val)} rows={8} readOnly={readOnly} />
       </div>
     </SectionBox>
   );
@@ -531,14 +531,14 @@ export function TChartTemplate({ values, onChange, readOnly }: TemplateProps) {
 export function Brainwriting635Template({ values, onChange, readOnly }: TemplateProps) {
   const gridKeys = Array.from({ length: 18 }, (_, i) => `cell_${i}`);
   return (
-    <SectionBox title="Brainwriting 6-3-5 Method" color="purple">
-      <TextAreaField label="Issue (문제)" value={v(values, "issue")} onChange={(val) => onChange("issue", val)} rows={2} readOnly={readOnly} className="mb-3" />
+    <SectionBox title="브레인라이팅 6-3-5" color="purple">
+      <TextAreaField label="탐구 문제" value={v(values, "issue")} onChange={(val) => onChange("issue", val)} rows={4} readOnly={readOnly} className="mb-3" />
       <p className="mb-2 text-xs text-slate-500">6명 × 3아이디어 × 6라운드</p>
       <GridInput keys={gridKeys} values={values} onChange={onChange} cols={3} readOnly={readOnly} />
       <div className="mt-3 grid gap-3 md:grid-cols-3">
-        <TextAreaField label="Connect/Combine" value={v(values, "connect")} onChange={(val) => onChange("connect", val)} rows={3} readOnly={readOnly} />
-        <TextAreaField label="Cluster" value={v(values, "cluster")} onChange={(val) => onChange("cluster", val)} rows={3} readOnly={readOnly} />
-        <TextAreaField label="Evaluate" value={v(values, "evaluate")} onChange={(val) => onChange("evaluate", val)} rows={3} readOnly={readOnly} />
+        <TextAreaField label="연결·결합" value={v(values, "connect")} onChange={(val) => onChange("connect", val)} rows={3} readOnly={readOnly} />
+        <TextAreaField label="묶기" value={v(values, "cluster")} onChange={(val) => onChange("cluster", val)} rows={3} readOnly={readOnly} />
+        <TextAreaField label="평가" value={v(values, "evaluate")} onChange={(val) => onChange("evaluate", val)} rows={3} readOnly={readOnly} />
       </div>
     </SectionBox>
   );
@@ -550,7 +550,7 @@ export function SpectrumTemplate({ values, onChange, readOnly }: TemplateProps) 
   const labels = ["전혀 아니다", "아니다", "그렇다", "매우 그렇다"];
   return (
     <SectionBox title="스펙트럼 입장문" color="yellow">
-      <TextAreaField label="질문/주제" value={v(values, "question")} onChange={(val) => onChange("question", val)} rows={2} readOnly={readOnly} className="mb-4" />
+      <TextAreaField label="질문/주제" value={v(values, "question")} onChange={(val) => onChange("question", val)} rows={4} readOnly={readOnly} className="mb-4" />
       <div className="relative mb-6 flex items-center justify-between rounded bg-slate-100 px-4 py-8">
         <span>←</span>
         {labels.map((l, i) => (
@@ -559,7 +559,7 @@ export function SpectrumTemplate({ values, onChange, readOnly }: TemplateProps) 
         <span>→</span>
       </div>
       {positions.map((key, i) => (
-        <TextAreaField key={key} label={`${labels[i]} — 나의 생각`} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={2} readOnly={readOnly} className="mb-2" />
+        <TextAreaField key={key} label={`${labels[i]} — 나의 생각`} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={4} readOnly={readOnly} className="mb-2" />
       ))}
       <TextAreaField label="종합 성찰" value={v(values, "reflection")} onChange={(val) => onChange("reflection", val)} rows={3} readOnly={readOnly} className="mt-3" />
     </SectionBox>
@@ -570,7 +570,7 @@ export function SpectrumTemplate({ values, onChange, readOnly }: TemplateProps) 
 
 export function WhatMakesYouSayThatTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="What Makes You Say That?" color="blue">
+    <SectionBox title="왜 그렇게 말할 수 있을까?" color="blue">
       <TextAreaField label="나의 주장·가설" value={v(values, "claim")} onChange={(val) => onChange("claim", val)} rows={4} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="실험 데이터·텍스트 근거" value={v(values, "evidence")} onChange={(val) => onChange("evidence", val)} rows={5} readOnly={readOnly} placeholder="그렇게 판단한 근거와 출처를 적으세요" className="mb-3" />
       <TextAreaField label="근거와 주장의 연결 설명" value={v(values, "reasoning")} onChange={(val) => onChange("reasoning", val)} rows={4} readOnly={readOnly} />
@@ -580,11 +580,11 @@ export function WhatMakesYouSayThatTemplate({ values, onChange, readOnly }: Temp
 
 export function E3Template({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Estimate · Explore · Explain" color="green">
-      <TextAreaField label="1. Estimate — 예측" value={v(values, "estimate")} onChange={(val) => onChange("estimate", val)} rows={4} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="2. Explore — 실험 데이터" value={v(values, "exploreData")} onChange={(val) => onChange("exploreData", val)} rows={5} readOnly={readOnly} className="mb-3" />
+    <SectionBox title="예측·탐구·설명" color="green">
+      <TextAreaField label="1. 예측" value={v(values, "estimate")} onChange={(val) => onChange("estimate", val)} rows={4} readOnly={readOnly} className="mb-3" />
+      <TextAreaField label="2. 탐구 — 실험 데이터" value={v(values, "exploreData")} onChange={(val) => onChange("exploreData", val)} rows={5} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="예측과 결과의 차이" value={v(values, "gapAnalysis")} onChange={(val) => onChange("gapAnalysis", val)} rows={3} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="3. Explain — 과학적 설명" value={v(values, "explain")} onChange={(val) => onChange("explain", val)} rows={5} readOnly={readOnly} />
+      <TextAreaField label="3. 설명 — 과학적 설명" value={v(values, "explain")} onChange={(val) => onChange("explain", val)} rows={5} readOnly={readOnly} />
     </SectionBox>
   );
 }
@@ -592,8 +592,8 @@ export function E3Template({ values, onChange, readOnly }: TemplateProps) {
 export function FishboneTemplate({ values, onChange, readOnly }: TemplateProps) {
   const causes = ["cause1", "cause2", "cause3", "cause4"] as const;
   return (
-    <SectionBox title="Fishbone — 인과관계 다이어그램" color="orange">
-      <TextAreaField label="현상(결과)" value={v(values, "phenomenon")} onChange={(val) => onChange("phenomenon", val)} rows={2} readOnly={readOnly} className="mb-4" />
+    <SectionBox title="어골 모양 — 인과관계" color="orange">
+      <TextAreaField label="현상(결과)" value={v(values, "phenomenon")} onChange={(val) => onChange("phenomenon", val)} rows={4} readOnly={readOnly} className="mb-4" />
       <p className="mb-2 text-xs font-bold text-slate-600">원인(뼈대)</p>
       <div className="grid gap-2 sm:grid-cols-2">
         {causes.map((key, i) => (
@@ -689,12 +689,12 @@ export function ScamperTemplate({ values, onChange, readOnly }: TemplateProps) {
   ] as const;
 
   return (
-    <SectionBox title="SCAMPER — 가설 확장·변형" color="yellow">
+    <SectionBox title="SCAMPER — 아이디어 확장·변형" color="yellow">
       <TextAreaField
         label="아이디어 (바꿀 대상)"
         value={v(values, "conclusion")}
         onChange={(val) => onChange("conclusion", val)}
-        rows={2}
+        rows={4}
         readOnly={readOnly}
         placeholder="대체·조합·변형할 아이디어를 적어 보세요"
         className="mb-4"
@@ -713,7 +713,7 @@ export function ScamperTemplate({ values, onChange, readOnly }: TemplateProps) {
               <div className="flex flex-1 flex-col p-2">
                 <p className={`mb-2 rounded px-2 py-1.5 text-[11px] leading-snug ${badge}`}>{hint}</p>
                 <textarea
-                  className="min-h-[140px] flex-1 resize-y rounded border border-white bg-white px-2 py-2 text-xs text-slate-800 focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-300 disabled:bg-slate-50"
+                  className="ui-textarea min-h-[10rem] flex-1 border-white px-3 py-3 text-slate-800 focus:border-slate-300 focus:outline-none focus:ring-1 focus:ring-slate-300 disabled:bg-slate-50"
                   value={v(values, key)}
                   disabled={readOnly}
                   placeholder={hint}
@@ -730,7 +730,7 @@ export function ScamperTemplate({ values, onChange, readOnly }: TemplateProps) {
 
 export function TrafficLightReflectionTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Traffic Light Reflection" color="green">
+    <SectionBox title="신호등 성찰" color="green">
       <TextAreaField label="🟢 이해 완료" value={v(values, "green")} onChange={(val) => onChange("green", val)} rows={4} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="🟡 아직 모호함" value={v(values, "yellow")} onChange={(val) => onChange("yellow", val)} rows={4} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="🔴 재학습 필요" value={v(values, "red")} onChange={(val) => onChange("red", val)} rows={4} readOnly={readOnly} className="mb-3" />
@@ -741,7 +741,7 @@ export function TrafficLightReflectionTemplate({ values, onChange, readOnly }: T
 
 export function ShowOfThumbsReflectionTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Show of Thumbs Reflection" color="pink">
+    <SectionBox title="엄지척 성찰" color="pink">
       <TextAreaField label="난이도 (👎 어려움 ↔ 👍 쉬움)" value={v(values, "difficulty")} onChange={(val) => onChange("difficulty", val)} rows={3} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="몰입도 (👎 낮음 ↔ 👍 높음)" value={v(values, "engagement")} onChange={(val) => onChange("engagement", val)} rows={3} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="성찰 메모" value={v(values, "notes")} onChange={(val) => onChange("notes", val)} rows={4} readOnly={readOnly} />
@@ -751,13 +751,13 @@ export function ShowOfThumbsReflectionTemplate({ values, onChange, readOnly }: T
 
 export function FourCsReflectionTemplate({ values, onChange, readOnly }: TemplateProps) {
   const items = [
-    { key: "connections", label: "Connections — 무엇과 연결되었나요?" },
-    { key: "challenge", label: "Challenge — 어떤 도전이 있었나요?" },
-    { key: "concepts", label: "Concepts — 핵심 개념은 무엇인가요?" },
-    { key: "changes", label: "Changes — 무엇이 변했나요?" },
+    { key: "connections", label: "연결 — 무엇과 연결되었나요?" },
+    { key: "challenge", label: "도전 — 어떤 도전이 있었나요?" },
+    { key: "concepts", label: "개념 — 핵심 개념은 무엇인가요?" },
+    { key: "changes", label: "변화 — 무엇이 변했나요?" },
   ] as const;
   return (
-    <SectionBox title="4C 반성 — 종합 성찰" color="blue">
+    <SectionBox title="4C 성찰 — 종합 정리" color="blue">
       {items.map(({ key, label }) => (
         <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} rows={4} readOnly={readOnly} className="mb-3" />
       ))}
@@ -767,9 +767,9 @@ export function FourCsReflectionTemplate({ values, onChange, readOnly }: Templat
 
 export function GiveOneGetOneTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Give One, Get One" color="green">
-      <TextAreaField label="Give — 내가 발견한 과학적 사실·표현" value={v(values, "give")} onChange={(val) => onChange("give", val)} rows={5} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="Get — 친구에게서 배운 꿀팁" value={v(values, "get")} onChange={(val) => onChange("get", val)} rows={5} readOnly={readOnly} className="mb-3" />
+    <SectionBox title="하나 주고 하나 받기" color="green">
+      <TextAreaField label="주기 — 내가 발견한 과학적 사실·표현" value={v(values, "give")} onChange={(val) => onChange("give", val)} rows={5} readOnly={readOnly} className="mb-3" />
+      <TextAreaField label="받기 — 친구에게서 배운 내용" value={v(values, "get")} onChange={(val) => onChange("get", val)} rows={5} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="교환 소감" value={v(values, "notes")} onChange={(val) => onChange("notes", val)} rows={3} readOnly={readOnly} />
     </SectionBox>
   );
@@ -777,17 +777,17 @@ export function GiveOneGetOneTemplate({ values, onChange, readOnly }: TemplatePr
 
 export function ThinkTalkOpenExchangeTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Think · Talk · Open Exchange" color="purple">
-      <TextAreaField label="Think — 나의 생각" value={v(values, "think")} onChange={(val) => onChange("think", val)} rows={4} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="Talk — 말하고 싶은 내용" value={v(values, "talk")} onChange={(val) => onChange("talk", val)} rows={4} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="Open Exchange — 열린 교류 기록" value={v(values, "exchange")} onChange={(val) => onChange("exchange", val)} rows={5} readOnly={readOnly} />
+    <SectionBox title="생각하기·말하기·열린 교류" color="purple">
+      <TextAreaField label="생각하기 — 나의 생각" value={v(values, "think")} onChange={(val) => onChange("think", val)} rows={4} readOnly={readOnly} className="mb-3" />
+      <TextAreaField label="말하기 — 말하고 싶은 내용" value={v(values, "talk")} onChange={(val) => onChange("talk", val)} rows={4} readOnly={readOnly} className="mb-3" />
+      <TextAreaField label="열린 교류 — 교류 기록" value={v(values, "exchange")} onChange={(val) => onChange("exchange", val)} rows={5} readOnly={readOnly} />
     </SectionBox>
   );
 }
 
 export function LeaderlessDiscussionTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="The Leaderless Discussion" color="yellow">
+    <SectionBox title="리더 없는 토론" color="yellow">
       <TextAreaField label="공유 데이터·근거" value={v(values, "dataPoint")} onChange={(val) => onChange("dataPoint", val)} rows={4} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="나의 의견" value={v(values, "opinion")} onChange={(val) => onChange("opinion", val)} rows={4} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="반론·다른 관점" value={v(values, "counter")} onChange={(val) => onChange("counter", val)} rows={4} readOnly={readOnly} className="mb-3" />
@@ -798,10 +798,10 @@ export function LeaderlessDiscussionTemplate({ values, onChange, readOnly }: Tem
 
 export function MakingMeaningTemplate({ values, onChange, readOnly }: TemplateProps) {
   return (
-    <SectionBox title="Making Meaning — 집단적 과학 의미" color="orange">
+    <SectionBox title="의미 만들기 — 함께 만든 과학적 의미" color="orange">
       <TextAreaField label="내가 기여한 핵심 표현" value={v(values, "contribution")} onChange={(val) => onChange("contribution", val)} rows={4} readOnly={readOnly} className="mb-3" />
       <TextAreaField label="학급이 함께 도출한 의미" value={v(values, "classInsight")} onChange={(val) => onChange("classInsight", val)} rows={5} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="단어구름에 넣을 키워드" value={v(values, "wordCloud")} onChange={(val) => onChange("wordCloud", val)} rows={3} readOnly={readOnly} placeholder="쉼표로 구분해 적어보세요" />
+      <TextAreaField label="함께 정리할 핵심 키워드" value={v(values, "wordCloud")} onChange={(val) => onChange("wordCloud", val)} rows={3} readOnly={readOnly} placeholder="쉼표로 구분해 적어보세요" />
     </SectionBox>
   );
 }

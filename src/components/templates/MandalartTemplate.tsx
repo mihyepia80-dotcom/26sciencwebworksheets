@@ -27,7 +27,7 @@ function GridCell({
 
   return (
     <textarea
-      className={`min-h-[72px] w-full resize-none border border-amber-300 p-2 text-center text-sm leading-snug focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-300 sm:min-h-[84px] ${
+      className={`min-h-[6rem] w-full resize-none border border-amber-300 p-2 text-center text-sm leading-snug focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-300 sm:min-h-[84px] ${
         isCenter
           ? "bg-amber-100 font-bold text-amber-900 placeholder:text-amber-700/60"
           : "bg-white text-slate-800 placeholder:text-slate-400"
@@ -71,7 +71,7 @@ export function MandalartTemplate({ values, onChange, readOnly }: TemplateProps)
         </h3>
         <label className="mb-1 block text-xs font-semibold text-amber-800">세부내용</label>
         <textarea
-          className="mandalart-ruled min-h-[180px] w-full resize-y rounded-lg border border-amber-200 bg-white/90 p-3 text-sm leading-7 text-slate-800 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-300"
+          className="mandalart-ruled min-h-[180px] w-full resize-y rounded-lg border border-amber-200 bg-white/90 p-3 text-base leading-7 text-slate-800 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-300"
           value={v(values, "details")}
           disabled={readOnly}
           placeholder="위 칸에 적은 내용을 예를 들어 자세히 설명하세요"

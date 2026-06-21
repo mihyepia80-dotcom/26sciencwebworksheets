@@ -14,9 +14,9 @@ export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) 
         <div className="mb-6 border-b border-slate-200 pb-6 text-center">
           <p className="text-xs font-medium text-slate-500">{get("unit")}</p>
           <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">
-            Headlines (헤드라인) — Visible Thinking
+            헤드라인
           </h2>
-          <p className="mt-2 text-sm text-slate-600">{get("topic")}</p>
+          <p className="mt-2 text-base text-slate-600">{get("topic")}</p>
         </div>
 
         <div className="mb-8 rounded-xl border border-teal-100 bg-teal-50/60 p-4">
@@ -33,13 +33,13 @@ export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) 
 
         <div className="space-y-6">
           <div className="rounded-xl border border-slate-200 p-5 shadow-sm print:shadow-none">
-            <label className="mb-2 block text-sm font-bold text-slate-800">헤드라인 뽑기</label>
-            <p className="mb-3 text-xs text-slate-500">
+            <label className="ui-label">헤드라인 뽑기</label>
+            <p className="mb-3 text-base text-slate-600">
               탐구 내용의 핵심 본질과 가치를 한 줄로 관통하는 제목을 작성하세요.
             </p>
             <input
               type="text"
-              className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-800 focus:border-blue-500 focus:outline-none disabled:bg-slate-50"
+              className="ui-input"
               value={v(values, "headline")}
               disabled={readOnly}
               placeholder={HEADLINE_PLACEHOLDERS.headline}
@@ -48,12 +48,12 @@ export function HeadlineTemplate({ values, onChange, readOnly }: TemplateProps) 
           </div>
 
           <div className="rounded-xl border border-slate-200 p-5 shadow-sm print:shadow-none">
-            <label className="mb-2 block text-sm font-bold text-slate-800">이유 서술하기</label>
-            <p className="mb-3 text-xs text-slate-500">
+            <label className="ui-label">이유 서술하기</label>
+            <p className="mb-3 text-base text-slate-600">
               왜 그렇게 헤드라인을 뽑았는지, 과학적 사실(실험·조사 데이터)과 인과 관계를 담아 서술하세요.
             </p>
             <textarea
-              className="w-full resize-y rounded-lg border border-slate-200 p-3 text-sm leading-relaxed text-slate-800 focus:border-blue-500 focus:outline-none disabled:bg-slate-50"
+              className="ui-textarea min-h-[12rem]"
               rows={8}
               value={v(values, "headlineReason")}
               disabled={readOnly}

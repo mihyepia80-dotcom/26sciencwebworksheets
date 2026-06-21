@@ -308,14 +308,14 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
 
   return (
     <div className="gsce-worksheet space-y-6 print:space-y-4">
-      <SectionBox title="G-S-C-E 사고 루틴 — 용해와 용액 (생성·분류·연결·정교화)" color="blue">
+      <SectionBox title="생성·분류·연결·정교화(G-S-C-E) — 용해와 용액" color="blue">
         <p className="mb-4 text-sm leading-relaxed text-slate-600">
           오늘 수행한 실험 과정과 결과를 떠올리며, 단어를 생성하고 분류·연결한 뒤 과학적 문장으로 정교화해 봅시다.
         </p>
 
         {/* 1단계: 생성 */}
         <section className="mb-6 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
-          <h3 className="mb-1 text-sm font-bold text-blue-900">1단계 — 생성하기 (Generate)</h3>
+          <h3 className="mb-1 text-base font-bold text-blue-900">1단계 — 생성하기</h3>
           <p className="mb-3 text-xs text-slate-600">기본 과학 단어를 확인하고, 필요하면 새 포스트잇 단어를 추가하세요.</p>
           {!readOnly && (
             <div className="mb-3 flex flex-wrap gap-2 print:hidden">
@@ -353,7 +353,7 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
         <section className="mb-6 rounded-xl border border-purple-200 bg-purple-50/30 p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-bold text-purple-900">2~3단계 — 분류·연결하기 (Sort & Connect)</h3>
+              <h3 className="text-base font-bold text-purple-900">2~3단계 — 분류·연결하기</h3>
               <p className="mt-1 text-xs text-slate-600">
                 단어를 원인/조건과 결과/관찰 영역으로 드래그한 뒤, 연결 모드에서 두 칩을 클릭해 관계를 적으세요.
               </p>
@@ -442,7 +442,7 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
 
         {/* 4단계: 정교화 */}
         <section className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/30 p-4">
-          <h3 className="mb-3 text-sm font-bold text-emerald-900">4단계 — 정교화하기 (Elaborate)</h3>
+          <h3 className="mb-3 text-base font-bold text-emerald-900">4단계 — 정교화하기</h3>
           <div className="space-y-4">
             {GSCE_ELABORATE_SECTIONS.map(({ key, title, guide }) => (
               <TextAreaField

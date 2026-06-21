@@ -6,7 +6,7 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, limit, query, serverTimestamp, setDoc } from "firebase/firestore";
 import { getFirebaseStudentPassword, STUDENT_EMAIL_DOMAIN, STUDENT_PASSWORD } from "@/lib/constants";
 import { getClientAuth, getClientDb } from "./client";
 
@@ -15,6 +15,10 @@ export interface StudentProfile {
   classNo: string;
   studentNo: string;
   studentName: string;
+}
+
+export interface StudentRecord extends StudentProfile {
+  uid: string;
 }
 
 export function buildStudentEmail(grade: string, classNo: string, studentNo: string): string {
@@ -32,6 +36,29 @@ export async function getStudentProfile(uid: string): Promise<StudentProfile | n
     studentNo: String(data.studentNo ?? ""),
     studentName: String(data.studentName ?? ""),
   };
+}
+
+export async function listStudentsForTeacher(max = 500): Promise<StudentRecord[]> {
+  const snap = await getDocs(query(collection(getClientDb(), "students"), limit(max)));
+  return snap.docs
+    .map((d) => {
+      const data = d.data();
+      return {
+        uid: d.id,
+        grade: String(data.grade ?? ""),
+        classNo: String(data.classNo ?? ""),
+        studentNo: String(data.studentNo ?? ""),
+        studentName: String(data.studentName ?? ""),
+      };
+    })
+    .filter((s) => s.studentName.trim())
+    .sort((a, b) => {
+      const g = a.grade.localeCompare(b.grade, "ko");
+      if (g !== 0) return g;
+      const c = a.classNo.localeCompare(b.classNo, "ko", { numeric: true });
+      if (c !== 0) return c;
+      return a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true });
+    });
 }
 
 async function saveStudentProfile(uid: string, profile: StudentProfile): Promise<void> {
