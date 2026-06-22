@@ -5,9 +5,7 @@ import type { User } from "firebase/auth";
 import {
   getStudentProfile,
   isFirebaseConfigured,
-  resolveAuthRole,
   subscribeAppAuth,
-  verifyTeacherPassword,
   type AuthRole,
   type StudentProfile,
 } from "@/lib/firebase";
@@ -18,7 +16,6 @@ interface AuthContextValue {
   loading: boolean;
   studentProfile: StudentProfile | null;
   refreshProfile: () => Promise<void>;
-  confirmTeacherPin: (password: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextValue>({
@@ -27,7 +24,6 @@ const AuthContext = createContext<AuthContextValue>({
   loading: true,
   studentProfile: null,
   refreshProfile: async () => {},
-  confirmTeacherPin: async () => false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -36,23 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (!user || role !== "student") {
       setStudentProfile(null);
       return;
     }
     const profile = await getStudentProfile(user.uid);
     setStudentProfile(profile);
-  };
-
-  const confirmTeacherPin = useCallback(async (password: string): Promise<boolean> => {
-    if (!user) return false;
-    const ok = await verifyTeacherPassword(user, password);
-    if (!ok) return false;
-    const nextRole = await resolveAuthRole(user);
-    setRole(nextRole);
-    return nextRole === "teacher";
-  }, [user]);
+  }, [role, user]);
 
   useEffect(() => {
     if (!isFirebaseConfigured()) {
@@ -77,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading, studentProfile, refreshProfile, confirmTeacherPin }}>
+    <AuthContext.Provider value={{ user, role, loading, studentProfile, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -18,16 +18,10 @@ export {
   type WorksheetSubmissionStatus,
 } from "./submissions";
 export {
-  signInTeacherWithGoogle,
-  signInTeacherWithGoogleRedirect,
+  signInTeacher,
   signOutUser,
   checkIsTeacher,
-  verifyTeacherPassword,
   resolveAuthRole,
-  completeTeacherGoogleRedirect,
-  isTeacherGoogleRedirectInProgress,
-  isTeacherPopupBlockedError,
-  isMissingRedirectStateError,
   subscribeAppAuth,
   type AppAuthState,
   type AuthRole,

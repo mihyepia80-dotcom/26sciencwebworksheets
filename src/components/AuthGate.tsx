@@ -30,11 +30,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (user && role === "teacher-pending" && pathname !== "/teacher" && pathname !== "/login") {
-      router.replace("/teacher");
-      return;
-    }
-
     if (user && pathname === "/login") {
       if (role === "teacher") router.replace("/teacher");
       else if (role === "student") router.replace("/");
@@ -46,7 +41,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (pathname === "/workspace" && (role === "teacher" || role === "teacher-pending")) {
+    if (pathname === "/workspace" && role === "teacher") {
       router.replace("/teacher");
       return;
     }

@@ -128,7 +128,7 @@ export function TeacherDashboard() {
           ← 로그인
         </Link>
         <h1 className="mt-4 text-2xl font-bold text-slate-900">교사 로그인</h1>
-        <p className="mt-2 text-sm text-slate-600">Google 계정과 암호로 로그인하면 제출된 활동지를 조회할 수 있습니다.</p>
+        <p className="mt-2 text-sm text-slate-600">교사 암호로 로그인하면 제출된 활동지를 조회할 수 있습니다.</p>
 
         <div className="mt-8">
           <TeacherLoginPanel />

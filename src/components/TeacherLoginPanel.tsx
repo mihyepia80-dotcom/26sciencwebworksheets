@@ -1,143 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useAuth } from "@/components/AuthProvider";
-import {
-  getFirebaseErrorMessage,
-  isTeacherGoogleRedirectInProgress,
-  isTeacherPopupBlockedError,
-  signInTeacherWithGoogle,
-  signInTeacherWithGoogleRedirect,
-} from "@/lib/firebase";
+import { useState } from "react";
+import { getFirebaseErrorMessage, signInTeacher } from "@/lib/firebase";
 
 interface TeacherLoginPanelProps {
   onSuccess?: () => void;
 }
 
 export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
-  const { user, role, confirmTeacherPin } = useAuth();
   const [teacherPassword, setTeacherPassword] = useState("");
   const [error, setError] = useState("");
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [redirectLoading, setRedirectLoading] = useState(false);
-  const [showRedirectOption, setShowRedirectOption] = useState(false);
-  const [pinLoading, setPinLoading] = useState(false);
-  const [pinVerified, setPinVerified] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!pinVerified || role !== "teacher") return;
-    setPinVerified(false);
-    onSuccess?.();
-  }, [pinVerified, role, onSuccess]);
-
-  const handleGoogleLogin = async () => {
-    setError("");
-    setGoogleLoading(true);
-    try {
-      await signInTeacherWithGoogle();
-      setShowRedirectOption(false);
-    } catch (err: unknown) {
-      if (isTeacherGoogleRedirectInProgress(err)) {
-        setError("Google 로그인 페이지로 이동합니다…");
-        return;
-      }
-      if (isTeacherPopupBlockedError(err)) {
-        setShowRedirectOption(true);
-        setError(getFirebaseErrorMessage({ code: "auth/popup-blocked" } as Error & { code: string }));
-        return;
-      }
-      setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
-    } finally {
-      setGoogleLoading(false);
-    }
-  };
-
-  const handleRedirectLogin = async () => {
-    setError("");
-    setRedirectLoading(true);
-    try {
-      await signInTeacherWithGoogleRedirect();
-    } catch (err: unknown) {
-      if (isTeacherGoogleRedirectInProgress(err)) {
-        setError("Google 로그인 페이지로 이동합니다…");
-        return;
-      }
-      setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
-    } finally {
-      setRedirectLoading(false);
-    }
-  };
-
-  const handlePinSubmit = async (event: React.FormEvent) => {
+  const handleTeacherLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
-    setPinLoading(true);
+    setLoading(true);
+
     try {
-      const ok = await confirmTeacherPin(teacherPassword);
-      if (!ok) {
-        setError("암호가 올바르지 않습니다.");
-        return;
-      }
+      await signInTeacher(teacherPassword);
       setTeacherPassword("");
-      setPinVerified(true);
+      onSuccess?.();
+    } catch (err: unknown) {
+      setError(getFirebaseErrorMessage(err, "교사 로그인에 실패했습니다."));
     } finally {
-      setPinLoading(false);
+      setLoading(false);
     }
   };
 
-  const needsTeacherPin = Boolean(user && role !== "student" && role !== "teacher");
-
-  if (needsTeacherPin) {
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-slate-600">{user?.email}</p>
-        <form onSubmit={handlePinSubmit} className="mt-4 space-y-3">
-          <input
-            type="password"
-            className="w-full rounded border border-slate-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none"
-            placeholder="교사 암호"
-            value={teacherPassword}
-            onChange={(e) => setTeacherPassword(e.target.value)}
-            required
-            autoFocus
-          />
-          <button
-            type="submit"
-            disabled={pinLoading}
-            className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-          >
-            {pinLoading ? "확인 중..." : "교사로 시작하기"}
-          </button>
-        </form>
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-      </div>
-    );
-  }
-
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <button
-        type="button"
-        disabled={googleLoading || redirectLoading}
-        onClick={() => void handleGoogleLogin()}
-        className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
-      >
-        {googleLoading ? "연결 중..." : "Google로 로그인 (팝업)"}
-      </button>
-      {(showRedirectOption || redirectLoading) && (
-        <button
-          type="button"
-          disabled={redirectLoading || googleLoading}
-          onClick={() => void handleRedirectLogin()}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100 disabled:opacity-60"
-        >
-          {redirectLoading ? "이동 중..." : "페이지 이동 로그인"}
-        </button>
-      )}
-      <p className="mt-3 text-xs text-slate-500">
-        팝업이 차단되면 주소창 옆에서 팝업을 허용하거나, 「페이지 이동 로그인」을 사용하세요.
+    <form onSubmit={handleTeacherLogin} className="ui-card space-y-4 p-6">
+      <h2 className="text-lg font-bold text-slate-800">교사 로그인</h2>
+      <p className="text-sm leading-relaxed text-slate-600">
+        교사 암호로 로그인하면 제출된 활동지·지도안·유도 질문을 관리할 수 있습니다.
       </p>
-      {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-    </div>
+      <input
+        type="password"
+        className="ui-input"
+        placeholder="교사 암호"
+        value={teacherPassword}
+        onChange={(e) => setTeacherPassword(e.target.value)}
+        required
+      />
+      <button type="submit" disabled={loading} className="ui-btn-primary w-full">
+        {loading ? "로그인 중..." : "교사로 시작하기"}
+      </button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </form>
   );
 }

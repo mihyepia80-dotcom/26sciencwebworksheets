@@ -12,12 +12,12 @@ function InquiryReportRedirectInner() {
   const report = searchParams.get("report");
 
   useEffect(() => {
-    if (role === "teacher" || role === "teacher-pending") return;
+    if (role === "teacher") return;
     const q = report ? `?report=${report}` : "";
     router.replace(`/workspace${q}`);
   }, [report, role, router]);
 
-  if (role === "teacher" || role === "teacher-pending") {
+  if (role === "teacher") {
     return <InquiryReportEditor initialReportId={report} />;
   }
 

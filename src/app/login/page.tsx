@@ -68,7 +68,6 @@ export default function LoginPage() {
       </form>
 
       <div className="mt-8">
-        <h2 className="mb-4 text-lg font-bold text-slate-800">교사 로그인</h2>
         <TeacherLoginPanel onSuccess={() => router.replace("/teacher")} />
       </div>
 

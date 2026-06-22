@@ -291,7 +291,7 @@ export function InquiryWorkspace() {
     }
   };
 
-  if (role === "teacher" || role === "teacher-pending") {
+  if (role === "teacher") {
     return (
       <div className="mx-auto max-w-lg px-5 py-20 text-center">
         <p className="text-base text-slate-600">교사 계정은 탐구 활동실 대신 교사 대시보드를 이용하세요.</p>

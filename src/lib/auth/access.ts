@@ -6,7 +6,7 @@ export function isLoggedInStudent(user: User | null, role: AuthRole): boolean {
 }
 
 export function isGuest(user: User | null, role: AuthRole): boolean {
-  return !user && role !== "teacher" && role !== "teacher-pending";
+  return !user && role !== "teacher";
 }
 
 export function canPersistStudentWork(user: User | null, role: AuthRole): boolean {
