@@ -43,7 +43,7 @@ export default function LoginPage() {
     <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-16">
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900">사고도구 톡톡</h1>
-        <p className="mt-2 text-base text-slate-600">학생 로그인 후 사고도구 학습지를 작성하세요</p>
+        <p className="mt-2 text-base text-slate-600">로그인 없이 체험하거나, 학생 로그인 후 활동지를 저장·제출하세요</p>
       </div>
 
       <form onSubmit={handleStudentLogin} className="ui-card mt-10 space-y-4 p-6">

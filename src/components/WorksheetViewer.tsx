@@ -27,6 +27,8 @@ import { DEFAULT_META, type Answers, type WorksheetMeta } from "@/lib/types";
 import type { WorksheetSubmission } from "@/lib/firebase/submissions";
 import { useWorksheetState } from "@/lib/useWorksheetState";
 import { getMinFieldChars } from "@/lib/worksheet-validation";
+import { canPersistStudentWork, isGuest, isLoggedInStudent, isWorksheetEditorMode } from "@/lib/auth/access";
+import { GuestNotice } from "@/components/common/GuestNotice";
 
 interface WorksheetViewerProps {
   templateId: string;
@@ -51,7 +53,10 @@ export function WorksheetViewer({
 
   const { user, role, studentProfile } = useAuth();
   const template = getTemplateById(templateId);
-  const isStudent = role === "student";
+  const isStudent = isLoggedInStudent(user, role);
+  const guestMode = isGuest(user, role);
+  const worksheetEditorMode = isWorksheetEditorMode(user, role);
+  const canPersist = canPersistStudentWork(user, role);
 
   const [meta, setMeta] = useState<WorksheetMeta>(() => ({
     ...DEFAULT_META,
@@ -207,8 +212,12 @@ export function WorksheetViewer({
   };
 
   const handleDraftSave = () => {
-    if (!user || !isStudent) {
-      setSubmitError("학생 로그인 후 임시 저장할 수 있습니다.");
+    if (!canPersist) {
+      setSubmitError(
+        guestMode
+          ? "학생 로그인 후 임시 저장할 수 있습니다. 로그인 없이 작성한 내용은 저장되지 않습니다."
+          : "학생 로그인 후 임시 저장할 수 있습니다.",
+      );
       return;
     }
     const payload = buildSavePayload();
@@ -219,8 +228,12 @@ export function WorksheetViewer({
   };
 
   const handleSubmit = () => {
-    if (!user || !isStudent) {
-      setSubmitError("학생 로그인 후 제출할 수 있습니다.");
+    if (!canPersist) {
+      setSubmitError(
+        guestMode
+          ? "학생 로그인 후 제출할 수 있습니다. 로그인 없이 작성한 내용은 저장되지 않습니다."
+          : "학생 로그인 후 제출할 수 있습니다.",
+      );
       return;
     }
     const payload = buildSavePayload();
@@ -245,8 +258,13 @@ export function WorksheetViewer({
   return (
     <div
       data-worksheet-embedded={embedded ? "true" : undefined}
-      className={`print:max-w-none print:space-y-0 print:p-0 ${embedded ? "worksheet-embedded-shell space-y-3" : `mx-auto space-y-4 px-4 py-6 ${isStudent ? "max-w-7xl" : "max-w-5xl"}`}`}
+      className={`print:max-w-none print:space-y-0 print:p-0 ${embedded ? "worksheet-embedded-shell space-y-3" : `mx-auto space-y-4 px-4 py-6 ${worksheetEditorMode ? "max-w-7xl" : "max-w-5xl"}`}`}
     >
+      {guestMode && !embedded && (
+        <div className="print:hidden">
+          <GuestNotice />
+        </div>
+      )}
       {!embedded && (
         <div className="flex items-center justify-between print:hidden">
           <Link href="/" className="ui-link">
@@ -264,9 +282,15 @@ export function WorksheetViewer({
         </div>
       )}
 
-      {embedded && isStudent && (
+      {embedded && worksheetEditorMode && (
         <p className="print:hidden rounded-lg border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-sm leading-relaxed text-blue-900">
-          본문 칸은 <strong>{getMinFieldChars(template.id)}자 이상</strong> 한글로 작성하세요. 임시 저장 후 제출할 수 있습니다.
+          {canPersist ? (
+            <>
+              본문 칸은 <strong>{getMinFieldChars(template.id)}자 이상</strong> 한글로 작성하세요. 임시 저장 후 제출할 수 있습니다.
+            </>
+          ) : (
+            <>로그인 없이 체험 중입니다. 작성 내용은 저장되지 않습니다.</>
+          )}
         </p>
       )}
 
@@ -304,13 +328,13 @@ export function WorksheetViewer({
           readOnly={submitted}
         />
 
-        {!isStudent && template.aiFeature && (
+        {!isStudent && role === "teacher" && template.aiFeature && (
           <div className="print:hidden">
             <AiFeaturePanel template={template} />
           </div>
         )}
 
-        {!isStudent && guided.visible && (
+        {!isStudent && role === "teacher" && guided.visible && (
           <div className="print:hidden">
             <GuidedQuestionsPanel
               topic={meta.topic}
@@ -326,8 +350,8 @@ export function WorksheetViewer({
           </div>
         )}
 
-        {isStudent ? (
-          embedded ? (
+        {worksheetEditorMode ? (
+          embedded || guestMode ? (
             <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
           ) : (
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -397,6 +421,7 @@ export function WorksheetViewer({
         onEdit={handleEdit}
         onDraftSave={handleDraftSave}
         onSubmit={handleSubmit}
+        persistEnabled={canPersist}
         />
       </div>
 
@@ -418,8 +443,18 @@ export function WorksheetViewer({
         </p>
       )}
 
-      {!isStudent && !submitted && (
+      {!canPersist && !submitted && role === "teacher" && (
         <p className="text-center text-sm text-amber-700 print:hidden">학생 로그인 후 제출할 수 있습니다.</p>
+      )}
+
+      {guestMode && !submitted && (
+        <p className="text-center text-sm text-amber-800 print:hidden">
+          체험 모드입니다. PDF 출력은 가능하지만 저장·제출은{" "}
+          <Link href="/login" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
+            학생 로그인
+          </Link>
+          후 이용할 수 있습니다.
+        </p>
       )}
 
       <div className="print:hidden">

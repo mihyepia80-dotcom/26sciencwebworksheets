@@ -3,9 +3,12 @@
 import Link from "next/link";
 import { signOutUser } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
+import { isGuest, isLoggedInStudent } from "@/lib/auth/access";
 
 export function AppHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   const { user, role, studentProfile } = useAuth();
+  const isStudent = isLoggedInStudent(user, role);
+  const guestMode = isGuest(user, role);
 
   const handleLogout = async () => {
     await signOutUser();
@@ -26,13 +29,23 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
           )}
         </div>
         <nav className="flex flex-wrap items-center gap-2">
-          {role === "student" && (
+          {isStudent && (
             <>
               <Link href="/workspace" className="ui-btn-accent ui-btn-sm">
                 탐구 활동실
               </Link>
               <Link href="/my" className="ui-btn-secondary ui-btn-sm">
                 내 활동지
+              </Link>
+            </>
+          )}
+          {guestMode && (
+            <>
+              <Link href="/workspace" className="ui-btn-accent ui-btn-sm">
+                탐구 활동실
+              </Link>
+              <Link href="/login" className="ui-btn-primary ui-btn-sm">
+                학생 로그인
               </Link>
             </>
           )}

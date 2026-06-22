@@ -12,17 +12,16 @@ function InquiryReportRedirectInner() {
   const report = searchParams.get("report");
 
   useEffect(() => {
-    if (role === "student") {
-      const q = report ? `?report=${report}` : "";
-      router.replace(`/workspace${q}`);
-    }
+    if (role === "teacher" || role === "teacher-pending") return;
+    const q = report ? `?report=${report}` : "";
+    router.replace(`/workspace${q}`);
   }, [report, role, router]);
 
-  if (role === "student") {
-    return <p className="py-20 text-center text-sm text-slate-500">탐구 활동실로 이동 중…</p>;
+  if (role === "teacher" || role === "teacher-pending") {
+    return <InquiryReportEditor initialReportId={report} />;
   }
 
-  return <InquiryReportEditor initialReportId={report} />;
+  return <p className="py-20 text-center text-sm text-slate-500">탐구 활동실로 이동 중…</p>;
 }
 
 export default function InquiryReportPage() {

@@ -44,6 +44,7 @@ interface WorksheetActionBarProps {
   savingDraft: boolean;
   hasSubmissionId: boolean;
   aiAvailable: boolean;
+  persistEnabled?: boolean;
   onEdit: () => void;
   onDraftSave: () => void;
   onSubmit: () => void;
@@ -72,6 +73,7 @@ export function WorksheetActionBar({
   savingDraft,
   hasSubmissionId,
   aiAvailable,
+  persistEnabled = true,
   onEdit,
   onDraftSave,
   onSubmit,
@@ -80,7 +82,7 @@ export function WorksheetActionBar({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-3 pt-6">
-      {submitted && (
+      {submitted && persistEnabled && (
         <Link href="/my" className="ui-btn-secondary border-emerald-200 text-emerald-700 hover:bg-emerald-50">
           내 활동지 보기
         </Link>
@@ -88,7 +90,12 @@ export function WorksheetActionBar({
       <button type="button" className="ui-btn-secondary" onClick={onEdit} disabled={busy || !submitted}>
         다시 수정
       </button>
-      {!submitted && (
+      {!persistEnabled && !submitted && (
+        <Link href="/login" className="ui-btn-primary min-w-[7rem]">
+          학생 로그인
+        </Link>
+      )}
+      {persistEnabled && !submitted && (
         <button
           type="button"
           className="ui-btn border border-amber-200 bg-amber-50 text-amber-900 hover:bg-amber-100"
@@ -98,15 +105,17 @@ export function WorksheetActionBar({
           {savingDraft ? "저장 중..." : "임시 저장"}
         </button>
       )}
-      <button type="button" className="ui-btn-primary min-w-[7rem]" onClick={onSubmit} disabled={busy || submitted}>
-        {submitting
-          ? aiAvailable
-            ? "AI 피드백 생성 중..."
-            : "제출 중..."
-          : hasSubmissionId
-            ? "제출하기"
-            : "제출하기"}
-      </button>
+      {persistEnabled && (
+        <button type="button" className="ui-btn-primary min-w-[7rem]" onClick={onSubmit} disabled={busy || submitted}>
+          {submitting
+            ? aiAvailable
+              ? "AI 피드백 생성 중..."
+              : "제출 중..."
+            : hasSubmissionId
+              ? "제출하기"
+              : "제출하기"}
+        </button>
+      )}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { isFirebaseConfigured } from "@/lib/firebase";
 import { useAuth } from "@/components/AuthProvider";
+import { isGuestBrowsablePath, isLoggedInStudent, isTeacherRoute } from "@/lib/auth/access";
 
 const PUBLIC_PATHS = ["/login"];
 
@@ -29,13 +30,6 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    const isPublic = isPublicPath(pathname);
-
-    if (!user && !isPublic) {
-      router.replace("/login");
-      return;
-    }
-
     if (user && role === "teacher-pending" && pathname !== "/teacher" && pathname !== "/login") {
       router.replace("/teacher");
       return;
@@ -47,25 +41,28 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (pathname === "/my" && role !== "student") {
+    if (pathname === "/my" && !isLoggedInStudent(user, role)) {
       router.replace(role === "teacher" ? "/teacher" : "/login");
+      return;
     }
 
-    if (pathname === "/inquiry-report" && role !== "student") {
-      router.replace(role === "teacher" ? "/teacher" : "/login");
+    if (pathname === "/workspace" && (role === "teacher" || role === "teacher-pending")) {
+      router.replace("/teacher");
+      return;
     }
 
-    if (pathname === "/workspace" && role !== "student") {
-      router.replace(role === "teacher" ? "/teacher" : "/login");
-    }
-
-    if (pathname.startsWith("/teacher") && role === "student") {
+    if (isTeacherRoute(pathname) && role === "student") {
       router.replace("/");
       return;
     }
 
     if (pathname.startsWith("/teacher/") && role !== "teacher") {
       router.replace(role === "student" ? "/" : "/teacher");
+      return;
+    }
+
+    if (isTeacherRoute(pathname) && !user) {
+      router.replace("/login");
       return;
     }
   }, [user, role, loading, pathname, router, firebaseReady]);
@@ -82,7 +79,15 @@ export function AuthGate({ children }: { children: ReactNode }) {
     return pathname === "/login" ? children : null;
   }
 
-  if (!user && !isPublicPath(pathname)) {
+  if (!user && pathname === "/my") {
+    return null;
+  }
+
+  if (!user && isTeacherRoute(pathname)) {
+    return null;
+  }
+
+  if (!user && !isPublicPath(pathname) && !isGuestBrowsablePath(pathname)) {
     return null;
   }
 

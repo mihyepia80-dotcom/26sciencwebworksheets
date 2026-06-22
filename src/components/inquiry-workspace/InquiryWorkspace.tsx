@@ -31,6 +31,8 @@ import {
   validateConsolidatedInquiry,
   type ConsolidatedInquiryForm,
 } from "@/lib/inquiry-workspace/consolidated-form";
+import { isGuest, isLoggedInStudent } from "@/lib/auth/access";
+import { GuestNotice } from "@/components/common/GuestNotice";
 
 type PanelFocus = "split" | "worksheet" | "report";
 
@@ -46,6 +48,9 @@ export function InquiryWorkspace() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, role, studentProfile } = useAuth();
+  const isStudent = isLoggedInStudent(user, role);
+  const guestMode = isGuest(user, role);
+  const canPersist = isStudent;
 
   const templateId = searchParams.get("template") ?? "";
   const submissionIdParam = searchParams.get("submission");
@@ -73,7 +78,14 @@ export function InquiryWorkspace() {
   }, [user]);
 
   useEffect(() => {
-    if (role !== "student" || !user) {
+    if (guestMode) {
+      setInitLoading(false);
+      setError("");
+      if (templateId) setActiveTemplateId(templateId);
+      return;
+    }
+
+    if (!isStudent || !user) {
       setInitLoading(false);
       return;
     }
@@ -162,6 +174,8 @@ export function InquiryWorkspace() {
     };
   }, [
     forceNew,
+    guestMode,
+    isStudent,
     refreshWorksheets,
     reportParam,
     role,
@@ -221,7 +235,10 @@ export function InquiryWorkspace() {
   };
 
   const handleSaveReport = async () => {
-    if (!user || !reportId) return;
+    if (!canPersist || !user || !reportId) {
+      setError("학생 로그인 후 탐구보고서를 저장할 수 있습니다.");
+      return;
+    }
     setReportSaving(true);
     setError("");
     try {
@@ -243,7 +260,10 @@ export function InquiryWorkspace() {
   };
 
   const handleSubmitReport = async () => {
-    if (!user || !reportId) return;
+    if (!canPersist || !user || !reportId) {
+      setError("학생 로그인 후 탐구보고서를 제출할 수 있습니다.");
+      return;
+    }
     const errors = validateConsolidatedInquiry(form);
     if (errors.length) {
       setError(errors.slice(0, 4).join("\n"));
@@ -271,12 +291,12 @@ export function InquiryWorkspace() {
     }
   };
 
-  if (role !== "student") {
+  if (role === "teacher" || role === "teacher-pending") {
     return (
       <div className="mx-auto max-w-lg px-5 py-20 text-center">
-        <p className="text-base text-slate-600">학생 로그인 후 탐구 활동실을 이용할 수 있습니다.</p>
-        <Link href="/login" className="ui-link mt-4 inline-block">
-          로그인
+        <p className="text-base text-slate-600">교사 계정은 탐구 활동실 대신 교사 대시보드를 이용하세요.</p>
+        <Link href="/teacher" className="ui-link mt-4 inline-block">
+          교사 대시보드
         </Link>
       </div>
     );
@@ -328,6 +348,12 @@ export function InquiryWorkspace() {
         </div>
       </header>
 
+      {guestMode && (
+        <div className="border-b border-amber-100 bg-amber-50/60 px-5 py-3">
+          <GuestNotice compact />
+        </div>
+      )}
+
       <div
         className={`mx-auto grid w-full max-w-[1600px] flex-1 gap-0 ${
           panelFocus === "split" ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]" : "grid-cols-1"
@@ -339,7 +365,8 @@ export function InquiryWorkspace() {
               <h2 className="text-lg font-bold text-slate-800">사고 활동지</h2>
               <p className="mt-1 text-sm text-slate-500">작성 후 오른쪽 탐구보고서를 완성하세요.</p>
               <div className="mt-3 flex flex-wrap gap-2">
-                {worksheets.map((w) => {
+                {canPersist &&
+                  worksheets.map((w) => {
                   const tpl = getTemplateById(w.templateId);
                   const label = tpl ? formatTemplateTitle(tpl) : w.templateName;
                   const suffix = w.instanceNo && w.instanceNo > 1 ? ` #${w.instanceNo}` : "";
@@ -367,7 +394,7 @@ export function InquiryWorkspace() {
                     </button>
                   );
                 })}
-                {activeTemplateId && (
+                {canPersist && activeTemplateId && (
                   <button
                     type="button"
                     title="같은 유형 활동지 추가"
@@ -407,22 +434,30 @@ export function InquiryWorkspace() {
                 <p className="text-sm text-slate-500">9개 섹션으로 정리된 보고서</p>
               </div>
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={reportSaving || reportSubmitted}
-                  onClick={() => void handleSaveReport()}
-                  className="ui-btn-secondary ui-btn-sm"
-                >
-                  {reportSaving ? "저장 중…" : "저장"}
-                </button>
-                <button
-                  type="button"
-                  disabled={reportSubmitting || reportSubmitted}
-                  onClick={() => void handleSubmitReport()}
-                  className="ui-btn-accent ui-btn-sm"
-                >
-                  {reportSubmitted ? "제출됨" : reportSubmitting ? "제출 중…" : "제출"}
-                </button>
+                {canPersist ? (
+                  <>
+                    <button
+                      type="button"
+                      disabled={reportSaving || reportSubmitted}
+                      onClick={() => void handleSaveReport()}
+                      className="ui-btn-secondary ui-btn-sm"
+                    >
+                      {reportSaving ? "저장 중…" : "저장"}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={reportSubmitting || reportSubmitted}
+                      onClick={() => void handleSubmitReport()}
+                      className="ui-btn-accent ui-btn-sm"
+                    >
+                      {reportSubmitted ? "제출됨" : reportSubmitting ? "제출 중…" : "제출"}
+                    </button>
+                  </>
+                ) : (
+                  <Link href="/login" className="ui-btn-primary ui-btn-sm">
+                    학생 로그인
+                  </Link>
+                )}
               </div>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto p-5">

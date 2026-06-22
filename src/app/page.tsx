@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
-import { StudentBadgeBar } from "@/components/student/StudentBadgeBar";
+import { HomeGuestNotice, HomeStudentBadgeBar } from "@/components/home/HomeGuestSections";
 import { StudentTemplateGrid } from "@/components/student/StudentTemplateGrid";
 
 export default function HomePage() {
@@ -12,7 +12,8 @@ export default function HomePage() {
       />
 
       <main className="page-main">
-        <StudentBadgeBar />
+        <HomeGuestNotice />
+        <HomeStudentBadgeBar />
 
         <section className="mb-12">
           <Link
