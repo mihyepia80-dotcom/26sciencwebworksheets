@@ -30,6 +30,7 @@ export function isGuestBrowsablePath(pathname: string): boolean {
     pathname === "/inquiry-report" ||
     pathname.startsWith("/templates/") ||
     pathname.startsWith("/share/") ||
+    pathname.startsWith("/join/") ||
     pathname.startsWith("/inquiry-report/view/")
   );
 }

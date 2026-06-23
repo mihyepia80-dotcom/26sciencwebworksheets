@@ -268,5 +268,28 @@ service cloud.firestore {
         && request.resource.data.title is string;
       allow delete: if isTeacher() || (isStudent() && resource.data.studentUid == request.auth.uid);
     }
+
+    function isValidTeacherInvite(data) {
+      return data.keys().hasAll(['teacherUid', 'mode', 'templateId', 'templateName', 'label', 'active', 'updatedAt'])
+        && data.teacherUid is string
+        && data.mode in ['worksheet', 'report', 'workspace']
+        && data.templateId is string
+        && data.templateName is string
+        && data.label is string
+        && data.label.size() <= 200
+        && data.active is bool;
+    }
+
+    match /teacherInvites/{token} {
+      allow read: if true;
+      allow create: if isTeacher()
+        && request.resource.data.teacherUid == request.auth.uid
+        && isValidTeacherInvite(request.resource.data);
+      allow update: if isTeacher()
+        && resource.data.teacherUid == request.auth.uid
+        && request.resource.data.teacherUid == resource.data.teacherUid
+        && isValidTeacherInvite(request.resource.data);
+      allow delete: if isTeacher() && resource.data.teacherUid == request.auth.uid;
+    }
   }
 }

@@ -12,6 +12,7 @@ function isPublicPath(pathname: string): boolean {
   return (
     PUBLIC_PATHS.includes(pathname) ||
     pathname.startsWith("/share/") ||
+    pathname.startsWith("/join/") ||
     pathname.startsWith("/inquiry-report/view/")
   );
 }

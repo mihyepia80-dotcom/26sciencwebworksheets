@@ -36,6 +36,10 @@ export {
   type StudentRecord,
 } from "./student-auth";
 export { getFirebaseErrorMessage, getStudentFirebaseErrorMessage } from "./errors";
+export {
+  createTeacherInviteLink,
+  getTeacherInviteByToken,
+} from "./teacher-invites";
 export { createShareLink, getShareByToken, type ShareRecord } from "./shares";
 export {
   createInquiryReportDraft,

@@ -36,6 +36,11 @@ import { GuestNotice } from "@/components/common/GuestNotice";
 
 type PanelFocus = "split" | "worksheet" | "report";
 
+function parsePanelFocus(value: string | null): PanelFocus {
+  if (value === "worksheet" || value === "report" || value === "split") return value;
+  return "split";
+}
+
 const TEXTAREA = "ui-textarea";
 
 function panelToggle(active: boolean, activeClass: string) {
@@ -56,13 +61,14 @@ export function InquiryWorkspace() {
   const submissionIdParam = searchParams.get("submission");
   const forceNew = searchParams.get("new") === "1";
   const reportParam = searchParams.get("report");
+  const panelParam = searchParams.get("panel");
 
   const [reportId, setReportId] = useState<string | null>(reportParam);
   const [worksheets, setWorksheets] = useState<WorksheetSubmission[]>([]);
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(submissionIdParam);
   const [activeTemplateId, setActiveTemplateId] = useState(templateId);
   const [form, setForm] = useState<ConsolidatedInquiryForm>(EMPTY_CONSOLIDATED_INQUIRY);
-  const [panelFocus, setPanelFocus] = useState<PanelFocus>("split");
+  const [panelFocus, setPanelFocus] = useState<PanelFocus>(() => parsePanelFocus(panelParam));
   const [initLoading, setInitLoading] = useState(true);
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSubmitting, setReportSubmitting] = useState(false);
@@ -76,6 +82,10 @@ export function InquiryWorkspace() {
     setWorksheets(items);
     return items;
   }, [user]);
+
+  useEffect(() => {
+    setPanelFocus(parsePanelFocus(panelParam));
+  }, [panelParam]);
 
   useEffect(() => {
     if (guestMode) {
