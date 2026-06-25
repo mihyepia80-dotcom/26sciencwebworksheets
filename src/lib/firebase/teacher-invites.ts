@@ -1,15 +1,10 @@
 "use client";
 
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
-  limit,
-  query,
   serverTimestamp,
   setDoc,
-  where,
   type Timestamp,
 } from "firebase/firestore";
 import { getTemplateById } from "@/lib/templates/registry";
@@ -19,12 +14,6 @@ import {
   type TeacherInviteRecord,
 } from "@/lib/teacher-invites/types";
 import { getClientDb } from "./client";
-
-function generateInviteToken(): string {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 function mapInviteDoc(id: string, data: Record<string, unknown>): TeacherInviteRecord {
   const mode = data.mode;
@@ -42,6 +31,11 @@ function mapInviteDoc(id: string, data: Record<string, unknown>): TeacherInviteR
     createdAt: (data.createdAt as Timestamp | null) ?? null,
     updatedAt: (data.updatedAt as Timestamp | null) ?? null,
   };
+}
+
+function buildInviteDocId(teacherUid: string, mode: TeacherInviteMode, templateId: string): string {
+  const key = mode === "report" ? "report" : templateId || "none";
+  return `tinv_${teacherUid}_${mode}_${key}`.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 400);
 }
 
 function buildInvitePayload(
@@ -88,31 +82,20 @@ export async function createTeacherInviteLink(
   const tpl = templateId ? getTemplateById(templateId) : null;
   const templateName = tpl?.name ?? "";
   const db = getClientDb();
-
-  const constraints = [
-    where("teacherUid", "==", teacherUid),
-    where("mode", "==", mode),
-    where("active", "==", true),
-  ];
-  if (mode === "report") {
-    constraints.push(where("templateId", "==", ""));
-  } else {
-    constraints.push(where("templateId", "==", templateId!));
-  }
-
-  const existing = await getDocs(query(collection(db, "teacherInvites"), ...constraints, limit(1)));
+  const docId = buildInviteDocId(teacherUid, mode, templateId ?? "");
   const payload = buildInvitePayload(teacherUid, mode, templateId ?? "", templateName);
 
-  if (!existing.empty) {
-    const token = existing.docs[0].id;
-    await setDoc(doc(db, "teacherInvites", token), payload, { merge: true });
-    return token;
-  }
+  const ref = doc(db, "teacherInvites", docId);
+  const existing = await getDoc(ref);
 
-  const token = generateInviteToken();
-  await setDoc(doc(db, "teacherInvites", token), {
-    ...payload,
-    createdAt: serverTimestamp(),
-  });
-  return token;
+  await setDoc(
+    ref,
+    {
+      ...payload,
+      ...(existing.exists() ? {} : { createdAt: serverTimestamp() }),
+    },
+    { merge: true },
+  );
+
+  return docId;
 }

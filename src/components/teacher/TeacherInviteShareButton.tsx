@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createTeacherInviteLink } from "@/lib/firebase/teacher-invites";
+import { getFirebaseErrorMessage } from "@/lib/firebase";
 import { buildJoinUrl, TEACHER_INVITE_MODE_LABELS, type TeacherInviteMode } from "@/lib/teacher-invites/types";
 
 interface TeacherInviteShareButtonProps {
@@ -29,14 +30,19 @@ export function TeacherInviteShareButton({
   const handleShare = async () => {
     setLoading(true);
     setMessage("");
+    setShareUrl("");
     try {
       const token = await createTeacherInviteLink(teacherUid, mode, templateId);
       const url = buildJoinUrl(token, window.location.origin);
       setShareUrl(url);
-      await navigator.clipboard.writeText(url);
-      setMessage("공유 링크가 복사되었습니다.");
-    } catch {
-      setMessage("공유 링크를 만들지 못했습니다.");
+      try {
+        await navigator.clipboard.writeText(url);
+        setMessage("공유 링크가 복사되었습니다.");
+      } catch {
+        setMessage("링크가 생성되었습니다. 아래 주소를 복사해 주세요.");
+      }
+    } catch (err: unknown) {
+      setMessage(getFirebaseErrorMessage(err, "공유 링크를 만들지 못했습니다."));
     } finally {
       setLoading(false);
     }
@@ -47,7 +53,9 @@ export function TeacherInviteShareButton({
       <button type="button" disabled={isDisabled} onClick={() => void handleShare()} className={className}>
         {loading ? "링크 생성 중…" : `${TEACHER_INVITE_MODE_LABELS[mode]} 공유`}
       </button>
-      {message && <p className="text-xs text-emerald-700">{message}</p>}
+      {message && (
+        <p className={`text-xs ${shareUrl ? "text-emerald-700" : "text-red-600"}`}>{message}</p>
+      )}
       {shareUrl && <p className="break-all text-xs text-slate-500">{shareUrl}</p>}
     </div>
   );
