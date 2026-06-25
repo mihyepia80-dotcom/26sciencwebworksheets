@@ -162,7 +162,7 @@ export default function JoinInvitePage({ params }: { params: Promise<{ token: st
         <input
           type="password"
           className="ui-input"
-          placeholder="암호 (2600)"
+          placeholder="암호"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

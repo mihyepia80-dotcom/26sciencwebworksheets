@@ -4,7 +4,7 @@ export const STUDENT_EMAIL_DOMAIN = "sagodogu-student.app";
 export const TEACHER_EMAIL_DOMAIN = "sagodogu-teacher.app";
 export const TEACHER_ACCOUNT_EMAIL = `teacher@${TEACHER_EMAIL_DOMAIN}`;
 
-/** Firebase Auth는 6자 이상 필요 — 학생은 STUDENT_PASSWORD(2600)만 입력 */
+/** Firebase Auth는 6자 이상 필요 — 학생은 공통 암호만 입력 */
 export function getFirebaseStudentPassword(): string {
   return `${STUDENT_PASSWORD}@sagodogu`;
 }

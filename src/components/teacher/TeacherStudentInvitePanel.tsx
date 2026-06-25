@@ -17,7 +17,7 @@ export function TeacherStudentInvitePanel({ teacherUid }: TeacherStudentInvitePa
     <section className="ui-card mt-8 border-violet-100 bg-violet-50/30 p-6">
       <h2 className="text-lg font-bold text-violet-950">학생 작성 공유 링크</h2>
       <p className="mt-2 text-sm leading-relaxed text-violet-900/80">
-        링크를 복사해 학생에게 전달하세요. 학생은 링크에서 <strong>학년·반·번호·이름·암호(2600)</strong>를 입력한 뒤
+        링크를 복사해 학생에게 전달하세요. 학생은 링크에서 <strong>학년·반·번호·이름·암호</strong>를 입력한 뒤
         바로 작성할 수 있습니다.
       </p>
 
