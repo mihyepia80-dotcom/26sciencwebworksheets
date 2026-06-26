@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AiFeedbackCard } from "@/components/AiFeedbackCard";
 import { ShareButton } from "@/components/ShareButton";
 import { AppHeader } from "@/components/AppHeader";
+import { StudentGroupRoleCard } from "@/components/student/StudentGroupRoleCard";
 import { useAuth } from "@/components/AuthProvider";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
 import { listStudentSubmissions, type WorksheetSubmission } from "@/lib/firebase/submissions";
@@ -75,6 +76,8 @@ export default function MyWorksheetsPage() {
         <Link href="/" className="ui-link">
           ← 홈으로
         </Link>
+
+        <StudentGroupRoleCard />
 
         <section className="mt-10">
           <div className="mb-5 flex flex-wrap items-center justify-between gap-4">

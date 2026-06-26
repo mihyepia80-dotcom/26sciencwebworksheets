@@ -196,6 +196,22 @@
         { "fieldPath": "active", "order": "ASCENDING" },
         { "fieldPath": "templateId", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "groupRoleSchedules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "grade", "order": "ASCENDING" },
+        { "fieldPath": "classNo", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "groupActivityPraises",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rosterId", "order": "ASCENDING" },
+        { "fieldPath": "weekIndex", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

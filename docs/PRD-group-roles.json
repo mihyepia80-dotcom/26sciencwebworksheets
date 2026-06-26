@@ -1,0 +1,101 @@
+{
+  "version": "0.3",
+  "updatedAt": "2026-06-19",
+  "status": "implemented",
+  "featureId": "group-activity",
+  "title": "모둠 자리·역할 부여",
+  "routes": {
+    "teacher": "/teacher/groups",
+    "teacherLabel": "모둠 활동",
+    "studentHome": "/",
+    "studentMy": "/my"
+  },
+  "classManagement": {
+    "multiClass": true,
+    "registerAction": "반 추가 등록",
+    "workPerClass": true,
+    "description": "교사가 학년·반을 등록하고, 선택한 반 단위로 명단·편성·역할·칭찬을 관리한다."
+  },
+  "rosterImport": {
+    "formats": ["xls", "csv"],
+    "templateDownload": true,
+    "columns": [
+      { "key": "grade", "header": "학년", "required": true, "example": "5" },
+      { "key": "classNo", "header": "반", "required": true, "example": "2" },
+      { "key": "studentNo", "header": "번호", "required": true, "example": "1" },
+      { "key": "studentName", "header": "이름", "required": true, "example": "김민수" },
+      { "key": "gender", "header": "성별", "required": true, "values": ["남", "여"], "example": "남" },
+      {
+        "key": "achievementLevel",
+        "header": "성적분포",
+        "required": false,
+        "values": ["상", "중", "하", "1", "2", "3"],
+        "default": "중",
+        "note": "100점 점수 없음 — 상(1)·중(2)·하(3)만 사용"
+      }
+    ],
+    "uploadValidation": "업로드 행의 학년·반은 현재 선택된 반과 일치해야 한다.",
+    "autoSave": true
+  },
+  "rosterTable": {
+    "stickyColumns": ["studentNo", "studentName"],
+    "maxBodyHeight": "24rem",
+    "scrollBothAxes": true
+  },
+  "achievementLevels": [
+    { "code": 1, "label": "상", "tier": "high" },
+    { "code": 2, "label": "중", "tier": "mid", "default": true },
+    { "code": 3, "label": "하", "tier": "low" }
+  ],
+  "roles": [
+    { "code": 1, "id": "leader", "label": "이끄미", "description": "사회자, 발표" },
+    { "code": 2, "id": "supplier", "label": "나누미", "description": "실험 준비물 준비, 배부" },
+    { "code": 3, "id": "recorder", "label": "지키미(기록이)", "description": "시간, 안전, 기록" },
+    { "code": 4, "id": "organizer", "label": "깔끄미", "description": "모둠 테이블 정리, 태블릿 정리" }
+  ],
+  "groupAssignment": {
+    "groupCount": 6,
+    "membersPerGroup": { "min": 3, "max": 4 },
+    "genderPerGroup": { "maleMin": 1, "maleMax": 2, "femaleMin": 1, "femaleMax": 2 },
+    "mixAchievementLevels": true
+  },
+  "roleSchedule": {
+    "anchorDate": "2026-06-29",
+    "weekStartDay": "monday",
+    "rotationWeeks": 1,
+    "threeMemberGroup": {
+      "primarySecondary": true,
+      "duplicateRoleCount": 1
+    }
+  },
+  "praise": {
+    "path": "/teacher/groups",
+    "separateFromBadges": true,
+    "badgesPath": "/teacher/badges",
+    "unit": "week"
+  },
+  "firestore": {
+    "collections": [
+      "classRosters",
+      "groupRosterStudents",
+      "groupSeparations",
+      "groupAssignments",
+      "groupRoleSchedules",
+      "groupActivityPraises"
+    ],
+    "deployCommand": "npm run deploy:firestore"
+  },
+  "goals": [
+    { "id": "GR1", "title": "반별 명단 디지털화", "import": "엑셀 템플릿 다운·업로드" },
+    { "id": "GR2", "title": "성적 분포 관리", "levels": [1, 2, 3] },
+    { "id": "GR3", "title": "6모둠 자동 편성" },
+    { "id": "GR6", "title": "주간 역할 순환", "anchorDate": "2026-06-29" },
+    { "id": "GR7", "title": "학생 모둠·역할 조회" },
+    { "id": "GR8", "title": "모둠 활동 칭찬(배지와 분리)" }
+  ],
+  "phase2": [
+    "월별 재배치(동료 3회 초과 방지)",
+    "역할 명칭 편집",
+    "수동 모둠·역할 조정"
+  ]
+}

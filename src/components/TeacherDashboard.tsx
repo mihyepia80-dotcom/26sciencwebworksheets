@@ -150,6 +150,12 @@ export function TeacherDashboard() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
+            href="/teacher/groups"
+            className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-900 hover:bg-violet-100"
+          >
+            모둠 활동
+          </Link>
+          <Link
             href="/teacher/badges"
             className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
           >
