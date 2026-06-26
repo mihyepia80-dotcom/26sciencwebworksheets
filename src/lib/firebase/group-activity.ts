@@ -12,7 +12,7 @@ import {
   where,
   type Timestamp,
 } from "firebase/firestore";
-import { buildRosterId, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
+import { buildClassScheduleId, buildRosterId, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
 import { assignGroups } from "@/lib/group-activity/assign-groups";
 import { assignRolesForAllGroups } from "@/lib/group-activity/assign-roles";
 import type {
@@ -116,7 +116,7 @@ export async function bulkUpsertRosterStudents(
   const rosterId = buildRosterId(teacherUid, grade, classNo);
   await ensureRosterMeta(teacherUid, grade, classNo);
 
-  const existing = await listRosterStudents(rosterId);
+  const existing = await listRosterStudents(teacherUid, rosterId);
   const byNo = new Map(existing.map((s) => [s.studentNo, s]));
 
   for (const row of rows) {
@@ -133,9 +133,13 @@ export async function bulkUpsertRosterStudents(
   return rows.length;
 }
 
-export async function listRosterStudents(rosterId: string): Promise<RosterStudent[]> {
+export async function listRosterStudents(teacherUid: string, rosterId: string): Promise<RosterStudent[]> {
   const snap = await getDocs(
-    query(collection(getClientDb(), "groupRosterStudents"), where("rosterId", "==", rosterId)),
+    query(
+      collection(getClientDb(), "groupRosterStudents"),
+      where("teacherUid", "==", teacherUid),
+      where("rosterId", "==", rosterId),
+    ),
   );
   return snap.docs
     .map((d) => mapStudent(d.id, d.data()))
@@ -178,9 +182,13 @@ export async function updateAchievementLevel(studentId: string, achievementLevel
   );
 }
 
-export async function listSeparationRules(rosterId: string): Promise<SeparationRule[]> {
+export async function listSeparationRules(teacherUid: string, rosterId: string): Promise<SeparationRule[]> {
   const snap = await getDocs(
-    query(collection(getClientDb(), "groupSeparations"), where("rosterId", "==", rosterId)),
+    query(
+      collection(getClientDb(), "groupSeparations"),
+      where("teacherUid", "==", teacherUid),
+      where("rosterId", "==", rosterId),
+    ),
   );
   return snap.docs.map((d) => {
     const data = d.data();
@@ -299,9 +307,10 @@ export async function saveRoleSchedule(
     updatedAt: serverTimestamp(),
   };
 
-  await setDoc(doc(getClientDb(), "groupRoleSchedules", rosterId), payload);
+  const scheduleId = buildClassScheduleId(grade, classNo);
+  await setDoc(doc(getClientDb(), "groupRoleSchedules", scheduleId), payload);
   return {
-    id: rosterId,
+    id: scheduleId,
     rosterId,
     teacherUid,
     grade,
@@ -315,18 +324,11 @@ export async function saveRoleSchedule(
 }
 
 export async function getRoleScheduleForClass(grade: string, classNo: string): Promise<RoleWeekSchedule | null> {
-  const snap = await getDocs(
-    query(
-      collection(getClientDb(), "groupRoleSchedules"),
-      where("grade", "==", grade),
-      where("classNo", "==", classNo),
-    ),
-  );
-  if (snap.empty) return null;
-  const d = snap.docs[0];
-  const data = d.data();
+  const snap = await getDoc(doc(getClientDb(), "groupRoleSchedules", buildClassScheduleId(grade, classNo)));
+  if (!snap.exists()) return null;
+  const data = snap.data();
   return {
-    id: d.id,
+    id: snap.id,
     rosterId: String(data.rosterId ?? ""),
     teacherUid: String(data.teacherUid ?? ""),
     grade: String(data.grade ?? ""),
@@ -339,10 +341,15 @@ export async function getRoleScheduleForClass(grade: string, classNo: string): P
   };
 }
 
-export async function listGroupActivityPraises(rosterId: string, weekIndex: number): Promise<GroupActivityPraise[]> {
+export async function listGroupActivityPraises(
+  teacherUid: string,
+  rosterId: string,
+  weekIndex: number,
+): Promise<GroupActivityPraise[]> {
   const snap = await getDocs(
     query(
       collection(getClientDb(), "groupActivityPraises"),
+      where("teacherUid", "==", teacherUid),
       where("rosterId", "==", rosterId),
       where("weekIndex", "==", weekIndex),
     ),

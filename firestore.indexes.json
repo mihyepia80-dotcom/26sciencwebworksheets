@@ -198,17 +198,26 @@
       ]
     },
     {
-      "collectionGroup": "groupRoleSchedules",
+      "collectionGroup": "groupRosterStudents",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "grade", "order": "ASCENDING" },
-        { "fieldPath": "classNo", "order": "ASCENDING" }
+        { "fieldPath": "teacherUid", "order": "ASCENDING" },
+        { "fieldPath": "rosterId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "groupSeparations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "teacherUid", "order": "ASCENDING" },
+        { "fieldPath": "rosterId", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "groupActivityPraises",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "teacherUid", "order": "ASCENDING" },
         { "fieldPath": "rosterId", "order": "ASCENDING" },
         { "fieldPath": "weekIndex", "order": "ASCENDING" }
       ]

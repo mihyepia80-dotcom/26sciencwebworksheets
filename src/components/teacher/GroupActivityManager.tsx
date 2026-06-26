@@ -120,10 +120,10 @@ export function GroupActivityManager() {
       setRosterId(meta.rosterId);
 
       const [roster, rules, assignment, praiseList, schedule] = await Promise.all([
-        listRosterStudents(meta.rosterId),
-        listSeparationRules(meta.rosterId),
+        listRosterStudents(user.uid, meta.rosterId),
+        listSeparationRules(user.uid, meta.rosterId),
         getMonthlyAssignment(meta.rosterId, year, month),
-        listGroupActivityPraises(meta.rosterId, week.weekIndex),
+        listGroupActivityPraises(user.uid, meta.rosterId, week.weekIndex),
         getRoleScheduleForClass(grade, classNo),
       ]);
 
@@ -296,7 +296,7 @@ export function GroupActivityManager() {
       );
       setPraiseNote("");
       setMessage("모둠 활동 칭찬을 부여했습니다.");
-      const list = await listGroupActivityPraises(rosterId, week.weekIndex);
+      const list = await listGroupActivityPraises(user.uid, rosterId, week.weekIndex);
       setPraises(list);
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "칭찬 실패"));

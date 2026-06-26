@@ -310,14 +310,14 @@ service cloud.firestore {
     }
 
     match /groupRosterStudents/{studentId} {
-      allow read: if isTeacherOwner(resource.data);
+      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data));
       allow create: if isTeacherOwner(request.resource.data);
       allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
       allow delete: if isTeacherOwner(resource.data);
     }
 
     match /groupSeparations/{ruleId} {
-      allow read: if isTeacherOwner(resource.data);
+      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data));
       allow create: if isTeacherOwner(request.resource.data);
       allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
       allow delete: if isTeacherOwner(resource.data);
@@ -331,15 +331,16 @@ service cloud.firestore {
     }
 
     match /groupRoleSchedules/{scheduleId} {
-      allow read: if isTeacherOwner(resource.data) || isSameClassDoc(resource.data);
+      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data))
+        || (resource.exists && isSameClassDoc(resource.data));
       allow create: if isTeacherOwner(request.resource.data);
       allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
       allow delete: if isTeacherOwner(resource.data);
     }
 
     match /groupActivityPraises/{praiseId} {
-      allow read: if isTeacherOwner(resource.data)
-        || (isSameClassDoc(resource.data)
+      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data))
+        || (resource.exists && isSameClassDoc(resource.data)
           && studentData(request.auth.uid).studentNo == resource.data.studentNo);
       allow create: if isTeacherOwner(request.resource.data);
       allow delete: if isTeacherOwner(resource.data);
