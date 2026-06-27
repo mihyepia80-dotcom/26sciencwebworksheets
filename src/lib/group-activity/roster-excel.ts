@@ -1,3 +1,4 @@
+import { normalizeClassPart } from "./constants";
 import {
   GROUP_ACTIVITY_PRD,
   ROSTER_EXCEL_HEADERS,
@@ -122,9 +123,14 @@ export function parseSpreadsheetRows(
     const studentName = pickColumn(colMap, row, ["이름", "studentName", "name"], 3);
     if (!studentNo || !studentName) continue;
 
-    if (grade !== expectedGrade || classNo !== expectedClassNo) {
+    const normalizedGrade = normalizeClassPart(grade);
+    const normalizedClassNo = normalizeClassPart(classNo);
+    const expectedGradeNorm = normalizeClassPart(expectedGrade);
+    const expectedClassNoNorm = normalizeClassPart(expectedClassNo);
+
+    if (normalizedGrade !== expectedGradeNorm || normalizedClassNo !== expectedClassNoNorm) {
       throw new Error(
-        `${studentNo}번 ${studentName}: 학년·반(${grade}학년 ${classNo}반)이 선택된 반(${expectedGrade}학년 ${expectedClassNo}반)과 다릅니다.`,
+        `${studentNo}번 ${studentName}: 학년·반(${grade} / ${classNo})이 선택된 반(${expectedGrade}학년 ${expectedClassNo}반)과 다릅니다.`,
       );
     }
 
@@ -132,8 +138,8 @@ export function parseSpreadsheetRows(
     const achievementRaw = pickColumn(colMap, row, ["성적분포", "achievementLevel", "성적"], 5);
 
     result.push({
-      grade,
-      classNo,
+      grade: normalizedGrade,
+      classNo: normalizedClassNo,
       studentNo,
       studentName,
       gender: parseGender(genderRaw) ?? "male",

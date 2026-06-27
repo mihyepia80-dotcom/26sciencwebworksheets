@@ -25,8 +25,13 @@ export const ACHIEVEMENT_LABELS: Record<1 | 2 | 3, string> = {
 /** 1주차 시작: 2026년 6월 29일(월) */
 export const ROLE_WEEK_ANCHOR = "2026-06-29";
 
+/** 학년·반 입력값 정규화 (5학년, 2반 → 5, 2) */
+export function normalizeClassPart(value: string): string {
+  return value.trim().replace(/학년|반/g, "").trim();
+}
+
 export function buildRosterId(teacherUid: string, grade: string, classNo: string): string {
-  return `${teacherUid}__${grade}__${classNo}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `${teacherUid}__${normalizeClassPart(grade)}__${normalizeClassPart(classNo)}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 export function buildRosterStudentId(rosterId: string, studentNo: string): string {
@@ -35,5 +40,5 @@ export function buildRosterStudentId(rosterId: string, studentNo: string): strin
 
 /** 학생 조회용 — 학년·반 키 (Firestore 규칙 getDoc 허용) */
 export function buildClassScheduleId(grade: string, classNo: string): string {
-  return `${grade}__${classNo}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `${normalizeClassPart(grade)}__${normalizeClassPart(classNo)}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }

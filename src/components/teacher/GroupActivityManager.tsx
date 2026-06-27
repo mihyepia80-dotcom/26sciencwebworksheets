@@ -116,26 +116,33 @@ export function GroupActivityManager() {
     }
     setLoading(true);
     setError("");
-    try {
-      const rosterId = buildRosterId(user.uid, grade, classNo);
-      setRosterId(rosterId);
+    const rid = buildRosterId(user.uid, grade, classNo);
+    setRosterId(rid);
 
-      const [roster, rules, assignment, praiseList, schedule] = await Promise.all([
-        listRosterStudents(user.uid, rosterId),
-        listSeparationRules(user.uid, rosterId),
-        getMonthlyAssignment(user.uid, rosterId, year, month),
-        listGroupActivityPraises(user.uid, rosterId, week.weekIndex),
+    try {
+      const roster = await listRosterStudents(user.uid, rid, grade, classNo);
+      setStudents(roster);
+    } catch (e: unknown) {
+      setError(getFirebaseErrorMessage(e, "명단 불러오기 실패"));
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [rules, assignment, praiseList, schedule] = await Promise.all([
+        listSeparationRules(user.uid, rid),
+        getMonthlyAssignment(user.uid, rid, year, month),
+        listGroupActivityPraises(user.uid, rid, week.weekIndex),
         getRoleScheduleForClass(grade, classNo),
       ]);
 
-      setStudents(roster);
       setSeparations(rules);
       setGroups(assignment?.groups ?? []);
       setAssignmentConfirmed(!!assignment?.confirmedAt);
       setPraises(praiseList);
       setRoleSchedule(schedule);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "불러오기 실패"));
+      setError(getFirebaseErrorMessage(e, "편성·역할 정보 불러오기 실패"));
     } finally {
       setLoading(false);
     }
@@ -205,8 +212,11 @@ export function GroupActivityManager() {
       const rows = await parseRosterFile(file, grade, classNo);
       if (rows.length === 0) throw new Error("업로드할 학생 데이터가 없습니다.");
       const count = await bulkUpsertRosterStudents(user.uid, grade, classNo, rows, user);
+      const rid = buildRosterId(user.uid, grade, classNo);
+      const roster = await listRosterStudents(user.uid, rid, grade, classNo);
+      setStudents(roster);
       setMessage(`${count}명 명단을 반영했습니다.`);
-      await loadClassData();
+      void loadClassData();
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "파일 업로드 실패"));
     } finally {
@@ -215,7 +225,18 @@ export function GroupActivityManager() {
   };
 
   const handleAddStudent = async () => {
-    if (!user || !newStudentNo.trim() || !newStudentName.trim()) return;
+    if (!user || role !== "teacher") {
+      setError("교사 로그인이 필요합니다.");
+      return;
+    }
+    if (!grade || !classNo) {
+      setError("반을 먼저 선택하거나 등록해 주세요.");
+      return;
+    }
+    if (!newStudentNo.trim() || !newStudentName.trim()) {
+      setError("번호와 이름을 입력해 주세요.");
+      return;
+    }
     setBusy("add");
     setError("");
     try {
@@ -226,10 +247,13 @@ export function GroupActivityManager() {
         achievementLevel: 2,
         active: true,
       }, user);
+      const rid = buildRosterId(user.uid, grade, classNo);
+      const roster = await listRosterStudents(user.uid, rid, grade, classNo);
+      setStudents(roster);
       setNewStudentNo("");
       setNewStudentName("");
       setMessage("학생을 추가했습니다.");
-      await loadClassData();
+      void loadClassData();
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "추가 실패"));
     } finally {

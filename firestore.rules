@@ -343,7 +343,10 @@ service cloud.firestore {
     }
 
     function isTeacherOwner(data) {
-      return isTeacher() && data.teacherUid == request.auth.uid;
+      return request.auth != null
+        && data.teacherUid is string
+        && data.teacherUid == request.auth.uid
+        && isTeacherAt(request.auth.uid);
     }
 
     function isSameClassDoc(data) {
@@ -353,7 +356,8 @@ service cloud.firestore {
     }
 
     match /groupRoleSchedules/{scheduleId} {
-      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data))
+      allow read: if isTeacherAt(request.auth.uid) && !resource.exists
+        || (resource.exists && isTeacherOwner(resource.data))
         || (resource.exists && isSameClassDoc(resource.data));
       allow create: if isTeacherOwner(request.resource.data);
       allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);

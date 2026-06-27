@@ -12,7 +12,7 @@ import {
   type DocumentReference,
   type Timestamp,
 } from "firebase/firestore";
-import { buildClassScheduleId, buildRosterId, buildRosterStudentId, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
+import { buildClassScheduleId, buildRosterId, buildRosterStudentId, normalizeClassPart, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
 import { assignGroups } from "@/lib/group-activity/assign-groups";
 import { assignRolesForAllGroups } from "@/lib/group-activity/assign-roles";
 import type {
@@ -69,19 +69,21 @@ export async function ensureRosterMeta(
   if (teacherUser) {
     await prepareTeacherFirestoreAccess(teacherUser);
   }
-  const rosterId = buildRosterId(teacherUid, grade, classNo);
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
+  const rosterId = buildRosterId(teacherUid, normalizedGrade, normalizedClassNo);
   await setDoc(
     teacherDocument(teacherUid, "classRosters", rosterId),
     {
       teacherUid,
-      grade,
-      classNo,
+      grade: normalizedGrade,
+      classNo: normalizedClassNo,
       anchorDate: ROLE_WEEK_ANCHOR,
       updatedAt: serverTimestamp(),
     },
     { merge: true },
   );
-  return { rosterId, teacherUid, grade, classNo, anchorDate: ROLE_WEEK_ANCHOR };
+  return { rosterId, teacherUid, grade: normalizedGrade, classNo: normalizedClassNo, anchorDate: ROLE_WEEK_ANCHOR };
 }
 
 export async function listTeacherClasses(teacherUid: string): Promise<ClassRosterMeta[]> {
@@ -92,8 +94,8 @@ export async function listTeacherClasses(teacherUid: string): Promise<ClassRoste
       return {
         rosterId: d.id,
         teacherUid: String(data.teacherUid ?? teacherUid),
-        grade: String(data.grade ?? ""),
-        classNo: String(data.classNo ?? ""),
+        grade: normalizeClassPart(String(data.grade ?? "")),
+        classNo: normalizeClassPart(String(data.classNo ?? "")),
         anchorDate: String(data.anchorDate ?? ROLE_WEEK_ANCHOR),
       };
     })
@@ -126,16 +128,18 @@ export async function bulkUpsertRosterStudents(
   }[],
   teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
 ): Promise<number> {
-  const rosterId = buildRosterId(teacherUid, grade, classNo);
-  await ensureRosterMeta(teacherUid, grade, classNo, teacherUser);
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
+  const rosterId = buildRosterId(teacherUid, normalizedGrade, normalizedClassNo);
+  await ensureRosterMeta(teacherUid, normalizedGrade, normalizedClassNo, teacherUser);
 
   for (const row of rows) {
     const id = buildRosterStudentId(rosterId, row.studentNo);
     await setDoc(teacherDocument(teacherUid, "groupRosterStudents", id), {
       rosterId,
       teacherUid,
-      grade,
-      classNo,
+      grade: normalizedGrade,
+      classNo: normalizedClassNo,
       studentNo: row.studentNo,
       studentName: row.studentName,
       gender: row.gender,
@@ -147,11 +151,22 @@ export async function bulkUpsertRosterStudents(
   return rows.length;
 }
 
-export async function listRosterStudents(teacherUid: string, rosterId: string): Promise<RosterStudent[]> {
+export async function listRosterStudents(
+  teacherUid: string,
+  rosterId: string,
+  grade?: string,
+  classNo?: string,
+): Promise<RosterStudent[]> {
+  const normalizedGrade = grade ? normalizeClassPart(grade) : "";
+  const normalizedClassNo = classNo ? normalizeClassPart(classNo) : "";
   const snap = await getDocs(teacherCollection(teacherUid, "groupRosterStudents"));
   return snap.docs
     .map((d) => mapStudent(d.id, d.data()))
-    .filter((s) => s.rosterId === rosterId)
+    .filter((s) => {
+      if (s.rosterId === rosterId) return true;
+      if (!normalizedGrade || !normalizedClassNo) return false;
+      return normalizeClassPart(s.grade) === normalizedGrade && normalizeClassPart(s.classNo) === normalizedClassNo;
+    })
     .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
 }
 
@@ -162,14 +177,16 @@ export async function upsertRosterStudent(
   student: Omit<RosterStudent, "id" | "rosterId" | "teacherUid" | "grade" | "classNo"> & { id?: string },
   teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
 ): Promise<string> {
-  const rosterId = buildRosterId(teacherUid, grade, classNo);
-  await ensureRosterMeta(teacherUid, grade, classNo, teacherUser);
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
+  const rosterId = buildRosterId(teacherUid, normalizedGrade, normalizedClassNo);
+  await ensureRosterMeta(teacherUid, normalizedGrade, normalizedClassNo, teacherUser);
   const id = student.id ?? buildRosterStudentId(rosterId, student.studentNo);
   await setDoc(teacherDocument(teacherUid, "groupRosterStudents", id), {
     rosterId,
     teacherUid,
-    grade,
-    classNo,
+    grade: normalizedGrade,
+    classNo: normalizedClassNo,
     studentNo: student.studentNo,
     studentName: student.studentName,
     gender: student.gender,
