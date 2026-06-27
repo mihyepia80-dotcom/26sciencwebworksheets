@@ -22,6 +22,8 @@ export interface SeparationRule {
   teacherUid: string;
   typeLabel: string;
   studentIds: string[];
+  /** 명단 ID 변경 시에도 표시·편성에 사용 */
+  studentNos?: string[];
 }
 
 export interface GroupSlot {

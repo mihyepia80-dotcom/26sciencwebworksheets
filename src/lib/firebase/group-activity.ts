@@ -307,9 +307,63 @@ export async function listSeparationRules(teacherUid: string, rosterId: string):
         teacherUid: String(data.teacherUid ?? teacherUid),
         typeLabel: String(data.typeLabel ?? ""),
         studentIds: Array.isArray(data.studentIds) ? data.studentIds.map(String) : [],
+        studentNos: Array.isArray(data.studentNos) ? data.studentNos.map(String) : [],
       };
     })
     .filter((rule) => rule.rosterId === rosterId);
+}
+
+/** 분리 조건에 연결된 현재 명단 학생 ID */
+export function resolveSeparationStudentIds(
+  rule: Pick<SeparationRule, "studentIds" | "studentNos">,
+  students: RosterStudent[],
+): string[] {
+  const byId = new Set(students.map((s) => s.id));
+  const byNo = new Map(students.map((s) => [normalizeStudentNo(s.studentNo), s.id]));
+
+  const fromNos = (rule.studentNos ?? [])
+    .map((no) => byNo.get(normalizeStudentNo(no)))
+    .filter((id): id is string => Boolean(id));
+  const fromIds = rule.studentIds.filter((id) => byId.has(id));
+
+  return [...new Set([...fromNos, ...fromIds])];
+}
+
+export function resolveSeparationStudentEntries(
+  rule: SeparationRule,
+  students: RosterStudent[],
+): RosterStudent[] {
+  const byId = new Map(students.map((s) => [s.id, s]));
+  return resolveSeparationStudentIds(rule, students)
+    .map((id) => byId.get(id))
+    .filter((s): s is RosterStudent => Boolean(s));
+}
+
+export function buildSeparationStudentStatus(
+  students: RosterStudent[],
+  separations: SeparationRule[],
+): { student: RosterStudent; labels: string[] }[] {
+  const labelMap = new Map<string, Set<string>>();
+  for (const rule of separations) {
+    for (const student of resolveSeparationStudentEntries(rule, students)) {
+      if (!labelMap.has(student.id)) labelMap.set(student.id, new Set());
+      labelMap.get(student.id)!.add(rule.typeLabel);
+    }
+  }
+  return students
+    .filter((s) => labelMap.has(s.id))
+    .map((s) => ({ student: s, labels: [...labelMap.get(s.id)!].sort((a, b) => a.localeCompare(b, "ko")) }))
+    .sort((a, b) => a.student.studentNo.localeCompare(b.student.studentNo, "ko", { numeric: true }));
+}
+
+export function normalizeSeparationRulesForAssign(
+  separations: SeparationRule[],
+  students: RosterStudent[],
+): SeparationRule[] {
+  return separations.map((rule) => ({
+    ...rule,
+    studentIds: resolveSeparationStudentIds(rule, students),
+  }));
 }
 
 export async function saveSeparationRule(
@@ -317,6 +371,7 @@ export async function saveSeparationRule(
   rosterId: string,
   typeLabel: string,
   studentIds: string[],
+  studentNos: string[] = [],
   id?: string,
 ): Promise<string> {
   const docId = id ?? doc(teacherCollection(teacherUid, "groupSeparations")).id;
@@ -325,6 +380,7 @@ export async function saveSeparationRule(
     teacherUid,
     typeLabel,
     studentIds,
+    studentNos: studentNos.map(normalizeStudentNo),
     updatedAt: serverTimestamp(),
   });
   return docId;

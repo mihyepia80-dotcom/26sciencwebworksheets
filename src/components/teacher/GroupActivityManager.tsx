@@ -18,6 +18,7 @@ import { formatWeekRange, getWeekInfo } from "@/lib/group-activity/week-utils";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
 import {
   addGroupActivityPraise,
+  buildSeparationStudentStatus,
   bulkUpsertRosterStudents,
   computeGroupAssignment,
   deleteRosterStudent,
@@ -28,12 +29,14 @@ import {
   listRosterStudents,
   listSeparationRules,
   listTeacherClasses,
+  normalizeSeparationRulesForAssign,
   registerTeacherClass,
   saveMonthlyAssignment,
   saveRoleSchedule,
   saveSeparationRule,
   updateAchievementLevel,
   upsertRosterStudent,
+  resolveSeparationStudentEntries,
 } from "@/lib/firebase/group-activity";
 import type { ClassRosterMeta } from "@/lib/group-activity/types";
 
@@ -96,6 +99,16 @@ export function GroupActivityManager() {
   const classNo = selectedMeta?.classNo ?? "";
 
   const studentsById = useMemo(() => new Map(students.map((s) => [s.id, s])), [students]);
+
+  const separationStudentStatus = useMemo(
+    () => buildSeparationStudentStatus(students, separations),
+    [students, separations],
+  );
+
+  const separationRulesForAssign = useMemo(
+    () => normalizeSeparationRulesForAssign(separations, students),
+    [separations, students],
+  );
 
   const loadTeacherClasses = useCallback(async () => {
     if (!user || role !== "teacher") return;
@@ -278,7 +291,7 @@ export function GroupActivityManager() {
   const handleAutoAssign = (seed?: number) => {
     setError("");
     try {
-      const result = computeGroupAssignment(students, separations, seed);
+      const result = computeGroupAssignment(students, separationRulesForAssign, seed);
       setGroups(result);
       setMessage("모둠을 자동 편성했습니다. 확인 후 「편성 확정」을 눌러 주세요.");
     } catch (e: unknown) {
@@ -315,10 +328,18 @@ export function GroupActivityManager() {
   };
 
   const handleSaveSeparation = async () => {
-    if (!user || !rosterId || sepStudentIds.length < 2) return;
+    if (!user || !rosterId) return;
+    if (sepStudentIds.length < 2) {
+      setError("분리 조건에는 학생을 2명 이상 선택해 주세요.");
+      return;
+    }
     setBusy("sep");
+    setError("");
     try {
-      await saveSeparationRule(user.uid, rosterId, sepLabel.trim() || "분리", sepStudentIds);
+      const studentNos = sepStudentIds
+        .map((id) => studentsById.get(id)?.studentNo)
+        .filter((no): no is string => Boolean(no));
+      await saveSeparationRule(user.uid, rosterId, sepLabel.trim() || "분리", sepStudentIds, studentNos);
       setSepStudentIds([]);
       await loadClassData();
       setMessage("분리 조건을 저장했습니다.");
@@ -563,6 +584,16 @@ export function GroupActivityManager() {
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">2. 분리 조건</h2>
             <p className="mt-1 text-xs text-slate-500">같은 모둠에 배치하지 않을 학생을 유형별로 지정합니다.</p>
+
+            <div className="mt-4 flex flex-wrap gap-3 text-sm">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
+                등록 조건 {separations.length}건
+              </span>
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-900">
+                등록 학생 {separationStudentStatus.length}명
+              </span>
+            </div>
+
             <div className="mt-4 flex flex-wrap items-end gap-2">
               <input className={`${INPUT} w-28`} value={sepLabel} onChange={(e) => setSepLabel(e.target.value)} placeholder="유형" />
               <select
@@ -580,16 +611,82 @@ export function GroupActivityManager() {
                 쌍 추가
               </button>
             </div>
-            <ul className="mt-4 space-y-2">
-              {separations.map((rule) => (
-                <li key={rule.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
-                  <span className="font-medium">{rule.typeLabel}:</span>
-                  <span>{rule.studentIds.map((id) => studentsById.get(id)?.studentName ?? id).join(" ↔ ")}</span>
-                  <button type="button" className="ml-auto text-red-600 hover:underline" onClick={() => user && void deleteSeparationRule(user.uid, rule.id).then(loadClassData)}>
-                    삭제
-                  </button>
+            <p className="mt-2 text-xs text-slate-500">Ctrl(⌘) + 클릭으로 여러 학생을 선택하세요.</p>
+
+            {separationStudentStatus.length > 0 && (
+              <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
+                <h3 className="text-sm font-bold text-amber-950">분리 조건 등록 학생 현황</h3>
+                <p className="mt-1 text-xs text-amber-900/80">아래 학생들은 지정한 유형끼리 같은 모둠에 배치되지 않습니다.</p>
+                <div className="mt-3">
+                  <RosterScrollTable>
+                  <RosterStickyHead
+                    extraHeaders={<th className="min-w-[10rem] px-3 py-2">분리 유형</th>}
+                  />
+                  <tbody>
+                    {separationStudentStatus.map(({ student, labels }) => (
+                      <RosterStickyRow
+                        key={student.id}
+                        studentNo={student.studentNo}
+                        studentName={student.studentName}
+                        cells={
+                          <td className="px-3 py-2">
+                            <div className="flex flex-wrap gap-1">
+                              {labels.map((label) => (
+                                <span
+                                  key={label}
+                                  className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-amber-900 ring-1 ring-amber-200"
+                                >
+                                  {label}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                        }
+                      />
+                    ))}
+                  </tbody>
+                  </RosterScrollTable>
+                </div>
+              </div>
+            )}
+
+            <ul className="mt-5 space-y-2">
+              {separations.length === 0 && (
+                <li className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-sm text-slate-400">
+                  등록된 분리 조건이 없습니다.
                 </li>
-              ))}
+              )}
+              {separations.map((rule) => {
+                const members = resolveSeparationStudentEntries(rule, students);
+                return (
+                  <li key={rule.id} className="rounded-lg bg-slate-50 px-3 py-3 text-sm">
+                    <div className="flex flex-wrap items-start gap-2">
+                      <span className="font-medium text-slate-800">{rule.typeLabel}</span>
+                      <span className="text-xs text-slate-500">({members.length}명)</span>
+                      <button
+                        type="button"
+                        className="ml-auto text-red-600 hover:underline"
+                        onClick={() => user && void deleteSeparationRule(user.uid, rule.id).then(loadClassData)}
+                      >
+                        삭제
+                      </button>
+                    </div>
+                    <ul className="mt-2 flex flex-wrap gap-2">
+                      {members.map((s) => (
+                        <li
+                          key={s.id}
+                          className="rounded-md bg-white px-2 py-1 text-xs text-slate-700 ring-1 ring-slate-200"
+                        >
+                          {s.studentNo}번 {s.studentName}
+                        </li>
+                      ))}
+                      {members.length === 0 && (
+                        <li className="text-xs text-red-600">명단과 연결되지 않은 조건입니다. 삭제 후 다시 등록해 주세요.</li>
+                      )}
+                    </ul>
+                  </li>
+                );
+              })}
             </ul>
           </section>
 
