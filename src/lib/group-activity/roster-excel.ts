@@ -1,4 +1,4 @@
-import { normalizeClassPart } from "./constants";
+import { normalizeClassPart, normalizeStudentNo } from "./constants";
 import {
   GROUP_ACTIVITY_PRD,
   ROSTER_EXCEL_HEADERS,
@@ -140,13 +140,18 @@ export function parseSpreadsheetRows(
     result.push({
       grade: normalizedGrade,
       classNo: normalizedClassNo,
-      studentNo,
+      studentNo: normalizeStudentNo(studentNo),
       studentName,
       gender: parseGender(genderRaw) ?? "male",
       achievementLevel: achievementCodeFromLabel(achievementRaw || "중"),
     });
   }
-  return result;
+
+  const byNo = new Map<string, RosterImportRow>();
+  for (const row of result) {
+    byNo.set(row.studentNo, row);
+  }
+  return Array.from(byNo.values());
 }
 
 function parseSpreadsheetXml(text: string, expectedGrade: string, expectedClassNo: string): RosterImportRow[] {

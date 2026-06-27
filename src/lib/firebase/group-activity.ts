@@ -12,7 +12,7 @@ import {
   type DocumentReference,
   type Timestamp,
 } from "firebase/firestore";
-import { buildClassScheduleId, buildRosterId, buildRosterStudentId, normalizeClassPart, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
+import { buildClassScheduleId, buildRosterId, buildRosterStudentId, normalizeClassPart, normalizeStudentNo, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
 import { assignGroups } from "@/lib/group-activity/assign-groups";
 import { assignRolesForAllGroups } from "@/lib/group-activity/assign-roles";
 import type {
@@ -40,6 +40,65 @@ function teacherCollection(teacherUid: string, name: string): CollectionReferenc
 
 function teacherDocument(teacherUid: string, name: string, id: string): DocumentReference {
   return doc(getClientDb(), "teachers", teacherUid, name, id);
+}
+
+function belongsToClass(
+  student: RosterStudent,
+  rosterId: string,
+  normalizedGrade: string,
+  normalizedClassNo: string,
+): boolean {
+  if (student.rosterId === rosterId) return true;
+  return (
+    normalizeClassPart(student.grade) === normalizedGrade
+    && normalizeClassPart(student.classNo) === normalizedClassNo
+  );
+}
+
+function dedupeRosterStudents(
+  students: RosterStudent[],
+  rosterId: string,
+): RosterStudent[] {
+  const byNo = new Map<string, RosterStudent>();
+  for (const student of students) {
+    const no = normalizeStudentNo(student.studentNo);
+    const canonicalId = buildRosterStudentId(rosterId, no);
+    const normalized = { ...student, studentNo: no };
+    const prev = byNo.get(no);
+    if (!prev || student.id === canonicalId) {
+      byNo.set(no, normalized.id === canonicalId ? normalized : { ...normalized, id: canonicalId });
+    }
+  }
+  return Array.from(byNo.values());
+}
+
+function dedupeImportRows<T extends { studentNo: string }>(rows: T[]): T[] {
+  const byNo = new Map<string, T>();
+  for (const row of rows) {
+    const no = normalizeStudentNo(row.studentNo);
+    byNo.set(no, { ...row, studentNo: no });
+  }
+  return Array.from(byNo.values());
+}
+
+async function removeStaleRosterStudentDocs(
+  teacherUid: string,
+  rosterId: string,
+  normalizedGrade: string,
+  normalizedClassNo: string,
+  studentNos: Set<string>,
+): Promise<void> {
+  const snap = await getDocs(teacherCollection(teacherUid, "groupRosterStudents"));
+  for (const d of snap.docs) {
+    const student = mapStudent(d.id, d.data());
+    if (!belongsToClass(student, rosterId, normalizedGrade, normalizedClassNo)) continue;
+    const no = normalizeStudentNo(student.studentNo);
+    if (!studentNos.has(no)) continue;
+    const canonicalId = buildRosterStudentId(rosterId, no);
+    if (d.id !== canonicalId) {
+      await deleteDoc(teacherDocument(teacherUid, "groupRosterStudents", d.id));
+    }
+  }
 }
 
 function mapStudent(id: string, data: Record<string, unknown>): RosterStudent {
@@ -133,14 +192,19 @@ export async function bulkUpsertRosterStudents(
   const rosterId = buildRosterId(teacherUid, normalizedGrade, normalizedClassNo);
   await ensureRosterMeta(teacherUid, normalizedGrade, normalizedClassNo, teacherUser);
 
-  for (const row of rows) {
-    const id = buildRosterStudentId(rosterId, row.studentNo);
+  const uniqueRows = dedupeImportRows(rows);
+  const studentNos = new Set<string>();
+
+  for (const row of uniqueRows) {
+    const studentNo = normalizeStudentNo(row.studentNo);
+    studentNos.add(studentNo);
+    const id = buildRosterStudentId(rosterId, studentNo);
     await setDoc(teacherDocument(teacherUid, "groupRosterStudents", id), {
       rosterId,
       teacherUid,
       grade: normalizedGrade,
       classNo: normalizedClassNo,
-      studentNo: row.studentNo,
+      studentNo,
       studentName: row.studentName,
       gender: row.gender,
       achievementLevel: row.achievementLevel,
@@ -148,7 +212,15 @@ export async function bulkUpsertRosterStudents(
       updatedAt: serverTimestamp(),
     });
   }
-  return rows.length;
+
+  await removeStaleRosterStudentDocs(
+    teacherUid,
+    rosterId,
+    normalizedGrade,
+    normalizedClassNo,
+    studentNos,
+  );
+  return uniqueRows.length;
 }
 
 export async function listRosterStudents(
@@ -160,14 +232,17 @@ export async function listRosterStudents(
   const normalizedGrade = grade ? normalizeClassPart(grade) : "";
   const normalizedClassNo = classNo ? normalizeClassPart(classNo) : "";
   const snap = await getDocs(teacherCollection(teacherUid, "groupRosterStudents"));
-  return snap.docs
+  const filtered = snap.docs
     .map((d) => mapStudent(d.id, d.data()))
     .filter((s) => {
       if (s.rosterId === rosterId) return true;
       if (!normalizedGrade || !normalizedClassNo) return false;
-      return normalizeClassPart(s.grade) === normalizedGrade && normalizeClassPart(s.classNo) === normalizedClassNo;
-    })
-    .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
+      return belongsToClass(s, rosterId, normalizedGrade, normalizedClassNo);
+    });
+
+  return dedupeRosterStudents(filtered, rosterId).sort((a, b) =>
+    a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }),
+  );
 }
 
 export async function upsertRosterStudent(
@@ -181,19 +256,27 @@ export async function upsertRosterStudent(
   const normalizedClassNo = normalizeClassPart(classNo);
   const rosterId = buildRosterId(teacherUid, normalizedGrade, normalizedClassNo);
   await ensureRosterMeta(teacherUid, normalizedGrade, normalizedClassNo, teacherUser);
-  const id = student.id ?? buildRosterStudentId(rosterId, student.studentNo);
+  const studentNo = normalizeStudentNo(student.studentNo);
+  const id = student.id ?? buildRosterStudentId(rosterId, studentNo);
   await setDoc(teacherDocument(teacherUid, "groupRosterStudents", id), {
     rosterId,
     teacherUid,
     grade: normalizedGrade,
     classNo: normalizedClassNo,
-    studentNo: student.studentNo,
+    studentNo,
     studentName: student.studentName,
     gender: student.gender,
     achievementLevel: student.achievementLevel,
     active: student.active,
     updatedAt: serverTimestamp(),
   });
+  await removeStaleRosterStudentDocs(
+    teacherUid,
+    rosterId,
+    normalizedGrade,
+    normalizedClassNo,
+    new Set([studentNo]),
+  );
   return id;
 }
 

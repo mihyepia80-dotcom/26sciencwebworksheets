@@ -41,6 +41,13 @@ service cloud.firestore {
         && teacherDomainEmail(request.resource.data.get('email', ''));
     }
 
+    /** 교사 본인 데이터 — 학생 계정 제외, uid 일치 */
+    function ownsTeacherScope(teacherId) {
+      return request.auth != null
+        && request.auth.uid == teacherId
+        && !isStudent();
+    }
+
     function studentData(uid) {
       return get(/databases/$(database)/documents/students/$(uid)).data;
     }
@@ -132,26 +139,26 @@ service cloud.firestore {
     match /teachers/{teacherId} {
       allow read: if request.auth != null && request.auth.uid == teacherId;
       allow create: if canCreateTeacherProfile(teacherId);
-      allow update: if isTeacherAt(teacherId);
+      allow update: if ownsTeacherScope(teacherId) || isTeacherAt(teacherId);
 
       match /classRosters/{rosterId} {
-        allow read, write: if isTeacherAt(teacherId);
+        allow read, write: if ownsTeacherScope(teacherId);
       }
 
       match /groupRosterStudents/{studentId} {
-        allow read, write: if isTeacherAt(teacherId);
+        allow read, write: if ownsTeacherScope(teacherId);
       }
 
       match /groupSeparations/{ruleId} {
-        allow read, write: if isTeacherAt(teacherId);
+        allow read, write: if ownsTeacherScope(teacherId);
       }
 
       match /groupAssignments/{assignmentId} {
-        allow read, write: if isTeacherAt(teacherId);
+        allow read, write: if ownsTeacherScope(teacherId);
       }
 
       match /groupActivityPraises/{praiseId} {
-        allow read, write: if isTeacherAt(teacherId);
+        allow read, write: if ownsTeacherScope(teacherId);
       }
     }
 
@@ -346,7 +353,7 @@ service cloud.firestore {
       return request.auth != null
         && data.teacherUid is string
         && data.teacherUid == request.auth.uid
-        && isTeacherAt(request.auth.uid);
+        && !isStudent();
     }
 
     function isSameClassDoc(data) {
@@ -356,7 +363,7 @@ service cloud.firestore {
     }
 
     match /groupRoleSchedules/{scheduleId} {
-      allow read: if isTeacherAt(request.auth.uid) && !resource.exists
+      allow read: if request.auth != null && !isStudent() && !resource.exists
         || (resource.exists && isTeacherOwner(resource.data))
         || (resource.exists && isSameClassDoc(resource.data));
       allow create: if isTeacherOwner(request.resource.data);

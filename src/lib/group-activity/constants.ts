@@ -30,12 +30,21 @@ export function normalizeClassPart(value: string): string {
   return value.trim().replace(/학년|반/g, "").trim();
 }
 
+/** 번호 정규화 (01 → 1) — 중복 방지용 */
+export function normalizeStudentNo(value: string): string {
+  const trimmed = value.trim();
+  if (/^\d+$/.test(trimmed)) {
+    return String(parseInt(trimmed, 10));
+  }
+  return trimmed;
+}
+
 export function buildRosterId(teacherUid: string, grade: string, classNo: string): string {
   return `${teacherUid}__${normalizeClassPart(grade)}__${normalizeClassPart(classNo)}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 export function buildRosterStudentId(rosterId: string, studentNo: string): string {
-  return `${rosterId}__${studentNo}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `${rosterId}__${normalizeStudentNo(studentNo)}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 /** 학생 조회용 — 학년·반 키 (Firestore 규칙 getDoc 허용) */
