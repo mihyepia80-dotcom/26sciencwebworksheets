@@ -100,9 +100,29 @@ service cloud.firestore {
         && request.resource.data.submissionId == resource.data.submissionId;
     }
 
-    match /teachers/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
+    match /teachers/{teacherId} {
+      allow read: if request.auth != null && request.auth.uid == teacherId;
+      allow create, update: if isTeacher() && request.auth.uid == teacherId;
+
+      match /classRosters/{rosterId} {
+        allow read, write: if isTeacher() && request.auth.uid == teacherId;
+      }
+
+      match /groupRosterStudents/{studentId} {
+        allow read, write: if isTeacher() && request.auth.uid == teacherId;
+      }
+
+      match /groupSeparations/{ruleId} {
+        allow read, write: if isTeacher() && request.auth.uid == teacherId;
+      }
+
+      match /groupAssignments/{assignmentId} {
+        allow read, write: if isTeacher() && request.auth.uid == teacherId;
+      }
+
+      match /groupActivityPraises/{praiseId} {
+        allow read, write: if isTeacher() && request.auth.uid == teacherId;
+      }
     }
 
     match /students/{uid} {
@@ -302,49 +322,12 @@ service cloud.firestore {
         && studentData(request.auth.uid).classNo == data.classNo;
     }
 
-    match /classRosters/{rosterId} {
-      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data));
-      allow create: if isTeacherOwner(request.resource.data);
-      allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
-      allow delete: if isTeacherOwner(resource.data);
-    }
-
-    match /groupRosterStudents/{studentId} {
-      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data));
-      allow create: if isTeacherOwner(request.resource.data);
-      allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
-      allow delete: if isTeacherOwner(resource.data);
-    }
-
-    match /groupSeparations/{ruleId} {
-      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data));
-      allow create: if isTeacherOwner(request.resource.data);
-      allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
-      allow delete: if isTeacherOwner(resource.data);
-    }
-
-    match /groupAssignments/{assignmentId} {
-      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data));
-      allow create: if isTeacherOwner(request.resource.data);
-      allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
-      allow delete: if isTeacherOwner(resource.data);
-    }
-
     match /groupRoleSchedules/{scheduleId} {
       allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data))
         || (resource.exists && isSameClassDoc(resource.data));
       allow create: if isTeacherOwner(request.resource.data);
       allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
       allow delete: if isTeacherOwner(resource.data);
-    }
-
-    match /groupActivityPraises/{praiseId} {
-      allow read: if isTeacher() && (!resource.exists || isTeacherOwner(resource.data))
-        || (resource.exists && isSameClassDoc(resource.data)
-          && studentData(request.auth.uid).studentNo == resource.data.studentNo);
-      allow create: if isTeacherOwner(request.resource.data);
-      allow delete: if isTeacherOwner(resource.data);
-      allow update: if false;
     }
   }
 }

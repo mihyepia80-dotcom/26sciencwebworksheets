@@ -62,6 +62,8 @@
   "roleSchedule": {
     "anchorDate": "2026-06-29",
     "weekStartDay": "monday",
+    "weekEndDay": "friday",
+    "weekLabelFormat": "6월 5주(6.29~7.3)",
     "rotationWeeks": 1,
     "threeMemberGroup": {
       "primarySecondary": true,

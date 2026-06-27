@@ -198,26 +198,9 @@
       ]
     },
     {
-      "collectionGroup": "groupRosterStudents",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "teacherUid", "order": "ASCENDING" },
-        { "fieldPath": "rosterId", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "groupSeparations",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "teacherUid", "order": "ASCENDING" },
-        { "fieldPath": "rosterId", "order": "ASCENDING" }
-      ]
-    },
-    {
       "collectionGroup": "groupActivityPraises",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "teacherUid", "order": "ASCENDING" },
         { "fieldPath": "rosterId", "order": "ASCENDING" },
         { "fieldPath": "weekIndex", "order": "ASCENDING" }
       ]

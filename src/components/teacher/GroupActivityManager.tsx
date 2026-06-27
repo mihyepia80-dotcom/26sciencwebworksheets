@@ -8,6 +8,7 @@ import {
   ACHIEVEMENT_LABELS,
   ROLE_DESCRIPTIONS,
   ROLE_LABELS,
+  buildRosterId,
 } from "@/lib/group-activity/constants";
 import { GROUP_ACTIVITY_PRD } from "@/lib/group-activity/prd";
 import { downloadRosterExcel, parseRosterFile } from "@/lib/group-activity/roster-excel";
@@ -20,7 +21,6 @@ import {
   computeGroupAssignment,
   deleteRosterStudent,
   deleteSeparationRule,
-  ensureRosterMeta,
   getMonthlyAssignment,
   getRoleScheduleForClass,
   listGroupActivityPraises,
@@ -116,14 +116,14 @@ export function GroupActivityManager() {
     setLoading(true);
     setError("");
     try {
-      const meta = await ensureRosterMeta(user.uid, grade, classNo);
-      setRosterId(meta.rosterId);
+      const rosterId = buildRosterId(user.uid, grade, classNo);
+      setRosterId(rosterId);
 
       const [roster, rules, assignment, praiseList, schedule] = await Promise.all([
-        listRosterStudents(user.uid, meta.rosterId),
-        listSeparationRules(user.uid, meta.rosterId),
-        getMonthlyAssignment(meta.rosterId, year, month),
-        listGroupActivityPraises(user.uid, meta.rosterId, week.weekIndex),
+        listRosterStudents(user.uid, rosterId),
+        listSeparationRules(user.uid, rosterId),
+        getMonthlyAssignment(user.uid, rosterId, year, month),
+        listGroupActivityPraises(user.uid, rosterId, week.weekIndex),
         getRoleScheduleForClass(grade, classNo),
       ]);
 
@@ -208,10 +208,11 @@ export function GroupActivityManager() {
   };
 
   const handleDeleteStudent = async (id: string) => {
+    if (!user) return;
     if (!window.confirm("이 학생을 명단에서 삭제할까요?")) return;
     setBusy(`del-${id}`);
     try {
-      await deleteRosterStudent(id);
+      await deleteRosterStudent(user.uid, id);
       await loadClassData();
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "삭제 실패"));
@@ -355,7 +356,7 @@ export function GroupActivityManager() {
 
         {selectedMeta && (
           <p className="mt-2 text-xs text-slate-500">
-            현재: {grade}학년 {classNo}반 · {year}년 {month}월 · {week.weekIndex}주차 ({formatWeekRange(week.weekStart, week.weekEnd)})
+            현재: {grade}학년 {classNo}반 · {year}년 {month}월 · {week.schoolWeekLabel}
           </p>
         )}
       </section>
@@ -481,7 +482,7 @@ export function GroupActivityManager() {
                               value={s.achievementLevel}
                               onChange={(e) => {
                                 const level = Number(e.target.value) as AchievementLevel;
-                                void updateAchievementLevel(s.id, level).then(loadClassData);
+                                void updateAchievementLevel(user.uid, s.id, level).then(loadClassData);
                               }}
                             >
                               <option value={1}>상(1)</option>
@@ -523,7 +524,7 @@ export function GroupActivityManager() {
                 <li key={rule.id} className="flex flex-wrap items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
                   <span className="font-medium">{rule.typeLabel}:</span>
                   <span>{rule.studentIds.map((id) => studentsById.get(id)?.studentName ?? id).join(" ↔ ")}</span>
-                  <button type="button" className="ml-auto text-red-600 hover:underline" onClick={() => void deleteSeparationRule(rule.id).then(loadClassData)}>
+                  <button type="button" className="ml-auto text-red-600 hover:underline" onClick={() => user && void deleteSeparationRule(user.uid, rule.id).then(loadClassData)}>
                     삭제
                   </button>
                 </li>
@@ -565,7 +566,7 @@ export function GroupActivityManager() {
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">4. 역할 부여</h2>
             <p className="mt-1 text-sm text-slate-600">
-              {week.weekIndex}주차: {formatWeekRange(week.weekStart, week.weekEnd)} · 매주 월요일 갱신
+              {formatWeekRange(week.weekStart, week.weekEnd)} · 매주 월요일 갱신 (월~금)
             </p>
             <button type="button" className={`mt-4 ${BTN_PRIMARY}`} disabled={busy === "roles" || groups.length === 0} onClick={() => void handleAssignRoles()}>
               역할 배정 (이번 주)

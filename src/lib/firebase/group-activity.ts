@@ -10,6 +10,8 @@ import {
   serverTimestamp,
   setDoc,
   where,
+  type CollectionReference,
+  type DocumentReference,
   type Timestamp,
 } from "firebase/firestore";
 import { buildClassScheduleId, buildRosterId, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
@@ -32,6 +34,14 @@ import { parseAchievementLevel, parseGender } from "@/lib/group-activity/parse-r
 import { getClientDb } from "./client";
 
 export { parseAchievementLevel, parseGender };
+
+function teacherCollection(teacherUid: string, name: string): CollectionReference {
+  return collection(getClientDb(), "teachers", teacherUid, name);
+}
+
+function teacherDocument(teacherUid: string, name: string, id: string): DocumentReference {
+  return doc(getClientDb(), "teachers", teacherUid, name, id);
+}
 
 function mapStudent(id: string, data: Record<string, unknown>): RosterStudent {
   const level = Number(data.achievementLevel ?? 2);
@@ -58,7 +68,7 @@ export async function ensureRosterMeta(
 ): Promise<ClassRosterMeta> {
   const rosterId = buildRosterId(teacherUid, grade, classNo);
   await setDoc(
-    doc(getClientDb(), "classRosters", rosterId),
+    teacherDocument(teacherUid, "classRosters", rosterId),
     {
       teacherUid,
       grade,
@@ -72,15 +82,13 @@ export async function ensureRosterMeta(
 }
 
 export async function listTeacherClasses(teacherUid: string): Promise<ClassRosterMeta[]> {
-  const snap = await getDocs(
-    query(collection(getClientDb(), "classRosters"), where("teacherUid", "==", teacherUid)),
-  );
+  const snap = await getDocs(teacherCollection(teacherUid, "classRosters"));
   return snap.docs
     .map((d) => {
       const data = d.data();
       return {
         rosterId: d.id,
-        teacherUid: String(data.teacherUid ?? ""),
+        teacherUid: String(data.teacherUid ?? teacherUid),
         grade: String(data.grade ?? ""),
         classNo: String(data.classNo ?? ""),
         anchorDate: String(data.anchorDate ?? ROLE_WEEK_ANCHOR),
@@ -135,11 +143,7 @@ export async function bulkUpsertRosterStudents(
 
 export async function listRosterStudents(teacherUid: string, rosterId: string): Promise<RosterStudent[]> {
   const snap = await getDocs(
-    query(
-      collection(getClientDb(), "groupRosterStudents"),
-      where("teacherUid", "==", teacherUid),
-      where("rosterId", "==", rosterId),
-    ),
+    query(teacherCollection(teacherUid, "groupRosterStudents"), where("rosterId", "==", rosterId)),
   );
   return snap.docs
     .map((d) => mapStudent(d.id, d.data()))
@@ -154,8 +158,8 @@ export async function upsertRosterStudent(
 ): Promise<string> {
   const rosterId = buildRosterId(teacherUid, grade, classNo);
   await ensureRosterMeta(teacherUid, grade, classNo);
-  const id = student.id ?? doc(collection(getClientDb(), "groupRosterStudents")).id;
-  await setDoc(doc(getClientDb(), "groupRosterStudents", id), {
+  const id = student.id ?? doc(teacherCollection(teacherUid, "groupRosterStudents")).id;
+  await setDoc(teacherDocument(teacherUid, "groupRosterStudents", id), {
     rosterId,
     teacherUid,
     grade,
@@ -170,13 +174,17 @@ export async function upsertRosterStudent(
   return id;
 }
 
-export async function deleteRosterStudent(studentId: string): Promise<void> {
-  await deleteDoc(doc(getClientDb(), "groupRosterStudents", studentId));
+export async function deleteRosterStudent(teacherUid: string, studentId: string): Promise<void> {
+  await deleteDoc(teacherDocument(teacherUid, "groupRosterStudents", studentId));
 }
 
-export async function updateAchievementLevel(studentId: string, achievementLevel: AchievementLevel): Promise<void> {
+export async function updateAchievementLevel(
+  teacherUid: string,
+  studentId: string,
+  achievementLevel: AchievementLevel,
+): Promise<void> {
   await setDoc(
-    doc(getClientDb(), "groupRosterStudents", studentId),
+    teacherDocument(teacherUid, "groupRosterStudents", studentId),
     { achievementLevel, updatedAt: serverTimestamp() },
     { merge: true },
   );
@@ -184,18 +192,14 @@ export async function updateAchievementLevel(studentId: string, achievementLevel
 
 export async function listSeparationRules(teacherUid: string, rosterId: string): Promise<SeparationRule[]> {
   const snap = await getDocs(
-    query(
-      collection(getClientDb(), "groupSeparations"),
-      where("teacherUid", "==", teacherUid),
-      where("rosterId", "==", rosterId),
-    ),
+    query(teacherCollection(teacherUid, "groupSeparations"), where("rosterId", "==", rosterId)),
   );
   return snap.docs.map((d) => {
     const data = d.data();
     return {
       id: d.id,
       rosterId: String(data.rosterId ?? ""),
-      teacherUid: String(data.teacherUid ?? ""),
+      teacherUid: String(data.teacherUid ?? teacherUid),
       typeLabel: String(data.typeLabel ?? ""),
       studentIds: Array.isArray(data.studentIds) ? data.studentIds.map(String) : [],
     };
@@ -209,8 +213,8 @@ export async function saveSeparationRule(
   studentIds: string[],
   id?: string,
 ): Promise<string> {
-  const docId = id ?? doc(collection(getClientDb(), "groupSeparations")).id;
-  await setDoc(doc(getClientDb(), "groupSeparations", docId), {
+  const docId = id ?? doc(teacherCollection(teacherUid, "groupSeparations")).id;
+  await setDoc(teacherDocument(teacherUid, "groupSeparations", docId), {
     rosterId,
     teacherUid,
     typeLabel,
@@ -220,8 +224,8 @@ export async function saveSeparationRule(
   return docId;
 }
 
-export async function deleteSeparationRule(ruleId: string): Promise<void> {
-  await deleteDoc(doc(getClientDb(), "groupSeparations", ruleId));
+export async function deleteSeparationRule(teacherUid: string, ruleId: string): Promise<void> {
+  await deleteDoc(teacherDocument(teacherUid, "groupSeparations", ruleId));
 }
 
 function assignmentDocId(rosterId: string, year: number, month: number): string {
@@ -229,17 +233,20 @@ function assignmentDocId(rosterId: string, year: number, month: number): string 
 }
 
 export async function getMonthlyAssignment(
+  teacherUid: string,
   rosterId: string,
   year: number,
   month: number,
 ): Promise<MonthlyAssignment | null> {
-  const snap = await getDoc(doc(getClientDb(), "groupAssignments", assignmentDocId(rosterId, year, month)));
+  const snap = await getDoc(
+    teacherDocument(teacherUid, "groupAssignments", assignmentDocId(rosterId, year, month)),
+  );
   if (!snap.exists()) return null;
   const data = snap.data();
   return {
     id: snap.id,
     rosterId: String(data.rosterId ?? ""),
-    teacherUid: String(data.teacherUid ?? ""),
+    teacherUid: String(data.teacherUid ?? teacherUid),
     grade: String(data.grade ?? ""),
     classNo: String(data.classNo ?? ""),
     year: Number(data.year),
@@ -259,7 +266,7 @@ export async function saveMonthlyAssignment(
   confirmed: boolean,
 ): Promise<void> {
   const rosterId = buildRosterId(teacherUid, grade, classNo);
-  await setDoc(doc(getClientDb(), "groupAssignments", assignmentDocId(rosterId, year, month)), {
+  await setDoc(teacherDocument(teacherUid, "groupAssignments", assignmentDocId(rosterId, year, month)), {
     rosterId,
     teacherUid,
     grade,
@@ -348,8 +355,7 @@ export async function listGroupActivityPraises(
 ): Promise<GroupActivityPraise[]> {
   const snap = await getDocs(
     query(
-      collection(getClientDb(), "groupActivityPraises"),
-      where("teacherUid", "==", teacherUid),
+      teacherCollection(teacherUid, "groupActivityPraises"),
       where("rosterId", "==", rosterId),
       where("weekIndex", "==", weekIndex),
     ),
@@ -359,7 +365,7 @@ export async function listGroupActivityPraises(
     return {
       id: d.id,
       rosterId: String(data.rosterId ?? ""),
-      teacherUid: String(data.teacherUid ?? ""),
+      teacherUid: String(data.teacherUid ?? teacherUid),
       rosterStudentId: String(data.rosterStudentId ?? ""),
       studentNo: String(data.studentNo ?? ""),
       studentName: String(data.studentName ?? ""),
@@ -385,8 +391,8 @@ export async function addGroupActivityPraise(
   primaryRoleCode: 1 | 2 | 3 | 4,
   note?: string,
 ): Promise<void> {
-  const id = doc(collection(getClientDb(), "groupActivityPraises")).id;
-  await setDoc(doc(getClientDb(), "groupActivityPraises", id), {
+  const id = doc(teacherCollection(teacherUid, "groupActivityPraises")).id;
+  await setDoc(teacherDocument(teacherUid, "groupActivityPraises", id), {
     rosterId,
     teacherUid,
     grade,
@@ -402,4 +408,3 @@ export async function addGroupActivityPraise(
     createdAt: serverTimestamp(),
   });
 }
-

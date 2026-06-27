@@ -15,7 +15,8 @@ import {
   getFirebaseTeacherPassword,
 } from "@/lib/constants";
 import { isFirebaseConfigured } from "./config";
-import { getClientAuth } from "./client";
+import { getClientAuth, getClientDb } from "./client";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 
 function isStudentAccount(user: User): boolean {
   return Boolean(user.email?.endsWith(`@${STUDENT_EMAIL_DOMAIN}`));
@@ -40,6 +41,17 @@ export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
   return null;
 }
 
+async function ensureTeacherProfile(user: User): Promise<void> {
+  await setDoc(
+    doc(getClientDb(), "teachers", user.uid),
+    {
+      email: user.email ?? TEACHER_ACCOUNT_EMAIL,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
 export async function signInTeacher(password: string): Promise<User> {
   if (password !== TEACHER_PASSWORD) {
     throw new Error("암호가 올바르지 않습니다.");
@@ -52,11 +64,13 @@ export async function signInTeacher(password: string): Promise<User> {
 
   try {
     const result = await signInWithEmailAndPassword(auth, TEACHER_ACCOUNT_EMAIL, firebasePassword);
+    await ensureTeacherProfile(result.user);
     return result.user;
   } catch (error: unknown) {
     const code = typeof error === "object" && error && "code" in error ? String((error as { code: string }).code) : "";
     if (code === "auth/user-not-found" || code === "auth/invalid-credential") {
       const created = await createUserWithEmailAndPassword(auth, TEACHER_ACCOUNT_EMAIL, firebasePassword);
+      await ensureTeacherProfile(created.user);
       return created.user;
     }
     throw error;
