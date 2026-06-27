@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
+import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
 import { RosterScrollTable, RosterStickyHead, RosterStickyRow } from "@/components/teacher/RosterScrollTable";
 import {
   ACHIEVEMENT_LABELS,
@@ -151,14 +152,36 @@ export function GroupActivityManager() {
   }, [loadClassData]);
 
   const handleRegisterClass = async () => {
-    if (!user || !addGrade.trim() || !addClassNo.trim()) return;
+    if (!user || role !== "teacher") {
+      setError("교사 로그인이 필요합니다.");
+      return;
+    }
+    if (!addGrade.trim() || !addClassNo.trim()) {
+      setError("학년과 반 번호를 입력해 주세요.");
+      return;
+    }
     setBusy("register");
     setError("");
+    setMessage("");
     try {
-      const meta = await registerTeacherClass(user.uid, addGrade.trim(), addClassNo.trim());
+      const meta = await registerTeacherClass(user.uid, addGrade.trim(), addClassNo.trim(), user);
+      const key = classKey(meta.grade, meta.classNo);
+      setClasses((prev) => {
+        if (prev.some((c) => c.rosterId === meta.rosterId)) return prev;
+        return [...prev, meta].sort((a, b) => {
+          const g = a.grade.localeCompare(b.grade, "ko");
+          if (g !== 0) return g;
+          return a.classNo.localeCompare(b.classNo, "ko", { numeric: true });
+        });
+      });
+      setSelectedClass(key);
       setMessage(`${meta.grade}학년 ${meta.classNo}반을 등록했습니다.`);
-      await loadTeacherClasses();
-      setSelectedClass(classKey(meta.grade, meta.classNo));
+      try {
+        await loadTeacherClasses();
+        setSelectedClass(key);
+      } catch (reloadError: unknown) {
+        setError(getFirebaseErrorMessage(reloadError, "반 목록 새로고침 실패"));
+      }
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "반 등록 실패"));
     } finally {
@@ -167,14 +190,21 @@ export function GroupActivityManager() {
   };
 
   const handleFileUpload = async (file: File) => {
-    if (!user || !grade || !classNo) return;
+    if (!user || role !== "teacher") {
+      setError("교사 로그인이 필요합니다.");
+      return;
+    }
+    if (!grade || !classNo) {
+      setError("반을 먼저 선택하거나 등록해 주세요.");
+      return;
+    }
     setBusy("upload");
     setError("");
     setMessage("");
     try {
       const rows = await parseRosterFile(file, grade, classNo);
       if (rows.length === 0) throw new Error("업로드할 학생 데이터가 없습니다.");
-      const count = await bulkUpsertRosterStudents(user.uid, grade, classNo, rows);
+      const count = await bulkUpsertRosterStudents(user.uid, grade, classNo, rows, user);
       setMessage(`${count}명 명단을 반영했습니다.`);
       await loadClassData();
     } catch (e: unknown) {
@@ -195,7 +225,7 @@ export function GroupActivityManager() {
         gender: newGender,
         achievementLevel: 2,
         active: true,
-      });
+      }, user);
       setNewStudentNo("");
       setNewStudentName("");
       setMessage("학생을 추가했습니다.");
@@ -307,7 +337,14 @@ export function GroupActivityManager() {
   };
 
   if (!user || role !== "teacher") {
-    return <p className="text-sm text-slate-500">교사 로그인이 필요합니다.</p>;
+    return (
+      <div className="mx-auto max-w-md">
+        <p className="text-sm text-slate-600">모둠 활동을 관리하려면 교사 로그인이 필요합니다.</p>
+        <div className="mt-6">
+          <TeacherLoginPanel />
+        </div>
+      </div>
+    );
   }
 
   const acceptFormats = GROUP_ACTIVITY_PRD.rosterImport.formats.map((f) => `.${f}`).join(",");

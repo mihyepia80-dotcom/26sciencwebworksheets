@@ -6,15 +6,13 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   serverTimestamp,
   setDoc,
-  where,
   type CollectionReference,
   type DocumentReference,
   type Timestamp,
 } from "firebase/firestore";
-import { buildClassScheduleId, buildRosterId, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
+import { buildClassScheduleId, buildRosterId, buildRosterStudentId, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
 import { assignGroups } from "@/lib/group-activity/assign-groups";
 import { assignRolesForAllGroups } from "@/lib/group-activity/assign-roles";
 import type {
@@ -32,6 +30,7 @@ import type {
 import { getWeekInfo } from "@/lib/group-activity/week-utils";
 import { parseAchievementLevel, parseGender } from "@/lib/group-activity/parse-roster";
 import { getClientDb } from "./client";
+import { ensureTeacherProfile, prepareTeacherFirestoreAccess } from "./teacher-auth";
 
 export { parseAchievementLevel, parseGender };
 
@@ -65,7 +64,11 @@ export async function ensureRosterMeta(
   teacherUid: string,
   grade: string,
   classNo: string,
+  teacherUser?: Parameters<typeof ensureTeacherProfile>[0],
 ): Promise<ClassRosterMeta> {
+  if (teacherUser) {
+    await prepareTeacherFirestoreAccess(teacherUser);
+  }
   const rosterId = buildRosterId(teacherUid, grade, classNo);
   await setDoc(
     teacherDocument(teacherUid, "classRosters", rosterId),
@@ -105,8 +108,9 @@ export async function registerTeacherClass(
   teacherUid: string,
   grade: string,
   classNo: string,
+  teacherUser?: Parameters<typeof ensureTeacherProfile>[0],
 ): Promise<ClassRosterMeta> {
-  return ensureRosterMeta(teacherUid, grade.trim(), classNo.trim());
+  return ensureRosterMeta(teacherUid, grade.trim(), classNo.trim(), teacherUser);
 }
 
 export async function bulkUpsertRosterStudents(
@@ -120,33 +124,34 @@ export async function bulkUpsertRosterStudents(
     achievementLevel: AchievementLevel;
     active?: boolean;
   }[],
+  teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
 ): Promise<number> {
   const rosterId = buildRosterId(teacherUid, grade, classNo);
-  await ensureRosterMeta(teacherUid, grade, classNo);
-
-  const existing = await listRosterStudents(teacherUid, rosterId);
-  const byNo = new Map(existing.map((s) => [s.studentNo, s]));
+  await ensureRosterMeta(teacherUid, grade, classNo, teacherUser);
 
   for (const row of rows) {
-    const prev = byNo.get(row.studentNo);
-    await upsertRosterStudent(teacherUid, grade, classNo, {
-      id: prev?.id,
+    const id = buildRosterStudentId(rosterId, row.studentNo);
+    await setDoc(teacherDocument(teacherUid, "groupRosterStudents", id), {
+      rosterId,
+      teacherUid,
+      grade,
+      classNo,
       studentNo: row.studentNo,
       studentName: row.studentName,
       gender: row.gender,
       achievementLevel: row.achievementLevel,
       active: row.active ?? true,
+      updatedAt: serverTimestamp(),
     });
   }
   return rows.length;
 }
 
 export async function listRosterStudents(teacherUid: string, rosterId: string): Promise<RosterStudent[]> {
-  const snap = await getDocs(
-    query(teacherCollection(teacherUid, "groupRosterStudents"), where("rosterId", "==", rosterId)),
-  );
+  const snap = await getDocs(teacherCollection(teacherUid, "groupRosterStudents"));
   return snap.docs
     .map((d) => mapStudent(d.id, d.data()))
+    .filter((s) => s.rosterId === rosterId)
     .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
 }
 
@@ -155,10 +160,11 @@ export async function upsertRosterStudent(
   grade: string,
   classNo: string,
   student: Omit<RosterStudent, "id" | "rosterId" | "teacherUid" | "grade" | "classNo"> & { id?: string },
+  teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
 ): Promise<string> {
   const rosterId = buildRosterId(teacherUid, grade, classNo);
-  await ensureRosterMeta(teacherUid, grade, classNo);
-  const id = student.id ?? doc(teacherCollection(teacherUid, "groupRosterStudents")).id;
+  await ensureRosterMeta(teacherUid, grade, classNo, teacherUser);
+  const id = student.id ?? buildRosterStudentId(rosterId, student.studentNo);
   await setDoc(teacherDocument(teacherUid, "groupRosterStudents", id), {
     rosterId,
     teacherUid,
@@ -191,19 +197,19 @@ export async function updateAchievementLevel(
 }
 
 export async function listSeparationRules(teacherUid: string, rosterId: string): Promise<SeparationRule[]> {
-  const snap = await getDocs(
-    query(teacherCollection(teacherUid, "groupSeparations"), where("rosterId", "==", rosterId)),
-  );
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      rosterId: String(data.rosterId ?? ""),
-      teacherUid: String(data.teacherUid ?? teacherUid),
-      typeLabel: String(data.typeLabel ?? ""),
-      studentIds: Array.isArray(data.studentIds) ? data.studentIds.map(String) : [],
-    };
-  });
+  const snap = await getDocs(teacherCollection(teacherUid, "groupSeparations"));
+  return snap.docs
+    .map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        rosterId: String(data.rosterId ?? ""),
+        teacherUid: String(data.teacherUid ?? teacherUid),
+        typeLabel: String(data.typeLabel ?? ""),
+        studentIds: Array.isArray(data.studentIds) ? data.studentIds.map(String) : [],
+      };
+    })
+    .filter((rule) => rule.rosterId === rosterId);
 }
 
 export async function saveSeparationRule(
@@ -353,30 +359,26 @@ export async function listGroupActivityPraises(
   rosterId: string,
   weekIndex: number,
 ): Promise<GroupActivityPraise[]> {
-  const snap = await getDocs(
-    query(
-      teacherCollection(teacherUid, "groupActivityPraises"),
-      where("rosterId", "==", rosterId),
-      where("weekIndex", "==", weekIndex),
-    ),
-  );
-  return snap.docs.map((d) => {
-    const data = d.data();
-    return {
-      id: d.id,
-      rosterId: String(data.rosterId ?? ""),
-      teacherUid: String(data.teacherUid ?? teacherUid),
-      rosterStudentId: String(data.rosterStudentId ?? ""),
-      studentNo: String(data.studentNo ?? ""),
-      studentName: String(data.studentName ?? ""),
-      groupNo: Number(data.groupNo),
-      weekIndex: Number(data.weekIndex),
-      weekStart: String(data.weekStart ?? ""),
-      primaryRoleCode: Number(data.primaryRoleCode) as 1 | 2 | 3 | 4,
-      note: data.note ? String(data.note) : undefined,
-      createdAt: (data.createdAt as Timestamp | null) ?? null,
-    };
-  });
+  const snap = await getDocs(teacherCollection(teacherUid, "groupActivityPraises"));
+  return snap.docs
+    .map((d) => {
+      const data = d.data();
+      return {
+        id: d.id,
+        rosterId: String(data.rosterId ?? ""),
+        teacherUid: String(data.teacherUid ?? teacherUid),
+        rosterStudentId: String(data.rosterStudentId ?? ""),
+        studentNo: String(data.studentNo ?? ""),
+        studentName: String(data.studentName ?? ""),
+        groupNo: Number(data.groupNo),
+        weekIndex: Number(data.weekIndex),
+        weekStart: String(data.weekStart ?? ""),
+        primaryRoleCode: Number(data.primaryRoleCode) as 1 | 2 | 3 | 4,
+        note: data.note ? String(data.note) : undefined,
+        createdAt: (data.createdAt as Timestamp | null) ?? null,
+      };
+    })
+    .filter((praise) => praise.rosterId === rosterId && praise.weekIndex === weekIndex);
 }
 
 export async function addGroupActivityPraise(

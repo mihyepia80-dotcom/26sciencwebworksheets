@@ -41,7 +41,8 @@ export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
   return null;
 }
 
-async function ensureTeacherProfile(user: User): Promise<void> {
+export async function ensureTeacherProfile(user: User): Promise<void> {
+  if (!isTeacherAccount(user)) return;
   await setDoc(
     doc(getClientDb(), "teachers", user.uid),
     {
@@ -50,6 +51,12 @@ async function ensureTeacherProfile(user: User): Promise<void> {
     },
     { merge: true },
   );
+}
+
+/** Firestore 쓰기 전 토큰·교사 프로필을 맞춥니다. */
+export async function prepareTeacherFirestoreAccess(user: User): Promise<void> {
+  await user.getIdToken(true);
+  await ensureTeacherProfile(user);
 }
 
 export async function signInTeacher(password: string): Promise<User> {
@@ -64,13 +71,13 @@ export async function signInTeacher(password: string): Promise<User> {
 
   try {
     const result = await signInWithEmailAndPassword(auth, TEACHER_ACCOUNT_EMAIL, firebasePassword);
-    await ensureTeacherProfile(result.user);
+    await prepareTeacherFirestoreAccess(result.user);
     return result.user;
   } catch (error: unknown) {
     const code = typeof error === "object" && error && "code" in error ? String((error as { code: string }).code) : "";
     if (code === "auth/user-not-found" || code === "auth/invalid-credential") {
       const created = await createUserWithEmailAndPassword(auth, TEACHER_ACCOUNT_EMAIL, firebasePassword);
-      await ensureTeacherProfile(created.user);
+      await prepareTeacherFirestoreAccess(created.user);
       return created.user;
     }
     throw error;
@@ -111,7 +118,14 @@ export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
     }
 
     void resolveAuthRole(user)
-      .then((role) => {
+      .then(async (role) => {
+        if (role === "teacher") {
+          try {
+            await prepareTeacherFirestoreAccess(user);
+          } catch {
+            /* 프로필 저장 실패는 로그인 자체를 막지 않음 */
+          }
+        }
         if (active) onChange({ user, role, loading: false });
       })
       .catch(() => {

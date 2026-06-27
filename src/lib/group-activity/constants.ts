@@ -29,6 +29,10 @@ export function buildRosterId(teacherUid: string, grade: string, classNo: string
   return `${teacherUid}__${grade}__${classNo}`.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+export function buildRosterStudentId(rosterId: string, studentNo: string): string {
+  return `${rosterId}__${studentNo}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
 /** 학생 조회용 — 학년·반 키 (Firestore 규칙 getDoc 허용) */
 export function buildClassScheduleId(grade: string, classNo: string): string {
   return `${grade}__${classNo}`.replace(/[^a-zA-Z0-9_-]/g, "_");

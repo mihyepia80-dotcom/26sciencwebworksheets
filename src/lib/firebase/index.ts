@@ -21,6 +21,8 @@ export {
   signInTeacher,
   signOutUser,
   checkIsTeacher,
+  ensureTeacherProfile,
+  prepareTeacherFirestoreAccess,
   resolveAuthRole,
   subscribeAppAuth,
   type AppAuthState,
