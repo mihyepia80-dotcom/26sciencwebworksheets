@@ -7,6 +7,16 @@
 | [03-experiment-class-worksheet.md](./03-experiment-class-worksheet.md) | `3. 실험반 활동지.hwpx` | 차시별 웹앱·글쓰기 맥락 (자동 추출) |
 | [04-thinking-tool-worksheet.md](./04-thinking-tool-worksheet.md) | `4. 사고 도구 활동지.hwpx` | 사고도구별 활동지 부록 (자동 추출) |
 
-`scripts/extract-hwpx-to-md.mjs`로 hwpx를 다시 변환할 수 있습니다.
+## 변환 방법
+
+프로젝트 루트에 `.hwpx` 파일을 두고 아래 명령을 실행하세요.
+
+```bash
+node scripts/extract-hwpx-to-md.mjs
+```
+
+- 루트의 `*.hwpx`를 자동 탐색·압축 해제합니다.
+- XML 표 구조와 `Preview/PrvText.txt`를 파싱해 Markdown을 생성합니다.
+- 추출 임시 폴더: `.hwpx-extract/` (git 제외 권장)
 
 웹앱에서는 `src/lib/lesson-plan/template-content.ts`, `src/lib/worksheet-content/dissolution-unit.ts`에 핵심 내용이 구조화되어 반영됩니다.

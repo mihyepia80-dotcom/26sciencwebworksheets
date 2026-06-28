@@ -31,6 +31,12 @@ npm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# hwpx 변환 임시 파일
+.hwpx-extract/
+tmp-hwpx/
+tmp-hwpx-test/
+*.hwpx.zip
+
 # os
 .DS_Store
 Thumbs.db
