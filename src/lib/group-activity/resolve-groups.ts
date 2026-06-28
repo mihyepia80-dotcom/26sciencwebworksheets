@@ -2,6 +2,27 @@ import { GROUP_COUNT, normalizeStudentNo } from "./constants";
 import type { GroupSlot, RosterStudent, SeparationRule, StudentRoleAssignment } from "./types";
 import { assignGroups } from "./assign-groups";
 
+/** 번호순 → 남녀순(남→여) */
+export function compareRosterStudents(a: RosterStudent, b: RosterStudent): number {
+  const byNo = a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true });
+  if (byNo !== 0) return byNo;
+  if (a.gender === b.gender) return 0;
+  return a.gender === "male" ? -1 : 1;
+}
+
+export function sortRosterStudents(students: RosterStudent[]): RosterStudent[] {
+  return [...students].sort(compareRosterStudents);
+}
+
+function sortMemberIds(memberIds: string[], studentsById: Map<string, RosterStudent>): string[] {
+  return [...memberIds].sort((a, b) => {
+    const sa = studentsById.get(a);
+    const sb = studentsById.get(b);
+    if (!sa || !sb) return 0;
+    return compareRosterStudents(sa, sb);
+  });
+}
+
 export function ensureSixGroupSlots(groups: GroupSlot[]): GroupSlot[] {
   const byNo = new Map(groups.map((g) => [g.groupNo, g]));
   return Array.from({ length: GROUP_COUNT }, (_, i) => {
@@ -12,14 +33,17 @@ export function ensureSixGroupSlots(groups: GroupSlot[]): GroupSlot[] {
 
 export function enrichGroupSlots(groups: GroupSlot[], students: RosterStudent[]): GroupSlot[] {
   const byId = new Map(students.map((s) => [s.id, s]));
-  return ensureSixGroupSlots(groups).map((g) => ({
-    groupNo: g.groupNo,
-    memberIds: g.memberIds,
-    memberNos: g.memberIds
-      .map((id) => byId.get(id)?.studentNo)
-      .filter((no): no is string => Boolean(no))
-      .map(normalizeStudentNo),
-  }));
+  return ensureSixGroupSlots(groups).map((g) => {
+    const memberIds = sortMemberIds(g.memberIds, byId);
+    return {
+      groupNo: g.groupNo,
+      memberIds,
+      memberNos: memberIds
+        .map((id) => byId.get(id)?.studentNo)
+        .filter((no): no is string => Boolean(no))
+        .map(normalizeStudentNo),
+    };
+  });
 }
 
 export function resolveGroupSlots(groups: GroupSlot[], students: RosterStudent[]): GroupSlot[] {
@@ -99,16 +123,32 @@ export function getGroupMembers(
   slot: GroupSlot,
   studentsById: Map<string, RosterStudent>,
 ): RosterStudent[] {
-  return slot.memberIds
-    .map((id) => studentsById.get(id))
-    .filter((s): s is RosterStudent => Boolean(s));
+  return sortRosterStudents(
+    slot.memberIds
+      .map((id) => studentsById.get(id))
+      .filter((s): s is RosterStudent => Boolean(s)),
+  );
 }
 
 export function getUnassignedStudents(groups: GroupSlot[], students: RosterStudent[]): RosterStudent[] {
   const assigned = new Set(groups.flatMap((g) => g.memberIds));
-  return students
-    .filter((s) => s.active && !assigned.has(s.id))
-    .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
+  return sortRosterStudents(students.filter((s) => s.active && !assigned.has(s.id)));
+}
+
+export function moveStudentBetweenGroups(
+  groups: GroupSlot[],
+  studentId: string,
+  targetGroupNo: number | null,
+): GroupSlot[] {
+  const next = ensureSixGroupSlots(groups).map((g) => ({
+    ...g,
+    memberIds: g.memberIds.filter((id) => id !== studentId),
+  }));
+  if (targetGroupNo !== null && targetGroupNo >= 1 && targetGroupNo <= GROUP_COUNT) {
+    const slot = next.find((g) => g.groupNo === targetGroupNo);
+    if (slot) slot.memberIds = [...slot.memberIds, studentId];
+  }
+  return next;
 }
 
 export function resolveRoleAssignments(

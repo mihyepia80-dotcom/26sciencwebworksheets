@@ -363,9 +363,14 @@ service cloud.firestore {
     }
 
     match /groupRoleSchedules/{scheduleId} {
-      allow read: if request.auth != null && !isStudent() && !resource.exists
-        || (resource.exists && isTeacherOwner(resource.data))
-        || (resource.exists && isSameClassDoc(resource.data));
+      allow read: if request.auth != null && (
+        (isStudent() && resource.exists && isSameClassDoc(resource.data))
+        || (!isStudent() && (
+          !resource.exists
+          || isTeacherOwner(resource.data)
+          || isTeacher()
+        ))
+      );
       allow create: if isTeacherOwner(request.resource.data);
       allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
       allow delete: if isTeacherOwner(resource.data);

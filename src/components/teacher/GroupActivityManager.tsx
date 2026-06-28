@@ -183,12 +183,7 @@ export function GroupActivityManager() {
     }
 
     try {
-      const [assignment, praiseList, schedule] = await Promise.all([
-        getMonthlyAssignment(user.uid, rid, year, month),
-        listGroupActivityPraises(user.uid, rid, week.weekIndex),
-        getRoleScheduleForClass(grade, classNo),
-      ]);
-
+      const assignment = await getMonthlyAssignment(user.uid, rid, year, month);
       const syncedGroups = syncGroupsFromRoster(
         assignment?.groups ?? [],
         roster,
@@ -196,13 +191,24 @@ export function GroupActivityManager() {
       );
       setGroups(syncedGroups);
       setAssignmentConfirmed(!!assignment?.confirmedAt);
-      setPraises(praiseList);
-      setRoleSchedule(schedule);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "편성·역할 정보 불러오기 실패"));
-    } finally {
-      setLoading(false);
+      setError(getFirebaseErrorMessage(e, "모둠 편성 불러오기 실패"));
     }
+
+    try {
+      const praiseList = await listGroupActivityPraises(user.uid, rid, week.weekIndex);
+      setPraises(praiseList);
+    } catch {
+      setPraises([]);
+    }
+
+    try {
+      const schedule = await getRoleScheduleForClass(grade, classNo, user.uid);
+      setRoleSchedule(schedule);
+    } catch {
+      setRoleSchedule(null);
+    }
+    setLoading(false);
   }, [user, role, grade, classNo, year, month, week.weekIndex]);
 
   useEffect(() => {
@@ -356,6 +362,24 @@ export function GroupActivityManager() {
       );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "편성 실패");
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const handleManualGroupsChange = async (nextGroups: GroupSlot[]) => {
+    if (!user || !grade || !classNo) return;
+    setError("");
+    const payload = enrichGroupSlots(nextGroups, students);
+    setGroups(payload);
+    setAssignmentConfirmed(false);
+    setBusy("assign-save");
+    try {
+      await saveMonthlyAssignment(user.uid, grade, classNo, year, month, payload, false);
+      setMessage("모둠 구성을 저장했습니다. 확인 후 「편성 확정」을 눌러 주세요.");
+    } catch (e: unknown) {
+      setError(getFirebaseErrorMessage(e, "모둠 구성 저장 실패"));
+      void loadClassData();
     } finally {
       setBusy("");
     }
@@ -539,7 +563,7 @@ export function GroupActivityManager() {
       </section>
 
       {message && <p className="ui-message-success">{message}</p>}
-      {error && <p className="ui-message-error">{error}</p>}
+      {error && activitySection !== "assign" && <p className="ui-message-error">{error}</p>}
 
       {!selectedMeta && !loading && (
         <p className="ui-panel text-center text-lg text-slate-500">
@@ -825,7 +849,9 @@ export function GroupActivityManager() {
           )}
 
           {(activitySection === "assign") && (
-            <GroupAssignmentStatusPanel
+            <>
+              {error && <p className="ui-message-error">{error}</p>}
+              <GroupAssignmentStatusPanel
               year={year}
               month={month}
               grade={grade}
@@ -836,7 +862,9 @@ export function GroupActivityManager() {
               busy={busy}
               onAutoAssign={handleAutoAssign}
               onConfirm={() => void handleConfirmAssignment()}
+              onGroupsChange={(next) => void handleManualGroupsChange(next)}
             />
+            </>
           )}
 
           {(activitySection === "roles") && (

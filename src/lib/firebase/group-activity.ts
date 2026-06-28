@@ -514,10 +514,16 @@ export async function saveRoleSchedule(
   };
 }
 
-export async function getRoleScheduleForClass(grade: string, classNo: string): Promise<RoleWeekSchedule | null> {
+export async function getRoleScheduleForClass(
+  grade: string,
+  classNo: string,
+  teacherUid?: string,
+): Promise<RoleWeekSchedule | null> {
   const snap = await getDoc(doc(getClientDb(), "groupRoleSchedules", buildClassScheduleId(grade, classNo)));
   if (!snap.exists()) return null;
   const data = snap.data();
+  const ownerUid = String(data.teacherUid ?? "");
+  if (teacherUid && ownerUid && ownerUid !== teacherUid) return null;
   return {
     id: snap.id,
     rosterId: String(data.rosterId ?? ""),
