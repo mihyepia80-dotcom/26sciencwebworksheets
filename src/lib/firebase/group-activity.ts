@@ -13,7 +13,7 @@ import {
   type Timestamp,
 } from "firebase/firestore";
 import { buildClassScheduleId, buildRosterId, buildRosterStudentId, normalizeClassPart, normalizeStudentNo, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
-import { assignGroups } from "@/lib/group-activity/assign-groups";
+import { assignGroups, assignGroupsWithMeta } from "@/lib/group-activity/assign-groups";
 import { assignRolesForAllGroups } from "@/lib/group-activity/assign-roles";
 import {
   normalizeSeparationRulesForAssign,
@@ -461,6 +461,14 @@ export function computeGroupAssignment(
   seed?: number,
 ): GroupSlot[] {
   return assignGroups(students, rules, seed);
+}
+
+export function computeGroupAssignmentWithMeta(
+  students: RosterStudent[],
+  rules: SeparationRule[],
+  seed?: number,
+) {
+  return assignGroupsWithMeta(students, rules, seed);
 }
 
 export async function saveRoleSchedule(

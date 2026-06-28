@@ -86,7 +86,12 @@ export function GroupAssignmentStatusPanel({
 
       {activeCount > 0 && activeCount < minRequired && (
         <p className="ui-banner mt-5 border-amber-200 bg-amber-50 text-amber-950">
-          자동 6모둠 편성에는 최소 {minRequired}명이 필요합니다. 현재 {activeCount}명 — 아래에 명단·미배정 현황만 표시됩니다.
+          자동 6모둠 편성에는 <strong>18~24명</strong>(모둠당 3~4명)이 필요합니다. 현재 {activeCount}명 — 아래에 명단·미배정 현황만 표시됩니다.
+        </p>
+      )}
+      {activeCount > GROUP_COUNT * 4 && (
+        <p className="ui-banner mt-5 border-amber-200 bg-amber-50 text-amber-950">
+          학생이 {GROUP_COUNT * 4}명을 초과하면 6모둠 자동 편성이 어렵습니다. 현재 {activeCount}명 — 명단을 조정하거나 수동으로 조정해 주세요.
         </p>
       )}
 

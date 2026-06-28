@@ -27,7 +27,7 @@ import {
   addGroupActivityPraise,
   buildSeparationStudentStatus,
   bulkUpsertRosterStudents,
-  computeGroupAssignment,
+  computeGroupAssignmentWithMeta,
   deleteRosterStudent,
   deleteSeparationRule,
   getMonthlyAssignment,
@@ -339,15 +339,21 @@ export function GroupActivityManager() {
     setError("");
     setBusy("assign");
     try {
-      const result = enrichGroupSlots(
-        computeGroupAssignment(students, separationRulesForAssign, seed),
+      const { groups: assigned, notice } = computeGroupAssignmentWithMeta(
         students,
+        separationRulesForAssign,
+        seed,
       );
+      const result = enrichGroupSlots(assigned, students);
       await saveMonthlyAssignment(user.uid, grade, classNo, year, month, result, false);
       setGroups(result);
       setAssignmentConfirmed(false);
       setActivitySection("assign");
-      setMessage("모둠을 자동 편성해 저장했습니다. 확인 후 「편성 확정」을 눌러 주세요.");
+      setMessage(
+        notice
+          ? `모둠을 편성해 저장했습니다. ${notice} 「편성 확정」을 눌러 주세요.`
+          : "모둠을 자동 편성해 저장했습니다. 확인 후 「편성 확정」을 눌러 주세요.",
+      );
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "편성 실패");
     } finally {
