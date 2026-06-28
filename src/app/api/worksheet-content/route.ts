@@ -11,7 +11,7 @@ interface ReviseRequest {
   unit?: string;
 }
 
-const MAIN_FIELD_KEYS = new Set(["unit", "topic", "writingGuide", "reminder1", "reminder2"]);
+const MAIN_FIELD_KEYS = new Set(["unit", "topic", "inquiryQuestion", "writingGuide", "reminder1", "reminder2", "usageTips"]);
 
 function buildPrompt(body: ReviseRequest): string {
   const schema = getWorksheetContentSchema(body.templateId);

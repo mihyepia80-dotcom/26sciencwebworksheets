@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { reviseWorksheetContentWithAi } from "@/lib/ai/worksheet-content-client";
@@ -12,10 +12,12 @@ import {
   type WorksheetContentFieldDef,
   type WorksheetContentSchema,
 } from "@/lib/worksheet-content/registry";
+import { DISSOLUTION_UNIT_PRESETS } from "@/lib/worksheet-content/dissolution-unit";
+import { CURRENT_UNIT_LABEL } from "@/lib/lesson-plan/template-content";
 
 const INPUT = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
 
-const MAIN_KEYS = new Set(["unit", "topic", "writingGuide", "reminder1", "reminder2"]);
+const MAIN_KEYS = new Set(["unit", "topic", "inquiryQuestion", "writingGuide", "reminder1", "reminder2", "usageTips"]);
 
 function groupFields(fields: WorksheetContentFieldDef[]) {
   const main: WorksheetContentFieldDef[] = [];
@@ -73,6 +75,7 @@ export function WorksheetContentEditor() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const skipLoadRef = useRef(false);
 
   const schema: WorksheetContentSchema | undefined = WORKSHEET_CONTENT_SCHEMAS.find(
     (s) => s.templateId === selectedId,
@@ -100,6 +103,10 @@ export function WorksheetContentEditor() {
   }, []);
 
   useEffect(() => {
+    if (skipLoadRef.current) {
+      skipLoadRef.current = false;
+      return;
+    }
     if (selectedId) void loadContent(selectedId);
   }, [selectedId, loadContent]);
 
@@ -127,6 +134,17 @@ export function WorksheetContentEditor() {
     if (!selectedId) return;
     if (!window.confirm("코드 기본값으로 되돌릴까요? (저장 전까지 학생에게 반영되지 않습니다)")) return;
     setFields(getDefaultWorksheetContent(selectedId));
+  };
+
+  const handleApplyUnitPreset = (period: string) => {
+    const preset = DISSOLUTION_UNIT_PRESETS.find((p) => p.period === period);
+    if (!preset) return;
+    skipLoadRef.current = true;
+    if (preset.templateId !== selectedId) {
+      setSelectedId(preset.templateId);
+    }
+    setFields({ ...getDefaultWorksheetContent(preset.templateId), ...preset.fields });
+    setMessage(`${CURRENT_UNIT_LABEL} ${period}차시(${preset.templateLabel}) 프리셋을 적용했습니다. 배포 전 확인하세요.`);
   };
 
   const handleAiRevise = async () => {
@@ -178,6 +196,29 @@ export function WorksheetContentEditor() {
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+        <h3 className="text-sm font-bold text-indigo-950">{CURRENT_UNIT_LABEL} — 실험반·사고도구 활동지 프리셋</h3>
+        <p className="mt-1 text-xs leading-relaxed text-indigo-900/90">
+          한글 원본 「실험반 활동지」「사고 도구 활동지」 내용을 차시별로 반영했습니다.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {DISSOLUTION_UNIT_PRESETS.map((p) => (
+            <button
+              key={p.period}
+              type="button"
+              onClick={() => handleApplyUnitPreset(p.period)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
+                p.templateId === selectedId
+                  ? "bg-indigo-600 text-white"
+                  : "border border-indigo-200 bg-white text-indigo-800 hover:bg-indigo-50"
+              }`}
+            >
+              {p.period} · {p.templateLabel}
+            </button>
+          ))}
+        </div>
       </div>
 
       {lastUpdated && (

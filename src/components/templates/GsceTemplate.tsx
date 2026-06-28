@@ -4,12 +4,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { TemplateProps } from "@/lib/types";
 import { SectionBox, TextAreaField } from "@/components/common/Fields";
 import { fieldValue as v } from "@/components/templates/utils";
+import { useWorksheetContent } from "@/hooks/useWorksheetContent";
 import {
   addConnection,
   addCustomChip,
   createInitialBoardState,
   findChipZone,
   GSCE_ELABORATE_SECTIONS,
+  GSCE_CHECKLIST,
   moveChip,
   parseBoardState,
   removeConnection,
@@ -246,6 +248,7 @@ function ConnectionCanvas({
 }
 
 export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
+  const { get } = useWorksheetContent("gsce");
   const boardRef = useRef<HTMLDivElement>(null);
   const [board, setBoard] = useState<GsceBoardState>(() => parseBoardState(v(values, "gsceBoard")));
   const [newWord, setNewWord] = useState("");
@@ -308,15 +311,39 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
 
   return (
     <div className="gsce-worksheet space-y-6 print:space-y-4">
+      {(get("unit") || get("topic")) && (
+        <div className="rounded-xl border border-slate-200 bg-white p-4 text-center shadow-sm">
+          {get("unit") && <p className="text-xs font-medium text-slate-500">{get("unit")}</p>}
+          {get("topic") && <p className="mt-1 text-base font-semibold text-slate-800">{get("topic")}</p>}
+        </div>
+      )}
+
+      {get("inquiryQuestion") && (
+        <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-4">
+          <h3 className="mb-1 text-sm font-bold text-violet-900">탐구 질문</h3>
+          <p className="text-base leading-relaxed text-violet-950">{get("inquiryQuestion")}</p>
+        </div>
+      )}
+
       <SectionBox title="생성·분류·연결·정교화 — 용해와 용액" color="blue">
-        <p className="mb-4 text-sm leading-relaxed text-slate-600">
-          오늘 수행한 실험 과정과 결과를 떠올리며, 단어를 생성하고 분류·연결한 뒤 과학적 문장으로 정교화해 봅시다.
+        <p className="mb-4 text-base leading-relaxed text-slate-600">
+          {get("intro") ||
+            "오늘 수행한 실험 과정과 결과를 떠올리며, 단어를 생성하고 분류·연결한 뒤 과학적 문장으로 정교화해 봅시다."}
         </p>
+
+        {get("writingGuide") && (
+          <p className="mb-4 border-l-4 border-indigo-400 pl-3 text-base leading-relaxed text-slate-700">
+            <strong className="text-slate-800">글쓰기 안내.</strong> {get("writingGuide")}
+          </p>
+        )}
 
         {/* 1단계: 생성 */}
         <section className="mb-6 rounded-xl border border-blue-200 bg-blue-50/40 p-4">
           <h3 className="mb-1 text-base font-bold text-blue-900">1단계 — 생성하기</h3>
-          <p className="mb-3 text-base text-slate-600">기본 과학 단어를 확인하고, 필요하면 새 포스트잇 단어를 추가하세요.</p>
+          <p className="mb-3 text-base text-slate-600">
+            {get("step1Guide") ||
+              "기본 과학 단어를 확인하고, 필요하면 새 포스트잇 단어를 추가하세요."}
+          </p>
           {!readOnly && (
             <div className="mb-3 flex flex-wrap gap-2 print:hidden">
               <input
@@ -355,7 +382,8 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
             <div>
               <h3 className="text-base font-bold text-purple-900">2~3단계 — 분류·연결하기</h3>
               <p className="mt-1 text-base text-slate-600">
-                단어를 원인/조건과 결과/관찰 영역으로 드래그한 뒤, 연결 모드에서 두 칩을 클릭해 관계를 적으세요.
+                {get("step2Guide") ||
+                  "단어를 원인/조건과 결과/관찰 영역으로 드래그한 뒤, 연결 모드에서 두 칩을 클릭해 관계를 적으세요."}
               </p>
             </div>
             {!readOnly && (
@@ -442,7 +470,10 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
 
         {/* 4단계: 정교화 */}
         <section className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50/30 p-4">
-          <h3 className="mb-3 text-base font-bold text-emerald-900">4단계 — 정교화하기</h3>
+          <h3 className="mb-1 text-base font-bold text-emerald-900">4단계 — 정교화하기</h3>
+          {get("step4Guide") && (
+            <p className="mb-3 text-base text-slate-600">{get("step4Guide")}</p>
+          )}
           <div className="space-y-4">
             {GSCE_ELABORATE_SECTIONS.map(({ key, title, guide }) => (
               <TextAreaField
@@ -457,6 +488,40 @@ export function GsceTemplate({ values, onChange, readOnly }: TemplateProps) {
             ))}
           </div>
         </section>
+
+        {(get("reminder1") || get("reminder2")) && (
+          <div className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+            <h3 className="mb-2 text-sm font-bold text-indigo-900">탐구 리마인더</h3>
+            <ul className="list-disc space-y-1 pl-4 text-sm leading-relaxed text-indigo-900/90">
+              {get("reminder1") && <li>{get("reminder1")}</li>}
+              {get("reminder2") && <li>{get("reminder2")}</li>}
+            </ul>
+          </div>
+        )}
+
+        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+          <h3 className="mb-2 text-sm font-bold text-slate-800">과학 글쓰기 체크리스트</h3>
+          <ul className="space-y-2 text-sm text-slate-700">
+            {GSCE_CHECKLIST.map(({ key, label }) => (
+              <li key={key} className="flex gap-2">
+                <input
+                  type="checkbox"
+                  checked={v(values, key) === "1"}
+                  disabled={readOnly}
+                  onChange={(e) => onChange(key, e.target.checked ? "1" : "")}
+                  className="mt-0.5 print:hidden"
+                />
+                <span>{label}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {get("usageTips") && (
+          <p className="mt-4 rounded-lg border border-amber-100 bg-amber-50/80 px-3 py-2 text-sm leading-relaxed text-amber-950">
+            <strong className="text-amber-900">활용 팁.</strong> {get("usageTips")}
+          </p>
+        )}
       </SectionBox>
     </div>
   );

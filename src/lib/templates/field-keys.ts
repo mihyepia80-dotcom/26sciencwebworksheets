@@ -52,7 +52,7 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
   headline: ["headline", "headlineReason"],
   "zoom-in": ["step1", "step2", "step3", "writingSituation"],
   "chalk-talk": ["writingContext", "activityExample", "activityTip"],
-  gsce: ["elaborateA", "elaborateB", "elaborateC"],
+  gsce: ["elaborateA", "elaborateB", "elaborateC", "checkTerms", "checkVariable", "checkCausal", "gsceBoard"],
   "frayer-model": ["definition", "characteristics", "examples", "nonExamples", "concept"],
   "question-types": ["inquiry", "aiPrompt", "fact", "concept", "curiosity", "expected"],
   "question-bank": questionBankFieldKeys(),

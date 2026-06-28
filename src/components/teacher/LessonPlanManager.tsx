@@ -27,6 +27,12 @@ import {
   validateLessonThinkingTools,
   type PrimaryInquiryStageKey,
 } from "@/lib/lesson-plan/thinking-tools";
+import { generateLessonPlanWithAi } from "@/lib/ai/lesson-plan-client";
+import {
+  CURRENT_UNIT_LABEL,
+  EXPERIMENT_LESSON_SAMPLE,
+  getExperimentLessonSeed,
+} from "@/lib/lesson-plan/template-content";
 import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 
 const PRIMARY_STAGE_LABELS: { key: PrimaryInquiryStageKey; label: string }[] = [
@@ -63,6 +69,10 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiPeriod, setAiPeriod] = useState("1/12");
+  const [aiTopic, setAiTopic] = useState("");
+  const [aiInstruction, setAiInstruction] = useState("");
 
   const loadList = useCallback(() => {
     if (!user || role !== "teacher") return;
@@ -242,6 +252,38 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
     window.history.replaceState(null, "", "/teacher/lesson-plans");
   };
 
+  const handleApplyExperimentSample = () => {
+    const seed = getExperimentLessonSeed(aiPeriod);
+    setForm(seed);
+    setPlanId(null);
+    setMessage(`${CURRENT_UNIT_LABEL} 실험반 지도안 예시(${aiPeriod})를 불러왔습니다. 수정 후 저장하세요.`);
+    setError("");
+    window.history.replaceState(null, "", "/teacher/lesson-plans");
+  };
+
+  const handleGenerateWithAi = async () => {
+    setAiLoading(true);
+    setError("");
+    setMessage("");
+    try {
+      const { plan } = await generateLessonPlanWithAi({
+        unit: form.unit || CURRENT_UNIT_LABEL,
+        period: aiPeriod,
+        learningTopic: aiTopic || form.learningTopic,
+        achievementStandards: form.achievementStandards,
+        instruction: aiInstruction,
+      });
+      setForm(plan);
+      setPlanId(null);
+      setMessage(`AI가 ${plan.period}차시 실험반 지도안 초안을 생성했습니다. 확인 후 저장하세요.`);
+      window.history.replaceState(null, "", "/teacher/lesson-plans");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "AI 생성 실패");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   if (editorLoading) {
     return <p className="py-16 text-center text-sm text-slate-500">불러오는 중...</p>;
   }
@@ -293,6 +335,51 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
 
       {message && <p className="mt-4 text-sm text-green-600 print:hidden">{message}</p>}
       {error && <p className="mt-4 text-sm text-red-600 print:hidden">{error}</p>}
+
+      <section className="mt-6 rounded-xl border border-teal-200 bg-teal-50/40 p-5 print:hidden">
+        <h2 className="text-base font-bold text-teal-950">실험반 지도안 설계 도구</h2>
+        <p className="mt-1 text-sm leading-relaxed text-teal-900/90">
+          한글 원본 <strong>지도안(틀)</strong>·<strong>실험반 지도안</strong>을 Markdown으로 변환해 반영했습니다.
+          현재 단원({CURRENT_UNIT_LABEL}) 예시를 불러오거나 AI로 차시별 교수학습지도안 초안을 생성할 수 있습니다.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-teal-900">차시</span>
+            <input className={INPUT} value={aiPeriod} onChange={(e) => setAiPeriod(e.target.value)} placeholder="1/12" />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="mb-1 block text-xs font-semibold text-teal-900">학습 주제 (선택)</span>
+            <input className={INPUT} value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder="AI에 전달할 주제" />
+          </label>
+          <label className="block sm:col-span-2 lg:col-span-4">
+            <span className="mb-1 block text-xs font-semibold text-teal-900">AI 추가 지시 (선택)</span>
+            <input className={INPUT} value={aiInstruction} onChange={(e) => setAiInstruction(e.target.value)} placeholder="예: STW 중심, 영상 촬영 활동 포함" />
+          </label>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleApplyExperimentSample}
+            className="rounded-lg border border-teal-300 bg-white px-4 py-2 text-sm font-medium text-teal-900 hover:bg-teal-50"
+          >
+            실험반 예시 불러오기
+          </button>
+          <button
+            type="button"
+            onClick={() => void handleGenerateWithAi()}
+            disabled={aiLoading}
+            className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+          >
+            {aiLoading ? "AI 생성 중..." : "AI로 지도안 생성"}
+          </button>
+          <span className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs text-slate-600">
+            MD 원본: docs/templates/
+          </span>
+        </div>
+        <p className="mt-3 text-xs text-teal-800/80">
+          예시 1차시: {EXPERIMENT_LESSON_SAMPLE.thinkingTool} · {EXPERIMENT_LESSON_SAMPLE.learningTopic}
+        </p>
+      </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr] print:mt-0 print:block">
         <aside className="rounded-xl border border-slate-200 bg-white p-4 print:hidden">

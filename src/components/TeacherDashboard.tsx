@@ -191,6 +191,42 @@ export function TeacherDashboard() {
 
       <TeacherStudentInvitePanel teacherUid={user.uid} />
 
+      <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900">수업 설계 · 활동지 관리</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          용해와 용액 단원 한글 원본(지도안·실험반 활동지·사고도구 활동지)을 웹에 반영했습니다.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Link
+            href="/teacher/lesson-plans"
+            className="rounded-xl border border-teal-200 bg-teal-50/60 p-4 hover:bg-teal-50"
+          >
+            <p className="font-semibold text-teal-950">수업지도안 설계</p>
+            <p className="mt-1 text-xs leading-relaxed text-teal-900/90">
+              지도안 틀 · 실험반 예시 불러오기 · AI 교수학습지도안 생성
+            </p>
+          </Link>
+          <Link
+            href="/teacher/worksheet-content"
+            className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 hover:bg-indigo-50"
+          >
+            <p className="font-semibold text-indigo-950">학습지 텍스트 편집</p>
+            <p className="mt-1 text-xs leading-relaxed text-indigo-900/90">
+              차시별 실험반·사고도구 활동지 프리셋 · GSCE·STW 등 배포
+            </p>
+          </Link>
+          <Link
+            href="/templates/gsce"
+            className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 hover:bg-violet-50"
+          >
+            <p className="font-semibold text-violet-950">실험반 GSCE 활동지 미리보기</p>
+            <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+              생성·분류·연결·정교화 반응형 활동지 (4~5차시)
+            </p>
+          </Link>
+        </div>
+      </section>
+
       {listLoading && <p className="mt-8 text-sm text-slate-500">불러오는 중...</p>}
       {listError && <p className="mt-8 text-sm text-red-600">{listError}</p>}
 

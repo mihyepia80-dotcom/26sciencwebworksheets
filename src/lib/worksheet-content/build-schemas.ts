@@ -14,6 +14,7 @@ import {
   HEADLINE_UNIT,
 } from "@/lib/templates/headlines";
 import { CSQ_INQUIRY_MEMO, CSQ_SECTIONS } from "@/lib/templates/csq";
+import { getDissolutionPresetByTemplate } from "@/lib/worksheet-content/dissolution-unit";
 import type { WorksheetContentFieldDef, WorksheetContentSchema } from "./registry";
 
 const FIELD_HINT_PREFIX = "hint_";
@@ -28,22 +29,36 @@ const TEMPLATE_DEFAULT_OVERRIDES: Record<string, Record<string, string>> = {
     writingGuide: CSI_WRITING_GUIDE,
   },
   headline: {
-    unit: HEADLINE_UNIT,
-    topic: HEADLINE_TOPIC,
+    ...(getDissolutionPresetByTemplate("headline")?.fields ?? {}),
+    unit: getDissolutionPresetByTemplate("headline")?.fields.unit ?? HEADLINE_UNIT,
+    topic: getDissolutionPresetByTemplate("headline")?.fields.topic ?? HEADLINE_TOPIC,
     reminder1: HEADLINE_REMINDERS[0],
     reminder2: HEADLINE_REMINDERS[1],
-    writingGuide: HEADLINE_GUIDE,
+    writingGuide: getDissolutionPresetByTemplate("headline")?.fields.writingGuide ?? HEADLINE_GUIDE,
   },
   "claim-support-question": {
+    ...(getDissolutionPresetByTemplate("claim-support-question")?.fields ?? {}),
     memo1: CSQ_INQUIRY_MEMO[0],
     memo2: CSQ_INQUIRY_MEMO[1],
     ...Object.fromEntries(
       CSQ_SECTIONS.map((s) => [`guide_${s.key}`, s.guide]),
     ),
   },
+  ...Object.fromEntries(
+    ["see-think-wonder", "gsce", "i-used-to-think", "what-makes-you-say-that"].map((id) => {
+      const preset = getDissolutionPresetByTemplate(id);
+      return preset ? [id, preset.fields] : [id, {}];
+    }),
+  ),
 };
 
 const TEMPLATE_EXTRA_FIELDS: Record<string, WorksheetContentFieldDef[]> = {
+  gsce: [
+    { key: "intro", label: "활동지 도입", defaultValue: "", multiline: true },
+    { key: "step1Guide", label: "1단계 생성 안내", defaultValue: "", multiline: true },
+    { key: "step2Guide", label: "2~3단계 분류·연결 안내", defaultValue: "", multiline: true },
+    { key: "step4Guide", label: "4단계 정교화 안내", defaultValue: "", multiline: true },
+  ],
   "claim-support-question": [
     { key: "memo1", label: "탐구 데이터 1", defaultValue: CSQ_INQUIRY_MEMO[0], multiline: true },
     { key: "memo2", label: "탐구 데이터 2", defaultValue: CSQ_INQUIRY_MEMO[1], multiline: true },
@@ -61,6 +76,7 @@ export const TEMPLATES_WITH_BUILTIN_CONTENT = new Set([
   "color-symbol-image",
   "headline",
   "claim-support-question",
+  "gsce",
 ]);
 
 function standardFields(
@@ -72,6 +88,12 @@ function standardFields(
   return [
     { key: "unit", label: "단원", defaultValue: overrides.unit ?? "" },
     { key: "topic", label: "학습 주제", defaultValue: overrides.topic ?? description },
+    {
+      key: "inquiryQuestion",
+      label: "탐구 질문",
+      defaultValue: overrides.inquiryQuestion ?? "",
+      multiline: true,
+    },
     {
       key: "writingGuide",
       label: "글쓰기 안내",
@@ -88,6 +110,12 @@ function standardFields(
       key: "reminder2",
       label: "탐구 리마인더 2",
       defaultValue: overrides.reminder2 ?? "",
+      multiline: true,
+    },
+    {
+      key: "usageTips",
+      label: "활용 팁",
+      defaultValue: overrides.usageTips ?? "",
       multiline: true,
     },
   ];
