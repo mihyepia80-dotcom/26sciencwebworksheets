@@ -87,7 +87,9 @@ export function assignRolesForAllGroups(
   const all: StudentRoleAssignment[] = [];
   for (const group of groups) {
     const members = group.memberIds.map((id) => studentsById.get(id)).filter(Boolean) as RosterStudent[];
-    all.push(...assignRolesForGroup(members, group.groupNo, weekIndex));
+    if (members.length === 3 || members.length === 4) {
+      all.push(...assignRolesForGroup(members, group.groupNo, weekIndex));
+    }
   }
   return all;
 }

@@ -37,7 +37,7 @@ export {
   type StudentProfile,
   type StudentRecord,
 } from "./student-auth";
-export { getFirebaseErrorMessage, getStudentFirebaseErrorMessage } from "./errors";
+export { getFirebaseErrorCode, getFirebaseErrorMessage, getStudentFirebaseErrorMessage, getTeacherFirebaseErrorMessage } from "./errors";
 export {
   createTeacherInviteLink,
   getTeacherInviteByToken,

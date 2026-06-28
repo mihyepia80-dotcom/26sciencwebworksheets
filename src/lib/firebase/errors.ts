@@ -15,13 +15,18 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   "failed-precondition": "Firestore 색인이 필요합니다. Firebase Console에서 색인을 생성하거나 deploy:firestore를 실행하세요.",
 };
 
+export function getFirebaseErrorCode(error: unknown): string | undefined {
+  if (error && typeof error === "object" && "code" in error) {
+    return String((error as { code?: string }).code);
+  }
+  if (error instanceof Error && (error as Error & { code?: string }).code) {
+    return (error as Error & { code?: string }).code;
+  }
+  return undefined;
+}
+
 export function getFirebaseErrorMessage(error: unknown, fallback = "요청에 실패했습니다."): string {
-  const code =
-    error && typeof error === "object" && "code" in error
-      ? String((error as { code?: string }).code)
-      : error instanceof Error
-        ? (error as Error & { code?: string }).code
-        : undefined;
+  const code = getFirebaseErrorCode(error);
 
   if (code === "auth/unauthorized-domain") {
     const host = typeof window !== "undefined" ? window.location.hostname : "";
@@ -44,6 +49,22 @@ export function getStudentFirebaseErrorMessage(error: unknown, fallback = "잠�
   if (error instanceof Error) {
     const code = (error as Error & { code?: string }).code;
     if (code === "failed-precondition" || code === "permission-denied") return fallback;
+  }
+  const msg = getFirebaseErrorMessage(error, fallback);
+  if (msg.includes("Firestore") || msg.includes("deploy:") || msg.includes("Firebase Console")) {
+    return fallback;
+  }
+  return msg;
+}
+
+/** 교사 모둠 활동 등 — 기술적 Firestore 안내를 짧은 문구로 바꿉니다. */
+export function getTeacherFirebaseErrorMessage(error: unknown, fallback = "요청에 실패했습니다."): string {
+  const code = getFirebaseErrorCode(error);
+  if (code === "permission-denied") {
+    return "데이터를 불러올 권한이 없습니다. 교사 로그아웃 후 다시 로그인해 주세요.";
+  }
+  if (code === "failed-precondition") {
+    return "데이터 조회 설정이 필요합니다. 잠시 후 다시 시도해 주세요.";
   }
   const msg = getFirebaseErrorMessage(error, fallback);
   if (msg.includes("Firestore") || msg.includes("deploy:") || msg.includes("Firebase Console")) {

@@ -152,7 +152,13 @@ export async function ensureRosterMeta(
   return { rosterId, teacherUid, grade: normalizedGrade, classNo: normalizedClassNo, anchorDate: ROLE_WEEK_ANCHOR };
 }
 
-export async function listTeacherClasses(teacherUid: string): Promise<ClassRosterMeta[]> {
+export async function listTeacherClasses(
+  teacherUid: string,
+  teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
+): Promise<ClassRosterMeta[]> {
+  if (teacherUser) {
+    await prepareTeacherFirestoreAccess(teacherUser);
+  }
   const snap = await getDocs(teacherCollection(teacherUid, "classRosters"));
   return snap.docs
     .map((d) => {
@@ -235,7 +241,11 @@ export async function listRosterStudents(
   rosterId: string,
   grade?: string,
   classNo?: string,
+  teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
 ): Promise<RosterStudent[]> {
+  if (teacherUser) {
+    await prepareTeacherFirestoreAccess(teacherUser);
+  }
   const normalizedGrade = grade ? normalizeClassPart(grade) : "";
   const normalizedClassNo = classNo ? normalizeClassPart(classNo) : "";
   const snap = await getDocs(teacherCollection(teacherUid, "groupRosterStudents"));
@@ -308,7 +318,11 @@ export async function listSeparationRules(
   rosterId: string,
   grade?: string,
   classNo?: string,
+  teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
 ): Promise<SeparationRule[]> {
+  if (teacherUser) {
+    await prepareTeacherFirestoreAccess(teacherUser);
+  }
   const normalizedGrade = grade ? normalizeClassPart(grade) : "";
   const normalizedClassNo = classNo ? normalizeClassPart(classNo) : "";
   const snap = await getDocs(teacherCollection(teacherUid, "groupSeparations"));
@@ -413,7 +427,11 @@ export async function getMonthlyAssignment(
   rosterId: string,
   year: number,
   month: number,
+  teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
 ): Promise<MonthlyAssignment | null> {
+  if (teacherUser) {
+    await prepareTeacherFirestoreAccess(teacherUser);
+  }
   const snap = await getDoc(
     teacherDocument(teacherUid, "groupAssignments", assignmentDocId(rosterId, year, month)),
   );

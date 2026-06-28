@@ -24,7 +24,7 @@ import { GROUP_ACTIVITY_PRD } from "@/lib/group-activity/prd";
 import { downloadRosterExcel, parseRosterFile } from "@/lib/group-activity/roster-excel";
 import type { AchievementLevel, Gender, GroupSlot, RosterStudent, SeparationRule, StudentRoleAssignment } from "@/lib/group-activity/types";
 import { getWeekInfo } from "@/lib/group-activity/week-utils";
-import { getFirebaseErrorMessage } from "@/lib/firebase";
+import { getFirebaseErrorCode, getTeacherFirebaseErrorMessage } from "@/lib/firebase";
 import {
   addGroupActivityPraise,
   buildSeparationStudentStatus,
@@ -144,20 +144,24 @@ export function GroupActivityManager() {
 
   useEffect(() => {
     if (roleDraftDirtyRef.current) return;
-    if (resolvedGroups.every((g) => g.memberIds.length === 0)) {
+    try {
+      if (resolvedGroups.every((g) => g.memberIds.length === 0)) {
+        setRoleDraft([]);
+        return;
+      }
+      if (roleSchedule?.weekIndex === week.weekIndex && roleSchedule.assignments.length > 0) {
+        setRoleDraft(resolveRoleAssignments(roleSchedule.assignments, students));
+        return;
+      }
+      setRoleDraft(assignRolesForAllGroups(resolvedGroups, studentsById, week.weekIndex));
+    } catch {
       setRoleDraft([]);
-      return;
     }
-    if (roleSchedule?.weekIndex === week.weekIndex && roleSchedule.assignments.length > 0) {
-      setRoleDraft(resolveRoleAssignments(roleSchedule.assignments, students));
-      return;
-    }
-    setRoleDraft(assignRolesForAllGroups(resolvedGroups, studentsById, week.weekIndex));
   }, [resolvedGroups, students, studentsById, week.weekIndex, roleSchedule]);
 
   const loadTeacherClasses = useCallback(async () => {
     if (!user || role !== "teacher") return;
-    const list = await listTeacherClasses(user.uid);
+    const list = await listTeacherClasses(user.uid, user);
     setClasses(list);
     if (list.length > 0) {
       const key = classKey(list[0].grade, list[0].classNo);
@@ -181,18 +185,18 @@ export function GroupActivityManager() {
     let rules: SeparationRule[] = [];
 
     try {
-      roster = await listRosterStudents(user.uid, rid, grade, classNo);
+      roster = await listRosterStudents(user.uid, rid, grade, classNo, user);
       setStudents(roster);
-      rules = await listSeparationRules(user.uid, rid, grade, classNo);
+      rules = await listSeparationRules(user.uid, rid, grade, classNo, user);
       setSeparations(rules);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "명단·분리 조건 불러오기 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "명단·분리 조건 불러오기 실패"));
       setLoading(false);
       return;
     }
 
     try {
-      const assignment = await getMonthlyAssignment(user.uid, rid, year, month);
+      const assignment = await getMonthlyAssignment(user.uid, rid, year, month, user);
       const syncedGroups = syncGroupsFromRoster(
         assignment?.groups ?? [],
         roster,
@@ -201,7 +205,11 @@ export function GroupActivityManager() {
       setGroups(syncedGroups);
       setAssignmentConfirmed(!!assignment?.confirmedAt);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "모둠 편성 불러오기 실패"));
+      if (getFirebaseErrorCode(e) !== "permission-denied") {
+        setError(getTeacherFirebaseErrorMessage(e, "모둠 편성 불러오기 실패"));
+      }
+      setGroups(enrichGroupSlots([], roster));
+      setAssignmentConfirmed(false);
     }
 
     try {
@@ -222,7 +230,7 @@ export function GroupActivityManager() {
 
   useEffect(() => {
     void loadTeacherClasses().catch((e: unknown) => {
-      setError(getFirebaseErrorMessage(e, "반 목록 불러오기 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "반 목록 불러오기 실패"));
     });
   }, [loadTeacherClasses]);
 
@@ -259,10 +267,10 @@ export function GroupActivityManager() {
         await loadTeacherClasses();
         setSelectedClass(key);
       } catch (reloadError: unknown) {
-        setError(getFirebaseErrorMessage(reloadError, "반 목록 새로고침 실패"));
+        setError(getTeacherFirebaseErrorMessage(reloadError, "반 목록 새로고침 실패"));
       }
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "반 등록 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "반 등록 실패"));
     } finally {
       setBusy("");
     }
@@ -285,13 +293,13 @@ export function GroupActivityManager() {
       if (rows.length === 0) throw new Error("업로드할 학생 데이터가 없습니다.");
       const count = await bulkUpsertRosterStudents(user.uid, grade, classNo, rows, user);
       const rid = buildRosterId(user.uid, grade, classNo);
-      const roster = await listRosterStudents(user.uid, rid, grade, classNo);
+      const roster = await listRosterStudents(user.uid, rid, grade, classNo, user);
       setStudents(roster);
       setMessage(`${count}명 명단을 반영했습니다.`);
       setActivitySection("assign");
       void loadClassData();
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "파일 업로드 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "파일 업로드 실패"));
     } finally {
       setBusy("");
     }
@@ -321,7 +329,7 @@ export function GroupActivityManager() {
         active: true,
       }, user);
       const rid = buildRosterId(user.uid, grade, classNo);
-      const roster = await listRosterStudents(user.uid, rid, grade, classNo);
+      const roster = await listRosterStudents(user.uid, rid, grade, classNo, user);
       setStudents(roster);
       setNewStudentNo("");
       setNewStudentName("");
@@ -329,7 +337,7 @@ export function GroupActivityManager() {
       setActivitySection("assign");
       void loadClassData();
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "추가 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "추가 실패"));
     } finally {
       setBusy("");
     }
@@ -343,7 +351,7 @@ export function GroupActivityManager() {
       await deleteRosterStudent(user.uid, id);
       await loadClassData();
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "삭제 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "삭제 실패"));
     } finally {
       setBusy("");
     }
@@ -387,7 +395,7 @@ export function GroupActivityManager() {
       await saveMonthlyAssignment(user.uid, grade, classNo, year, month, payload, false);
       setMessage("모둠 구성을 저장했습니다. 확인 후 「편성 확정」을 눌러 주세요.");
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "모둠 구성 저장 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "모둠 구성 저장 실패"));
       void loadClassData();
     } finally {
       setBusy("");
@@ -404,7 +412,7 @@ export function GroupActivityManager() {
       setAssignmentConfirmed(true);
       setMessage(`${year}년 ${month}월 모둠 편성을 확정했습니다.`);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "확정 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "확정 실패"));
     } finally {
       setBusy("");
     }
@@ -420,7 +428,7 @@ export function GroupActivityManager() {
       setGroups(payload);
       setMessage("모둠 편성을 저장했습니다.");
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "편성 저장 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "편성 저장 실패"));
     } finally {
       setBusy("");
     }
@@ -438,7 +446,7 @@ export function GroupActivityManager() {
       setAssignmentConfirmed(false);
       setMessage("모둠 편성을 삭제했습니다.");
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "편성 삭제 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "편성 삭제 실패"));
     } finally {
       setBusy("");
     }
@@ -463,7 +471,7 @@ export function GroupActivityManager() {
       setActivitySection("roles");
       setMessage(`${week.weekIndex}주차 역할을 저장했습니다.`);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "역할 저장 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "역할 저장 실패"));
     } finally {
       setBusy("");
     }
@@ -481,7 +489,7 @@ export function GroupActivityManager() {
       setRoleDraft(assignRolesForAllGroups(resolvedGroups, studentsById, week.weekIndex));
       setMessage("역할 배정을 삭제했습니다.");
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "역할 삭제 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "역할 삭제 실패"));
     } finally {
       setBusy("");
     }
@@ -530,7 +538,7 @@ export function GroupActivityManager() {
       setRosterId(rid);
       setMessage(ruleId ? `「${label}」 분리 쌍을 수정했습니다.` : `「${label}」 분리 쌍을 등록했습니다.`);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "분리 조건 저장 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "분리 조건 저장 실패"));
     } finally {
       setBusy("");
     }
@@ -545,7 +553,7 @@ export function GroupActivityManager() {
       await loadClassData();
       setMessage("분리 조건을 삭제했습니다.");
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "분리 조건 삭제 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "분리 조건 삭제 실패"));
     } finally {
       setBusy("");
     }
@@ -576,7 +584,7 @@ export function GroupActivityManager() {
       const list = await listGroupActivityPraises(user.uid, rosterId, week.weekIndex);
       setPraises(list);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "칭찬 실패"));
+      setError(getTeacherFirebaseErrorMessage(e, "칭찬 실패"));
     } finally {
       setBusy("");
     }
@@ -664,7 +672,10 @@ export function GroupActivityManager() {
                 key={item.id}
                 type="button"
                 className={`ui-tab ${activitySection === item.id ? "ui-tab-active" : "ui-tab-inactive"}`}
-                onClick={() => setActivitySection(item.id)}
+                onClick={() => {
+                  setActivitySection(item.id);
+                  setError("");
+                }}
               >
                 {item.label}
               </button>
