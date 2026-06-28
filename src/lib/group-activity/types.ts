@@ -31,6 +31,8 @@ export interface SeparationRule {
 export interface GroupSlot {
   groupNo: number;
   memberIds: string[];
+  /** 명단 ID 변경 시 편성 복원용 */
+  memberNos?: string[];
 }
 
 export interface MonthlyAssignment {

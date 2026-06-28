@@ -5,9 +5,11 @@ import { getFirebaseErrorMessage, signInTeacher } from "@/lib/firebase";
 
 interface TeacherLoginPanelProps {
   onSuccess?: () => void;
+  consentComplete?: boolean;
+  onBeforeLogin?: () => void;
 }
 
-export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
+export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeLogin }: TeacherLoginPanelProps) {
   const [teacherPassword, setTeacherPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,9 +17,14 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
   const handleTeacherLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
+    if (!consentComplete) {
+      setError("서비스 이용 동의를 모두 확인해 주세요.");
+      return;
+    }
     setLoading(true);
 
     try {
+      onBeforeLogin?.();
       await signInTeacher(teacherPassword);
       setTeacherPassword("");
       onSuccess?.();
@@ -41,8 +48,9 @@ export function TeacherLoginPanel({ onSuccess }: TeacherLoginPanelProps) {
         value={teacherPassword}
         onChange={(e) => setTeacherPassword(e.target.value)}
         required
+        disabled={!consentComplete}
       />
-      <button type="submit" disabled={loading} className="ui-btn-primary w-full">
+      <button type="submit" disabled={loading || !consentComplete} className="ui-btn-primary w-full">
         {loading ? "로그인 중..." : "교사로 시작하기"}
       </button>
       {error && <p className="text-sm text-red-600">{error}</p>}

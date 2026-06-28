@@ -4,17 +4,24 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
+import { GroupAssignmentStatusPanel } from "@/components/teacher/GroupAssignmentStatusPanel";
+import { GroupRoleStatusPanel } from "@/components/teacher/GroupRoleStatusPanel";
 import { RosterScrollTable, RosterStickyHead, RosterStickyRow } from "@/components/teacher/RosterScrollTable";
 import {
-  ACHIEVEMENT_LABELS,
-  ROLE_DESCRIPTIONS,
   ROLE_LABELS,
   buildRosterId,
 } from "@/lib/group-activity/constants";
+import { assignRolesForAllGroups } from "@/lib/group-activity/assign-roles";
+import {
+  enrichGroupSlots,
+  resolveGroupSlots,
+  resolveRoleAssignments,
+  syncGroupsFromRoster,
+} from "@/lib/group-activity/resolve-groups";
 import { GROUP_ACTIVITY_PRD } from "@/lib/group-activity/prd";
 import { downloadRosterExcel, parseRosterFile } from "@/lib/group-activity/roster-excel";
 import type { AchievementLevel, Gender, GroupSlot, RosterStudent, SeparationRule } from "@/lib/group-activity/types";
-import { formatWeekRange, getWeekInfo } from "@/lib/group-activity/week-utils";
+import { getWeekInfo } from "@/lib/group-activity/week-utils";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
 import {
   addGroupActivityPraise,
@@ -45,6 +52,16 @@ const BTN = "rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60";
 const BTN_PRIMARY = `${BTN} bg-violet-600 text-white hover:bg-violet-700`;
 const BTN_SECONDARY = `${BTN} border border-slate-300 text-slate-700 hover:bg-slate-50`;
 
+type ActivitySection = "roster" | "separation" | "assign" | "roles" | "praise";
+
+const ACTIVITY_SECTIONS: { id: ActivitySection; label: string }[] = [
+  { id: "roster", label: "1. 명렬표" },
+  { id: "separation", label: "2. 분리 조건" },
+  { id: "assign", label: "4. 모둠 편성" },
+  { id: "roles", label: "5. 역할 부여" },
+  { id: "praise", label: "6. 칭찬" },
+];
+
 function classKey(grade: string, classNo: string): string {
   return `${grade}::${classNo}`;
 }
@@ -71,6 +88,7 @@ export function GroupActivityManager() {
   const [assignmentConfirmed, setAssignmentConfirmed] = useState(false);
 
   const [rosterTab, setRosterTab] = useState<"list" | "achievement">("list");
+  const [activitySection, setActivitySection] = useState<ActivitySection>("roster");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -110,6 +128,24 @@ export function GroupActivityManager() {
     [separations, students],
   );
 
+  const resolvedGroups = useMemo(
+    () => resolveGroupSlots(groups, students),
+    [groups, students],
+  );
+
+  const roleDisplayAssignments = useMemo(() => {
+    if (resolvedGroups.every((g) => g.memberIds.length === 0)) return [];
+    const preview = assignRolesForAllGroups(resolvedGroups, studentsById, week.weekIndex);
+    if (roleSchedule?.weekIndex === week.weekIndex && roleSchedule.assignments.length > 0) {
+      return resolveRoleAssignments(roleSchedule.assignments, students);
+    }
+    return preview;
+  }, [resolvedGroups, studentsById, week.weekIndex, roleSchedule, students]);
+
+  const rolesSavedThisWeek = Boolean(
+    roleSchedule?.weekIndex === week.weekIndex && roleSchedule.assignments.length > 0,
+  );
+
   const loadTeacherClasses = useCallback(async () => {
     if (!user || role !== "teacher") return;
     const list = await listTeacherClasses(user.uid);
@@ -132,10 +168,13 @@ export function GroupActivityManager() {
     const rid = buildRosterId(user.uid, grade, classNo);
     setRosterId(rid);
 
+    let roster: RosterStudent[] = [];
+    let rules: SeparationRule[] = [];
+
     try {
-      const roster = await listRosterStudents(user.uid, rid, grade, classNo);
+      roster = await listRosterStudents(user.uid, rid, grade, classNo);
       setStudents(roster);
-      const rules = await listSeparationRules(user.uid, rid, grade, classNo);
+      rules = await listSeparationRules(user.uid, rid, grade, classNo);
       setSeparations(rules);
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "명단·분리 조건 불러오기 실패"));
@@ -150,7 +189,15 @@ export function GroupActivityManager() {
         getRoleScheduleForClass(grade, classNo),
       ]);
 
-      setGroups(assignment?.groups ?? []);
+      const syncedGroups = syncGroupsFromRoster(
+        assignment?.groups ?? [],
+        roster,
+        normalizeSeparationRulesForAssign(rules, roster),
+      );
+      setGroups(syncedGroups);
+      if (syncedGroups.some((g) => g.memberIds.length > 0) && !assignment?.groups?.length) {
+        setMessage((prev) => prev || "명단을 반영해 모둠 편성을 구성했습니다.");
+      }
       setAssignmentConfirmed(!!assignment?.confirmedAt);
       setPraises(praiseList);
       setRoleSchedule(schedule);
@@ -229,6 +276,7 @@ export function GroupActivityManager() {
       const roster = await listRosterStudents(user.uid, rid, grade, classNo);
       setStudents(roster);
       setMessage(`${count}명 명단을 반영했습니다.`);
+      setActivitySection("assign");
       void loadClassData();
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "파일 업로드 실패"));
@@ -266,6 +314,7 @@ export function GroupActivityManager() {
       setNewStudentNo("");
       setNewStudentName("");
       setMessage("학생을 추가했습니다.");
+      setActivitySection("assign");
       void loadClassData();
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "추가 실패"));
@@ -292,7 +341,8 @@ export function GroupActivityManager() {
     setError("");
     try {
       const result = computeGroupAssignment(students, separationRulesForAssign, seed);
-      setGroups(result);
+      setGroups(enrichGroupSlots(result, students));
+      setActivitySection("assign");
       setMessage("모둠을 자동 편성했습니다. 확인 후 「편성 확정」을 눌러 주세요.");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "편성 실패");
@@ -300,10 +350,12 @@ export function GroupActivityManager() {
   };
 
   const handleConfirmAssignment = async () => {
-    if (!user || groups.length === 0) return;
+    if (!user || resolvedGroups.every((g) => g.memberIds.length === 0)) return;
     setBusy("confirm");
     try {
-      await saveMonthlyAssignment(user.uid, grade, classNo, year, month, groups, true);
+      const payload = enrichGroupSlots(resolvedGroups, students);
+      await saveMonthlyAssignment(user.uid, grade, classNo, year, month, payload, true);
+      setGroups(payload);
       setAssignmentConfirmed(true);
       setMessage(`${year}년 ${month}월 모둠 편성을 확정했습니다.`);
     } catch (e: unknown) {
@@ -314,11 +366,13 @@ export function GroupActivityManager() {
   };
 
   const handleAssignRoles = async () => {
-    if (!user || groups.length === 0) return;
+    if (!user || resolvedGroups.every((g) => g.memberIds.length === 0)) return;
     setBusy("roles");
     try {
-      const schedule = await saveRoleSchedule(user.uid, grade, classNo, groups, students);
+      const payload = enrichGroupSlots(resolvedGroups, students);
+      const schedule = await saveRoleSchedule(user.uid, grade, classNo, payload, students);
       setRoleSchedule(schedule);
+      setActivitySection("roles");
       setMessage(`${week.weekIndex}주차 역할을 배정했습니다.`);
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "역할 배정 실패"));
@@ -378,9 +432,9 @@ export function GroupActivityManager() {
   };
 
   const handlePraise = async () => {
-    if (!user || !rosterId || !praiseStudentId || !roleSchedule) return;
+    if (!user || !rosterId || !praiseStudentId) return;
     const student = studentsById.get(praiseStudentId);
-    const assignment = roleSchedule.assignments.find((a) => a.rosterStudentId === praiseStudentId);
+    const assignment = roleDisplayAssignments.find((a) => a.rosterStudentId === praiseStudentId);
     if (!student || !assignment) return;
 
     setBusy("praise");
@@ -483,6 +537,20 @@ export function GroupActivityManager() {
 
       {selectedMeta && !loading && (
         <>
+          <nav className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm" aria-label="모둠 활동 메뉴">
+            {ACTIVITY_SECTIONS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={activitySection === item.id ? BTN_PRIMARY : BTN_SECONDARY}
+                onClick={() => setActivitySection(item.id)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+
+          {(activitySection === "roster") && (
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-lg font-bold text-slate-900">1. 명렬표 ({grade}학년 {classNo}반)</h2>
@@ -607,7 +675,9 @@ export function GroupActivityManager() {
               </>
             )}
           </section>
+          )}
 
+          {(activitySection === "separation") && (
           <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-bold text-slate-900">2. 분리 조건</h2>
             <p className="mt-1 text-xs text-slate-500">같은 모둠에 배치하지 않을 학생을 유형별로 지정합니다.</p>
@@ -730,83 +800,44 @@ export function GroupActivityManager() {
               })}
             </ul>
           </section>
+          )}
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">3. 모둠 편성 ({year}년 {month}월 · {grade}학년 {classNo}반)</h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button type="button" className={BTN_PRIMARY} onClick={() => handleAutoAssign()}>자동 편성</button>
-              <button type="button" className={BTN_SECONDARY} onClick={() => handleAutoAssign(Date.now())}>재구성</button>
-              <button type="button" className={BTN_SECONDARY} disabled={busy === "confirm" || groups.length === 0} onClick={() => void handleConfirmAssignment()}>
-                편성 확정
-              </button>
-              {assignmentConfirmed && <span className="self-center text-sm text-emerald-700">✓ 확정됨</span>}
-            </div>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {groups.map((g) => (
-                <div key={g.groupNo} className="rounded-lg border border-violet-100 bg-violet-50/50 p-4">
-                  <p className="font-bold text-violet-900">{g.groupNo}모둠 ({g.memberIds.length}명)</p>
-                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                    {g.memberIds.map((id) => {
-                      const s = studentsById.get(id);
-                      if (!s) return null;
-                      return (
-                        <li key={id}>
-                          {s.studentNo} {s.studentName} · {genderLabel(s.gender)} · {ACHIEVEMENT_LABELS[s.achievementLevel]}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-              {groups.length === 0 && <p className="text-sm text-slate-400">「자동 편성」을 눌러 6모둠을 만드세요. (학생 {students.length}명)</p>}
-            </div>
-          </section>
+          {(activitySection === "assign") && (
+            <GroupAssignmentStatusPanel
+              year={year}
+              month={month}
+              grade={grade}
+              classNo={classNo}
+              students={students}
+              groups={resolvedGroups}
+              assignmentConfirmed={assignmentConfirmed}
+              busy={busy}
+              onAutoAssign={handleAutoAssign}
+              onConfirm={() => void handleConfirmAssignment()}
+            />
+          )}
 
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">4. 역할 부여</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              {formatWeekRange(week.weekStart, week.weekEnd)} · 매주 월요일 갱신 (월~금)
-            </p>
-            <button type="button" className={`mt-4 ${BTN_PRIMARY}`} disabled={busy === "roles" || groups.length === 0} onClick={() => void handleAssignRoles()}>
-              역할 배정 (이번 주)
-            </button>
-            {roleSchedule && roleSchedule.assignments.length > 0 && (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {[1, 2, 3, 4, 5, 6].map((groupNo) => {
-                  const members = roleSchedule.assignments.filter((a) => a.groupNo === groupNo);
-                  if (members.length === 0) return null;
-                  return (
-                    <div key={groupNo} className="rounded-lg border border-slate-200 p-4">
-                      <p className="font-bold">{groupNo}모둠</p>
-                      <ul className="mt-2 space-y-2 text-sm">
-                        {members.map((a) => (
-                          <li key={a.rosterStudentId}>
-                            <span className="font-medium">{a.studentName}</span>
-                            <br />
-                            주: {ROLE_LABELS[a.primaryRoleCode]} — {ROLE_DESCRIPTIONS[a.primaryRoleCode]}
-                            {a.secondaryRoleCode && (
-                              <>
-                                <br />
-                                보조: {ROLE_LABELS[a.secondaryRoleCode]}
-                              </>
-                            )}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
+          {(activitySection === "roles") && (
+            <GroupRoleStatusPanel
+              weekStart={week.weekStart}
+              weekEnd={week.weekEnd}
+              weekLabel={week.schoolWeekLabel}
+              assignments={roleDisplayAssignments}
+              hasGroups={resolvedGroups.some((g) => g.memberIds.length > 0)}
+              isSaved={rolesSavedThisWeek}
+              busy={busy}
+              onAssignRoles={() => void handleAssignRoles()}
+            />
+          )}
 
+          {(activitySection === "praise") && (
           <section className="rounded-xl border border-amber-200 bg-amber-50/40 p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-amber-900">5. 모둠 활동 칭찬</h2>
+            <h2 className="text-lg font-bold text-amber-900">6. 모둠 활동 칭찬</h2>
             <p className="mt-1 text-xs text-amber-800">학습지 칭찬 배지(<Link href="/teacher/badges" className="underline">/teacher/badges</Link>)와 별도입니다.</p>
             <div className="mt-4 flex flex-wrap items-end gap-2">
               <select className={INPUT} value={praiseStudentId} onChange={(e) => setPraiseStudentId(e.target.value)}>
                 <option value="">학생 선택</option>
-                {(roleSchedule?.assignments ?? []).map((a) => (
+                {roleDisplayAssignments.map((a) => (
                   <option key={a.rosterStudentId} value={a.rosterStudentId}>
                     {a.groupNo}모둠 · {a.studentName} · {ROLE_LABELS[a.primaryRoleCode]}
                   </option>
@@ -828,6 +859,7 @@ export function GroupActivityManager() {
               </ul>
             )}
           </section>
+          )}
         </>
       )}
     </div>

@@ -193,3 +193,11 @@ export const SITE_POLICIES = [
   { href: "/terms", label: "이용약관", description: "서비스 이용 조건", document: TERMS_OF_SERVICE },
   { href: "/ai-ethics", label: "AI 이용 안내", description: "인공지능 윤리·한도", document: AI_ETHICS_POLICY },
 ] as const;
+
+export const SITE_CONTACT = {
+  serviceName: "사고도구 톡톡",
+  privacyOfficer: "담당 교사",
+  organization: "소속 학교",
+  contact: "학교 교무실",
+  copyrightYear: "2026",
+} as const;
