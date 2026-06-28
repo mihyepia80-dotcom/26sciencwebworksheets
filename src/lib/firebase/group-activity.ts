@@ -42,16 +42,19 @@ function teacherDocument(teacherUid: string, name: string, id: string): Document
   return doc(getClientDb(), "teachers", teacherUid, name, id);
 }
 
-function belongsToClass(
-  student: RosterStudent,
-  rosterId: string,
+function belongsToRoster(
+  itemRosterId: string,
+  targetRosterId: string,
+  itemGrade: string,
+  itemClassNo: string,
   normalizedGrade: string,
   normalizedClassNo: string,
 ): boolean {
-  if (student.rosterId === rosterId) return true;
+  if (itemRosterId === targetRosterId) return true;
+  if (!normalizedGrade || !normalizedClassNo || !itemGrade || !itemClassNo) return false;
   return (
-    normalizeClassPart(student.grade) === normalizedGrade
-    && normalizeClassPart(student.classNo) === normalizedClassNo
+    normalizeClassPart(itemGrade) === normalizedGrade
+    && normalizeClassPart(itemClassNo) === normalizedClassNo
   );
 }
 
@@ -91,7 +94,7 @@ async function removeStaleRosterStudentDocs(
   const snap = await getDocs(teacherCollection(teacherUid, "groupRosterStudents"));
   for (const d of snap.docs) {
     const student = mapStudent(d.id, d.data());
-    if (!belongsToClass(student, rosterId, normalizedGrade, normalizedClassNo)) continue;
+    if (!belongsToRoster(student.rosterId, rosterId, student.grade, student.classNo, normalizedGrade, normalizedClassNo)) continue;
     const no = normalizeStudentNo(student.studentNo);
     if (!studentNos.has(no)) continue;
     const canonicalId = buildRosterStudentId(rosterId, no);
@@ -237,7 +240,7 @@ export async function listRosterStudents(
     .filter((s) => {
       if (s.rosterId === rosterId) return true;
       if (!normalizedGrade || !normalizedClassNo) return false;
-      return belongsToClass(s, rosterId, normalizedGrade, normalizedClassNo);
+      return belongsToRoster(s.rosterId, rosterId, s.grade, s.classNo, normalizedGrade, normalizedClassNo);
     });
 
   return dedupeRosterStudents(filtered, rosterId).sort((a, b) =>
@@ -296,7 +299,14 @@ export async function updateAchievementLevel(
   );
 }
 
-export async function listSeparationRules(teacherUid: string, rosterId: string): Promise<SeparationRule[]> {
+export async function listSeparationRules(
+  teacherUid: string,
+  rosterId: string,
+  grade?: string,
+  classNo?: string,
+): Promise<SeparationRule[]> {
+  const normalizedGrade = grade ? normalizeClassPart(grade) : "";
+  const normalizedClassNo = classNo ? normalizeClassPart(classNo) : "";
   const snap = await getDocs(teacherCollection(teacherUid, "groupSeparations"));
   return snap.docs
     .map((d) => {
@@ -305,12 +315,18 @@ export async function listSeparationRules(teacherUid: string, rosterId: string):
         id: d.id,
         rosterId: String(data.rosterId ?? ""),
         teacherUid: String(data.teacherUid ?? teacherUid),
+        grade: normalizeClassPart(String(data.grade ?? "")),
+        classNo: normalizeClassPart(String(data.classNo ?? "")),
         typeLabel: String(data.typeLabel ?? ""),
         studentIds: Array.isArray(data.studentIds) ? data.studentIds.map(String) : [],
         studentNos: Array.isArray(data.studentNos) ? data.studentNos.map(String) : [],
       };
     })
-    .filter((rule) => rule.rosterId === rosterId);
+    .filter((rule) => {
+      if (rule.rosterId === rosterId) return true;
+      if (!normalizedGrade || !normalizedClassNo) return false;
+      return belongsToRoster(rule.rosterId, rosterId, rule.grade, rule.classNo, normalizedGrade, normalizedClassNo);
+    });
 }
 
 /** 분리 조건에 연결된 현재 명단 학생 ID */
@@ -360,24 +376,38 @@ export function normalizeSeparationRulesForAssign(
   separations: SeparationRule[],
   students: RosterStudent[],
 ): SeparationRule[] {
-  return separations.map((rule) => ({
-    ...rule,
-    studentIds: resolveSeparationStudentIds(rule, students),
-  }));
+  return separations
+    .map((rule) => ({
+      ...rule,
+      studentIds: resolveSeparationStudentIds(rule, students),
+    }))
+    .filter((rule) => rule.studentIds.length >= 2);
 }
 
 export async function saveSeparationRule(
   teacherUid: string,
   rosterId: string,
+  grade: string,
+  classNo: string,
   typeLabel: string,
   studentIds: string[],
   studentNos: string[] = [],
+  teacherUser?: Parameters<typeof prepareTeacherFirestoreAccess>[0],
   id?: string,
 ): Promise<string> {
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
+  if (teacherUser) {
+    await prepareTeacherFirestoreAccess(teacherUser);
+  }
+  await ensureRosterMeta(teacherUid, normalizedGrade, normalizedClassNo, teacherUser);
+
   const docId = id ?? doc(teacherCollection(teacherUid, "groupSeparations")).id;
   await setDoc(teacherDocument(teacherUid, "groupSeparations", docId), {
     rosterId,
     teacherUid,
+    grade: normalizedGrade,
+    classNo: normalizedClassNo,
     typeLabel,
     studentIds,
     studentNos: studentNos.map(normalizeStudentNo),

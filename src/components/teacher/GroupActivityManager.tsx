@@ -135,21 +135,21 @@ export function GroupActivityManager() {
     try {
       const roster = await listRosterStudents(user.uid, rid, grade, classNo);
       setStudents(roster);
+      const rules = await listSeparationRules(user.uid, rid, grade, classNo);
+      setSeparations(rules);
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "명단 불러오기 실패"));
+      setError(getFirebaseErrorMessage(e, "명단·분리 조건 불러오기 실패"));
       setLoading(false);
       return;
     }
 
     try {
-      const [rules, assignment, praiseList, schedule] = await Promise.all([
-        listSeparationRules(user.uid, rid),
+      const [assignment, praiseList, schedule] = await Promise.all([
         getMonthlyAssignment(user.uid, rid, year, month),
         listGroupActivityPraises(user.uid, rid, week.weekIndex),
         getRoleScheduleForClass(grade, classNo),
       ]);
 
-      setSeparations(rules);
       setGroups(assignment?.groups ?? []);
       setAssignmentConfirmed(!!assignment?.confirmedAt);
       setPraises(praiseList);
@@ -328,26 +328,53 @@ export function GroupActivityManager() {
   };
 
   const handleSaveSeparation = async () => {
-    if (!user || !rosterId) return;
+    if (!user || role !== "teacher") {
+      setError("교사 로그인이 필요합니다.");
+      return;
+    }
+    if (!grade || !classNo) {
+      setError("반을 먼저 선택하거나 등록해 주세요.");
+      return;
+    }
     if (sepStudentIds.length < 2) {
       setError("분리 조건에는 학생을 2명 이상 선택해 주세요.");
       return;
     }
     setBusy("sep");
     setError("");
+    setMessage("");
     try {
+      const rid = buildRosterId(user.uid, grade, classNo);
       const studentNos = sepStudentIds
         .map((id) => studentsById.get(id)?.studentNo)
         .filter((no): no is string => Boolean(no));
-      await saveSeparationRule(user.uid, rosterId, sepLabel.trim() || "분리", sepStudentIds, studentNos);
+      await saveSeparationRule(
+        user.uid,
+        rid,
+        grade,
+        classNo,
+        sepLabel.trim() || "분리",
+        sepStudentIds,
+        studentNos,
+        user,
+      );
+      const rules = await listSeparationRules(user.uid, rid, grade, classNo);
+      setSeparations(rules);
+      setRosterId(rid);
       setSepStudentIds([]);
-      await loadClassData();
-      setMessage("분리 조건을 저장했습니다.");
+      setMessage(`「${sepLabel.trim() || "분리"}」 조건에 ${studentNos.length}명을 등록했습니다.`);
+      void loadClassData();
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "저장 실패"));
+      setError(getFirebaseErrorMessage(e, "분리 조건 저장 실패"));
     } finally {
       setBusy("");
     }
+  };
+
+  const toggleSepStudent = (studentId: string) => {
+    setSepStudentIds((prev) =>
+      prev.includes(studentId) ? prev.filter((id) => id !== studentId) : [...prev, studentId],
+    );
   };
 
   const handlePraise = async () => {
@@ -596,22 +623,36 @@ export function GroupActivityManager() {
 
             <div className="mt-4 flex flex-wrap items-end gap-2">
               <input className={`${INPUT} w-28`} value={sepLabel} onChange={(e) => setSepLabel(e.target.value)} placeholder="유형" />
-              <select
-                className={`${INPUT} max-w-xs`}
-                multiple
-                size={4}
-                value={sepStudentIds}
-                onChange={(e) => setSepStudentIds(Array.from(e.target.selectedOptions, (o) => o.value))}
-              >
-                {students.map((s) => (
-                  <option key={s.id} value={s.id}>{s.studentNo} {s.studentName}</option>
-                ))}
-              </select>
-              <button type="button" className={BTN_PRIMARY} disabled={busy === "sep"} onClick={() => void handleSaveSeparation()}>
-                쌍 추가
+              <button type="button" className={BTN_PRIMARY} disabled={busy === "sep" || sepStudentIds.length < 2} onClick={() => void handleSaveSeparation()}>
+                쌍 추가 ({sepStudentIds.length}명 선택)
               </button>
             </div>
-            <p className="mt-2 text-xs text-slate-500">Ctrl(⌘) + 클릭으로 여러 학생을 선택하세요.</p>
+            {students.length === 0 ? (
+              <p className="mt-3 text-sm text-slate-400">명단을 먼저 등록해 주세요.</p>
+            ) : (
+              <div className="mt-3 max-h-48 overflow-y-auto rounded-lg border border-slate-200 p-3">
+                <p className="mb-2 text-xs font-medium text-slate-600">같은 모둠에 두지 않을 학생 선택 (2명 이상)</p>
+                <div className="flex flex-wrap gap-2">
+                  {students.map((s) => {
+                    const selected = sepStudentIds.includes(s.id);
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => toggleSepStudent(s.id)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                          selected
+                            ? "bg-violet-600 text-white"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                        }`}
+                      >
+                        {s.studentNo} {s.studentName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {separationStudentStatus.length > 0 && (
               <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
