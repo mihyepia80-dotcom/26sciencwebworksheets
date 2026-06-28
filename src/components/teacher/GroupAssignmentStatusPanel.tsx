@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ACHIEVEMENT_LABELS, GROUP_COUNT } from "@/lib/group-activity/constants";
+import { getStudentDragData, setStudentDragData } from "@/lib/group-activity/drag-data";
 import {
   getGroupMembers,
   getUnassignedStudents,
@@ -27,32 +28,38 @@ interface GroupAssignmentStatusPanelProps {
   onAutoAssign: (seed?: number) => void;
   onConfirm: () => void;
   onGroupsChange: (groups: GroupSlot[]) => void;
+  onSave: () => void;
+  onDelete: () => void;
 }
 
 function StudentChip({
   student,
   draggable,
-  onDragStart,
+  compact,
 }: {
   student: RosterStudent;
   draggable: boolean;
-  onDragStart: (studentId: string) => void;
+  compact?: boolean;
 }) {
   return (
-    <li
+    <span
       draggable={draggable}
       onDragStart={(e) => {
-        e.dataTransfer.setData("text/plain", student.id);
-        e.dataTransfer.effectAllowed = "move";
-        onDragStart(student.id);
+        if (!draggable) return;
+        setStudentDragData(e.dataTransfer, student.id);
       }}
-      className={`rounded-xl bg-white/80 px-3 py-2 ${
-        draggable ? "cursor-grab active:cursor-grabbing" : ""
-      }`}
+      className={`inline-flex select-none rounded-xl bg-white/90 text-slate-700 ring-1 ring-slate-200 ${
+        compact ? "px-2.5 py-1 text-sm" : "px-3 py-2 text-base"
+      } ${draggable ? "cursor-grab active:cursor-grabbing hover:ring-violet-300" : ""}`}
     >
-      {student.studentNo} {student.studentName} · {genderLabel(student.gender)} ·{" "}
-      {ACHIEVEMENT_LABELS[student.achievementLevel]}
-    </li>
+      {student.studentNo} {student.studentName}
+      {!compact && (
+        <>
+          {" "}
+          · {genderLabel(student.gender)} · {ACHIEVEMENT_LABELS[student.achievementLevel]}
+        </>
+      )}
+    </span>
   );
 }
 
@@ -61,40 +68,44 @@ function DropGroupCard({
   members,
   dragOver,
   saving,
-  onDragOver,
-  onDragLeave,
   onDrop,
-  onDragStart,
 }: {
   groupNo: number;
   members: RosterStudent[];
   dragOver: boolean;
   saving: boolean;
-  onDragOver: () => void;
-  onDragLeave: () => void;
   onDrop: (studentId: string) => void;
-  onDragStart: (studentId: string) => void;
 }) {
+  const [dragDepth, setDragDepth] = useState(0);
+  const isDragOver = dragOver || dragDepth > 0;
+
   return (
     <div
       className={`rounded-2xl border-2 p-5 transition ${
-        dragOver
+        isDragOver
           ? "border-violet-500 bg-violet-100/80 ring-2 ring-violet-300"
           : members.length > 0
             ? "border-violet-200 bg-gradient-to-br from-violet-50 to-white shadow-sm"
             : "border-dashed border-slate-200 bg-slate-50/70"
       }`}
+      onDragEnter={(e) => {
+        if (saving) return;
+        e.preventDefault();
+        setDragDepth((d) => d + 1);
+      }}
       onDragOver={(e) => {
         if (saving) return;
         e.preventDefault();
-        onDragOver();
       }}
-      onDragLeave={onDragLeave}
+      onDragLeave={(e) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setDragDepth(0);
+      }}
       onDrop={(e) => {
         e.preventDefault();
-        onDragLeave();
+        setDragDepth(0);
         if (saving) return;
-        const studentId = e.dataTransfer.getData("text/plain");
+        const studentId = getStudentDragData(e.dataTransfer);
         if (studentId) onDrop(studentId);
       }}
     >
@@ -102,19 +113,16 @@ function DropGroupCard({
         {groupNo}모둠 ({members.length}명)
       </p>
       {members.length > 0 ? (
-        <ul className="mt-3 space-y-2 text-base text-slate-700">
+        <ul className="mt-3 flex flex-wrap gap-2">
           {members.map((s) => (
-            <StudentChip
-              key={s.id}
-              student={s}
-              draggable={!saving}
-              onDragStart={onDragStart}
-            />
+            <li key={s.id}>
+              <StudentChip student={s} draggable={!saving} />
+            </li>
           ))}
         </ul>
       ) : (
         <p className="mt-3 text-base text-slate-400">
-          {dragOver ? "여기에 놓으세요" : "배정된 학생 없음 · 학생을 드래그해 배치"}
+          {isDragOver ? "여기에 놓으세요" : "학생을 드래그해 배치"}
         </p>
       )}
     </div>
@@ -133,9 +141,11 @@ export function GroupAssignmentStatusPanel({
   onAutoAssign,
   onConfirm,
   onGroupsChange,
+  onSave,
+  onDelete,
 }: GroupAssignmentStatusPanelProps) {
-  const [dragOverGroup, setDragOverGroup] = useState<number | "unassigned" | null>(null);
-  const saving = busy === "assign-save";
+  const [dragOverUnassigned, setDragOverUnassigned] = useState(false);
+  const saving = busy === "assign-save" || busy === "assign-delete";
 
   const studentsById = useMemo(() => new Map(students.map((s) => [s.id, s])), [students]);
   const sortedStudents = useMemo(
@@ -165,8 +175,8 @@ export function GroupAssignmentStatusPanel({
         4. 모둠 편성 현황 ({year}년 {month}월 · {grade}학년 {classNo}반)
       </h2>
       <p className="ui-section-desc text-base">
-        위 명렬표 학생이 반영됩니다. 학생 이름을 드래그해 모둠을 바꿀 수 있으며, 자동 편성·확정 시 저장되어
-        새로고침 후에도 유지됩니다.
+        학생을 드래그해 6모둠에 배치·이동할 수 있습니다. 변경 시 자동 저장되며, 「편성 저장」「편성 삭제」로
+        직접 관리할 수도 있습니다.
       </p>
 
       <div className="mt-6 flex flex-wrap gap-3">
@@ -178,7 +188,7 @@ export function GroupAssignmentStatusPanel({
         {assignmentConfirmed && (
           <span className="ui-chip bg-emerald-100 text-emerald-800">✓ 편성 확정</span>
         )}
-        {saving && <span className="ui-chip bg-slate-100 text-slate-600">저장 중…</span>}
+        {busy === "assign-save" && <span className="ui-chip bg-slate-100 text-slate-600">저장 중…</span>}
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
@@ -196,64 +206,89 @@ export function GroupAssignmentStatusPanel({
         >
           편성 확정
         </button>
+        <button
+          type="button"
+          className="ui-btn-secondary"
+          disabled={saving || assignedCount === 0}
+          onClick={onSave}
+        >
+          편성 저장
+        </button>
+        <button
+          type="button"
+          className="ui-btn-secondary text-red-700"
+          disabled={saving || (assignedCount === 0 && !assignmentConfirmed)}
+          onClick={onDelete}
+        >
+          편성 삭제
+        </button>
       </div>
 
       {activeCount > 0 && activeCount < minRequired && (
         <p className="ui-banner mt-5 border-amber-200 bg-amber-50 text-amber-950">
-          자동 6모둠 편성에는 <strong>18~24명</strong>(모둠당 3~4명)이 필요합니다. 현재 {activeCount}명 — 아래에
-          명단·미배정 현황만 표시됩니다.
+          자동 6모둠 편성에는 <strong>18~24명</strong>(모둠당 3~4명)이 필요합니다. 현재 {activeCount}명 — 드래그로
+          수동 배치하거나 명단을 조정해 주세요.
         </p>
       )}
       {activeCount > GROUP_COUNT * 4 && (
         <p className="ui-banner mt-5 border-amber-200 bg-amber-50 text-amber-950">
-          학생이 {GROUP_COUNT * 4}명을 초과하면 6모둠 자동 편성이 어렵습니다. 현재 {activeCount}명 — 명단을 조정하거나
-          드래그로 수동 조정해 주세요.
+          학생이 {GROUP_COUNT * 4}명을 초과하면 6모둠 자동 편성이 어렵습니다. 현재 {activeCount}명 — 드래그로 수동
+          조정해 주세요.
         </p>
       )}
 
-      {unassigned.length > 0 && (
-        <div
-          className={`mt-8 rounded-2xl border-2 border-dashed p-5 transition ${
-            dragOverGroup === "unassigned"
-              ? "border-amber-500 bg-amber-100/80 ring-2 ring-amber-300"
-              : "border-amber-200 bg-amber-50/60"
-          }`}
-          onDragOver={(e) => {
-            if (saving) return;
-            e.preventDefault();
-            setDragOverGroup("unassigned");
-          }}
-          onDragLeave={() => setDragOverGroup(null)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragOverGroup(null);
-            if (saving) return;
-            const studentId = e.dataTransfer.getData("text/plain");
-            if (studentId) handleDrop(null, studentId);
-          }}
-        >
-          <p className="text-lg font-bold text-amber-950">미배정 ({unassigned.length}명)</p>
-          <p className="mt-1 text-sm text-amber-900/80">모둠에서 빼려면 여기로 드래그하세요.</p>
+      {sortedStudents.length > 0 && (
+        <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+          <h3 className="text-lg font-bold text-slate-900">학생 명단 (드래그하여 모둠에 배치)</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {sortedStudents.map((s) => (
+              <StudentChip key={s.id} student={s} draggable={!saving} compact />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div
+        className={`mt-6 rounded-2xl border-2 border-dashed p-5 transition ${
+          dragOverUnassigned
+            ? "border-amber-500 bg-amber-100/80 ring-2 ring-amber-300"
+            : "border-amber-200 bg-amber-50/60"
+        }`}
+        onDragEnter={(e) => {
+          if (saving) return;
+          e.preventDefault();
+          setDragOverUnassigned(true);
+        }}
+        onDragOver={(e) => {
+          if (saving) return;
+          e.preventDefault();
+        }}
+        onDragLeave={(e) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+          setDragOverUnassigned(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOverUnassigned(false);
+          if (saving) return;
+          const studentId = getStudentDragData(e.dataTransfer);
+          if (studentId) handleDrop(null, studentId);
+        }}
+      >
+        <p className="text-lg font-bold text-amber-950">미배정 ({unassigned.length}명)</p>
+        <p className="mt-1 text-sm text-amber-900/80">모둠에서 빼려면 여기로 드래그하세요.</p>
+        {unassigned.length > 0 ? (
           <ul className="mt-3 flex flex-wrap gap-2">
             {unassigned.map((s) => (
               <li key={s.id}>
-                <span
-                  draggable={!saving}
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", s.id);
-                    e.dataTransfer.effectAllowed = "move";
-                  }}
-                  className={`inline-block rounded-full bg-white px-3 py-1 text-sm text-amber-950 ring-1 ring-amber-200 ${
-                    saving ? "" : "cursor-grab active:cursor-grabbing"
-                  }`}
-                >
-                  {s.studentNo} {s.studentName}
-                </span>
+                <StudentChip student={s} draggable={!saving} compact />
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          <p className="mt-3 text-sm text-amber-800/70">현재 미배정 학생이 없습니다.</p>
+        )}
+      </div>
 
       <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {Array.from({ length: GROUP_COUNT }, (_, i) => {
@@ -265,12 +300,9 @@ export function GroupAssignmentStatusPanel({
               key={groupNo}
               groupNo={groupNo}
               members={members}
-              dragOver={dragOverGroup === groupNo}
+              dragOver={false}
               saving={saving}
-              onDragOver={() => setDragOverGroup(groupNo)}
-              onDragLeave={() => setDragOverGroup(null)}
               onDrop={(studentId) => handleDrop(groupNo, studentId)}
-              onDragStart={() => {}}
             />
           );
         })}
@@ -280,25 +312,27 @@ export function GroupAssignmentStatusPanel({
         <div className="mt-8">
           <h3 className="text-xl font-bold text-slate-900">학생별 모둠 배정표</h3>
           <RosterScrollTable>
-            <RosterStickyHead extraHeaders={<th className="ui-table-cell">모둠</th>} />
+            <RosterStickyHead extraHeaders={<th className="ui-table-cell">모둠 · 드래그</th>} />
             <tbody>
               {sortedStudents.map((s) => {
                 const groupNo = groupByStudentId.get(s.id);
                 return (
-                  <RosterStickyRow
-                    key={s.id}
-                    studentNo={s.studentNo}
-                    studentName={s.studentName}
-                    cells={
-                      <td className="ui-table-cell">
+                  <tr key={s.id} className="border-b border-slate-100">
+                    <td className="sticky left-0 z-10 bg-white px-3 py-2 font-medium text-slate-800">
+                      {s.studentNo}
+                    </td>
+                    <td className="sticky left-[4.5rem] z-10 bg-white px-3 py-2 text-slate-800">{s.studentName}</td>
+                    <td className="ui-table-cell">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StudentChip student={s} draggable={!saving} compact />
                         {groupNo ? (
                           <span className="ui-chip bg-violet-100 text-violet-900">{groupNo}모둠</span>
                         ) : (
                           <span className="text-base font-medium text-amber-700">미배정</span>
                         )}
-                      </td>
-                    }
-                  />
+                      </div>
+                    </td>
+                  </tr>
                 );
               })}
             </tbody>

@@ -455,6 +455,17 @@ export async function saveMonthlyAssignment(
   });
 }
 
+export async function deleteMonthlyAssignment(
+  teacherUid: string,
+  grade: string,
+  classNo: string,
+  year: number,
+  month: number,
+): Promise<void> {
+  const rosterId = buildRosterId(teacherUid, grade, classNo);
+  await deleteDoc(teacherDocument(teacherUid, "groupAssignments", assignmentDocId(rosterId, year, month)));
+}
+
 export function computeGroupAssignment(
   students: RosterStudent[],
   rules: SeparationRule[],
@@ -471,19 +482,17 @@ export function computeGroupAssignmentWithMeta(
   return assignGroupsWithMeta(students, rules, seed);
 }
 
-export async function saveRoleSchedule(
+export async function saveRoleScheduleAssignments(
   teacherUid: string,
   grade: string,
   classNo: string,
   groups: GroupSlot[],
-  students: RosterStudent[],
+  assignments: StudentRoleAssignment[],
   weekIndex?: number,
 ): Promise<RoleWeekSchedule> {
   const rosterId = buildRosterId(teacherUid, grade, classNo);
   const week = getWeekInfo(new Date(), ROLE_WEEK_ANCHOR);
   const idx = weekIndex ?? week.weekIndex;
-  const studentsById = new Map(students.map((s) => [s.id, s]));
-  const assignments = assignRolesForAllGroups(groups, studentsById, idx);
 
   const payload = {
     rosterId,
@@ -512,6 +521,25 @@ export async function saveRoleSchedule(
     assignments,
     updatedAt: null,
   };
+}
+
+export async function saveRoleSchedule(
+  teacherUid: string,
+  grade: string,
+  classNo: string,
+  groups: GroupSlot[],
+  students: RosterStudent[],
+  weekIndex?: number,
+): Promise<RoleWeekSchedule> {
+  const studentsById = new Map(students.map((s) => [s.id, s]));
+  const week = getWeekInfo(new Date(), ROLE_WEEK_ANCHOR);
+  const idx = weekIndex ?? week.weekIndex;
+  const assignments = assignRolesForAllGroups(groups, studentsById, idx);
+  return saveRoleScheduleAssignments(teacherUid, grade, classNo, groups, assignments, idx);
+}
+
+export async function deleteRoleSchedule(grade: string, classNo: string): Promise<void> {
+  await deleteDoc(doc(getClientDb(), "groupRoleSchedules", buildClassScheduleId(grade, classNo)));
 }
 
 export async function getRoleScheduleForClass(

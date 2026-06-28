@@ -6,10 +6,12 @@ import { useAuth } from "@/components/AuthProvider";
 import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
 import { GroupAssignmentStatusPanel } from "@/components/teacher/GroupAssignmentStatusPanel";
 import { GroupRoleStatusPanel } from "@/components/teacher/GroupRoleStatusPanel";
+import { SeparationDragPanel } from "@/components/teacher/SeparationDragPanel";
 import { RosterScrollTable, RosterStickyHead, RosterStickyRow } from "@/components/teacher/RosterScrollTable";
 import {
   ROLE_LABELS,
   buildRosterId,
+  type RoleCode,
 } from "@/lib/group-activity/constants";
 import { assignRolesForAllGroups } from "@/lib/group-activity/assign-roles";
 import {
@@ -20,7 +22,7 @@ import {
 } from "@/lib/group-activity/resolve-groups";
 import { GROUP_ACTIVITY_PRD } from "@/lib/group-activity/prd";
 import { downloadRosterExcel, parseRosterFile } from "@/lib/group-activity/roster-excel";
-import type { AchievementLevel, Gender, GroupSlot, RosterStudent, SeparationRule } from "@/lib/group-activity/types";
+import type { AchievementLevel, Gender, GroupSlot, RosterStudent, SeparationRule, StudentRoleAssignment } from "@/lib/group-activity/types";
 import { getWeekInfo } from "@/lib/group-activity/week-utils";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
 import {
@@ -28,7 +30,9 @@ import {
   buildSeparationStudentStatus,
   bulkUpsertRosterStudents,
   computeGroupAssignmentWithMeta,
+  deleteMonthlyAssignment,
   deleteRosterStudent,
+  deleteRoleSchedule,
   deleteSeparationRule,
   getMonthlyAssignment,
   getRoleScheduleForClass,
@@ -39,13 +43,12 @@ import {
   normalizeSeparationRulesForAssign,
   registerTeacherClass,
   saveMonthlyAssignment,
-  saveRoleSchedule,
+  saveRoleScheduleAssignments,
   saveSeparationRule,
   updateAchievementLevel,
   upsertRosterStudent,
-  resolveSeparationStudentEntries,
 } from "@/lib/firebase/group-activity";
-import type { ClassRosterMeta } from "@/lib/group-activity/types";
+import type { ClassRosterMeta, RoleWeekSchedule } from "@/lib/group-activity/types";
 
 const INPUT = "ui-input-compact";
 const BTN_PRIMARY = "ui-btn-accent";
@@ -82,13 +85,16 @@ export function GroupActivityManager() {
   const [students, setStudents] = useState<RosterStudent[]>([]);
   const [separations, setSeparations] = useState<SeparationRule[]>([]);
   const [groups, setGroups] = useState<GroupSlot[]>([]);
-  const [roleSchedule, setRoleSchedule] = useState<Awaited<ReturnType<typeof saveRoleSchedule>> | null>(null);
+  const [roleSchedule, setRoleSchedule] = useState<RoleWeekSchedule | null>(null);
   const [praises, setPraises] = useState<Awaited<ReturnType<typeof listGroupActivityPraises>>>([]);
   const [rosterId, setRosterId] = useState("");
   const [assignmentConfirmed, setAssignmentConfirmed] = useState(false);
 
   const [rosterTab, setRosterTab] = useState<"list" | "achievement">("list");
   const [activitySection, setActivitySection] = useState<ActivitySection>("roster");
+  const [roleDraft, setRoleDraft] = useState<StudentRoleAssignment[]>([]);
+  const roleDraftDirtyRef = useRef(false);
+
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -97,9 +103,6 @@ export function GroupActivityManager() {
   const [newStudentNo, setNewStudentNo] = useState("");
   const [newStudentName, setNewStudentName] = useState("");
   const [newGender, setNewGender] = useState<Gender>("male");
-
-  const [sepLabel, setSepLabel] = useState("떠듬");
-  const [sepStudentIds, setSepStudentIds] = useState<string[]>([]);
 
   const [praiseStudentId, setPraiseStudentId] = useState("");
   const [praiseNote, setPraiseNote] = useState("");
@@ -133,18 +136,24 @@ export function GroupActivityManager() {
     [groups, students],
   );
 
-  const roleDisplayAssignments = useMemo(() => {
-    if (resolvedGroups.every((g) => g.memberIds.length === 0)) return [];
-    const preview = assignRolesForAllGroups(resolvedGroups, studentsById, week.weekIndex);
-    if (roleSchedule?.weekIndex === week.weekIndex && roleSchedule.assignments.length > 0) {
-      return resolveRoleAssignments(roleSchedule.assignments, students);
-    }
-    return preview;
-  }, [resolvedGroups, studentsById, week.weekIndex, roleSchedule, students]);
+  const roleDisplayAssignments = roleDraft;
 
   const rolesSavedThisWeek = Boolean(
     roleSchedule?.weekIndex === week.weekIndex && roleSchedule.assignments.length > 0,
   );
+
+  useEffect(() => {
+    if (roleDraftDirtyRef.current) return;
+    if (resolvedGroups.every((g) => g.memberIds.length === 0)) {
+      setRoleDraft([]);
+      return;
+    }
+    if (roleSchedule?.weekIndex === week.weekIndex && roleSchedule.assignments.length > 0) {
+      setRoleDraft(resolveRoleAssignments(roleSchedule.assignments, students));
+      return;
+    }
+    setRoleDraft(assignRolesForAllGroups(resolvedGroups, studentsById, week.weekIndex));
+  }, [resolvedGroups, students, studentsById, week.weekIndex, roleSchedule]);
 
   const loadTeacherClasses = useCallback(async () => {
     if (!user || role !== "teacher") return;
@@ -401,23 +410,104 @@ export function GroupActivityManager() {
     }
   };
 
-  const handleAssignRoles = async () => {
-    if (!user || resolvedGroups.every((g) => g.memberIds.length === 0)) return;
-    setBusy("roles");
+  const handleSaveAssignment = async () => {
+    if (!user || !grade || !classNo) return;
+    setError("");
+    setBusy("assign-save");
     try {
       const payload = enrichGroupSlots(resolvedGroups, students);
-      const schedule = await saveRoleSchedule(user.uid, grade, classNo, payload, students);
-      setRoleSchedule(schedule);
-      setActivitySection("roles");
-      setMessage(`${week.weekIndex}주차 역할을 배정했습니다.`);
+      await saveMonthlyAssignment(user.uid, grade, classNo, year, month, payload, assignmentConfirmed);
+      setGroups(payload);
+      setMessage("모둠 편성을 저장했습니다.");
     } catch (e: unknown) {
-      setError(getFirebaseErrorMessage(e, "역할 배정 실패"));
+      setError(getFirebaseErrorMessage(e, "편성 저장 실패"));
     } finally {
       setBusy("");
     }
   };
 
-  const handleSaveSeparation = async () => {
+  const handleDeleteAssignment = async () => {
+    if (!user || !grade || !classNo) return;
+    if (!window.confirm(`${year}년 ${month}월 모둠 편성을 삭제할까요?`)) return;
+    setError("");
+    setBusy("assign-delete");
+    try {
+      await deleteMonthlyAssignment(user.uid, grade, classNo, year, month);
+      const empty = enrichGroupSlots([], students);
+      setGroups(empty);
+      setAssignmentConfirmed(false);
+      setMessage("모둠 편성을 삭제했습니다.");
+    } catch (e: unknown) {
+      setError(getFirebaseErrorMessage(e, "편성 삭제 실패"));
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const handleAssignRoles = async () => {
+    if (!user || resolvedGroups.every((g) => g.memberIds.length === 0) || roleDraft.length === 0) return;
+    setBusy("roles");
+    setError("");
+    try {
+      const payload = enrichGroupSlots(resolvedGroups, students);
+      const schedule = await saveRoleScheduleAssignments(
+        user.uid,
+        grade,
+        classNo,
+        payload,
+        roleDraft,
+        week.weekIndex,
+      );
+      setRoleSchedule(schedule);
+      roleDraftDirtyRef.current = false;
+      setActivitySection("roles");
+      setMessage(`${week.weekIndex}주차 역할을 저장했습니다.`);
+    } catch (e: unknown) {
+      setError(getFirebaseErrorMessage(e, "역할 저장 실패"));
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const handleDeleteRoles = async () => {
+    if (!user || !grade || !classNo) return;
+    if (!window.confirm("이번 주 역할 배정을 삭제할까요? 학생 화면에서도 사라집니다.")) return;
+    setBusy("roles-delete");
+    setError("");
+    try {
+      await deleteRoleSchedule(grade, classNo);
+      setRoleSchedule(null);
+      roleDraftDirtyRef.current = false;
+      setRoleDraft(assignRolesForAllGroups(resolvedGroups, studentsById, week.weekIndex));
+      setMessage("역할 배정을 삭제했습니다.");
+    } catch (e: unknown) {
+      setError(getFirebaseErrorMessage(e, "역할 삭제 실패"));
+    } finally {
+      setBusy("");
+    }
+  };
+
+  const handleAutoRoleAssign = () => {
+    roleDraftDirtyRef.current = true;
+    setRoleDraft(assignRolesForAllGroups(resolvedGroups, studentsById, week.weekIndex));
+    setMessage("자동 역할 배정 미리보기를 적용했습니다. 확인 후 「역할 저장」을 눌러 주세요.");
+  };
+
+  const handleRoleAssignmentChange = (
+    rosterStudentId: string,
+    patch: { primaryRoleCode?: RoleCode; secondaryRoleCode?: RoleCode | null },
+  ) => {
+    roleDraftDirtyRef.current = true;
+    setRoleDraft((prev) =>
+      prev.map((a) => (a.rosterStudentId === rosterStudentId ? { ...a, ...patch } : a)),
+    );
+  };
+
+  const handleSaveSeparationPair = async (
+    label: string,
+    studentIds: [string, string],
+    ruleId?: string,
+  ) => {
     if (!user || role !== "teacher") {
       setError("교사 로그인이 필요합니다.");
       return;
@@ -426,34 +516,19 @@ export function GroupActivityManager() {
       setError("반을 먼저 선택하거나 등록해 주세요.");
       return;
     }
-    if (sepStudentIds.length !== 2) {
-      setError("분리 조건은 학생 2명(한 쌍)만 선택해 주세요.");
-      return;
-    }
     setBusy("sep");
     setError("");
     setMessage("");
     try {
       const rid = buildRosterId(user.uid, grade, classNo);
-      const studentNos = sepStudentIds
+      const studentNos = studentIds
         .map((id) => studentsById.get(id)?.studentNo)
         .filter((no): no is string => Boolean(no));
-      await saveSeparationRule(
-        user.uid,
-        rid,
-        grade,
-        classNo,
-        sepLabel.trim() || "분리",
-        sepStudentIds,
-        studentNos,
-        user,
-      );
+      await saveSeparationRule(user.uid, rid, grade, classNo, label, studentIds, studentNos, user, ruleId);
       const rules = await listSeparationRules(user.uid, rid, grade, classNo);
       setSeparations(rules);
       setRosterId(rid);
-      setSepStudentIds([]);
-      setMessage(`「${sepLabel.trim() || "분리"}」 분리 쌍을 등록했습니다.`);
-      void loadClassData();
+      setMessage(ruleId ? `「${label}」 분리 쌍을 수정했습니다.` : `「${label}」 분리 쌍을 등록했습니다.`);
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "분리 조건 저장 실패"));
     } finally {
@@ -461,12 +536,19 @@ export function GroupActivityManager() {
     }
   };
 
-  const toggleSepStudent = (studentId: string) => {
-    setSepStudentIds((prev) => {
-      if (prev.includes(studentId)) return prev.filter((id) => id !== studentId);
-      if (prev.length >= 2) return [prev[1], studentId];
-      return [...prev, studentId];
-    });
+  const handleDeleteSeparationRule = async (ruleId: string) => {
+    if (!user) return;
+    if (!window.confirm("이 분리 조건을 삭제할까요?")) return;
+    setBusy("sep");
+    try {
+      await deleteSeparationRule(user.uid, ruleId);
+      await loadClassData();
+      setMessage("분리 조건을 삭제했습니다.");
+    } catch (e: unknown) {
+      setError(getFirebaseErrorMessage(e, "분리 조건 삭제 실패"));
+    } finally {
+      setBusy("");
+    }
   };
 
   const handlePraise = async () => {
@@ -529,6 +611,7 @@ export function GroupActivityManager() {
                 setSelectedClass(e.target.value);
                 setMessage("");
                 setError("");
+                roleDraftDirtyRef.current = false;
               }}
             >
               {classes.length === 0 && <option value="">등록된 반이 없습니다</option>}
@@ -716,136 +799,14 @@ export function GroupActivityManager() {
           )}
 
           {(activitySection === "separation") && (
-          <section className={PANEL}>
-            <h2 className="ui-section-title">2. 분리 조건</h2>
-            <p className="ui-section-desc text-base">
-              같은 모둠에 두지 않을 학생 <strong>2명씩(쌍)</strong>을 등록합니다. 여러 쌍은 OR 규칙으로 편성에 반영됩니다.
-            </p>
-
-            <div className="mt-4 flex flex-wrap gap-3 text-sm">
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
-                등록 조건 {separations.length}건
-              </span>
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-amber-900">
-                등록 학생 {separationStudentStatus.length}명
-              </span>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-end gap-2">
-              <input className={`${INPUT} w-28`} value={sepLabel} onChange={(e) => setSepLabel(e.target.value)} placeholder="유형" />
-              <button type="button" className={BTN_PRIMARY} disabled={busy === "sep" || sepStudentIds.length !== 2} onClick={() => void handleSaveSeparation()}>
-                쌍 추가 ({sepStudentIds.length}/2명)
-              </button>
-            </div>
-            {students.length === 0 ? (
-              <p className="mt-3 text-sm text-slate-400">명단을 먼저 등록해 주세요.</p>
-            ) : (
-              <div className="mt-3 max-h-48 overflow-y-auto rounded-lg border border-slate-200 p-3">
-                <p className="mb-2 text-xs font-medium text-slate-600">분리할 학생 2명 선택 (한 쌍)</p>
-                <div className="flex flex-wrap gap-2">
-                  {students.map((s) => {
-                    const selected = sepStudentIds.includes(s.id);
-                    return (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => toggleSepStudent(s.id)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                          selected
-                            ? "bg-violet-600 text-white"
-                            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                        }`}
-                      >
-                        {s.studentNo} {s.studentName}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {separationStudentStatus.length > 0 && (
-              <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
-                <h3 className="text-sm font-bold text-amber-950">분리 조건 등록 학생 현황</h3>
-                <p className="mt-1 text-xs text-amber-900/80">등록한 쌍끼리 같은 모둠에 배치되지 않습니다.</p>
-                <div className="mt-3">
-                  <RosterScrollTable>
-                  <RosterStickyHead
-                    extraHeaders={<th className="min-w-[10rem] px-3 py-2">분리 유형</th>}
-                  />
-                  <tbody>
-                    {separationStudentStatus.map(({ student, labels }) => (
-                      <RosterStickyRow
-                        key={student.id}
-                        studentNo={student.studentNo}
-                        studentName={student.studentName}
-                        cells={
-                          <td className="px-3 py-2">
-                            <div className="flex flex-wrap gap-1">
-                              {labels.map((label) => (
-                                <span
-                                  key={label}
-                                  className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-amber-900 ring-1 ring-amber-200"
-                                >
-                                  {label}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                        }
-                      />
-                    ))}
-                  </tbody>
-                  </RosterScrollTable>
-                </div>
-              </div>
-            )}
-
-            <ul className="mt-5 space-y-2">
-              {separations.length === 0 && (
-                <li className="rounded-lg border border-dashed border-slate-200 px-3 py-4 text-center text-sm text-slate-400">
-                  등록된 분리 조건이 없습니다.
-                </li>
-              )}
-              {separations.map((rule) => {
-                const members = resolveSeparationStudentEntries(rule, students);
-                return (
-                  <li key={rule.id} className="rounded-lg bg-slate-50 px-3 py-3 text-sm">
-                    <div className="flex flex-wrap items-start gap-2">
-                      <span className="font-medium text-slate-800">{rule.typeLabel}</span>
-                      <span className="text-xs text-slate-500">({members.length}명)</span>
-                      <button
-                        type="button"
-                        className="ml-auto text-red-600 hover:underline"
-                        onClick={() => user && void deleteSeparationRule(user.uid, rule.id).then(loadClassData)}
-                      >
-                        삭제
-                      </button>
-                    </div>
-                    <ul className="mt-2 flex flex-wrap gap-2">
-                      {members.length >= 2 ? (
-                        <li className="rounded-md bg-white px-2 py-1 text-xs text-slate-700 ring-1 ring-slate-200">
-                          {members[0].studentNo}번 {members[0].studentName} ↔ {members[1].studentNo}번 {members[1].studentName}
-                        </li>
-                      ) : (
-                        members.map((s) => (
-                          <li
-                            key={s.id}
-                            className="rounded-md bg-white px-2 py-1 text-xs text-slate-700 ring-1 ring-slate-200"
-                          >
-                            {s.studentNo}번 {s.studentName}
-                          </li>
-                        ))
-                      )}
-                      {members.length === 0 && (
-                        <li className="text-xs text-red-600">명단과 연결되지 않은 조건입니다. 삭제 후 다시 등록해 주세요.</li>
-                      )}
-                    </ul>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+            <SeparationDragPanel
+              students={students}
+              separations={separations}
+              separationStudentStatus={separationStudentStatus}
+              busy={busy}
+              onSavePair={handleSaveSeparationPair}
+              onDeleteRule={handleDeleteSeparationRule}
+            />
           )}
 
           {(activitySection === "assign") && (
@@ -863,6 +824,8 @@ export function GroupActivityManager() {
               onAutoAssign={handleAutoAssign}
               onConfirm={() => void handleConfirmAssignment()}
               onGroupsChange={(next) => void handleManualGroupsChange(next)}
+              onSave={() => void handleSaveAssignment()}
+              onDelete={() => void handleDeleteAssignment()}
             />
             </>
           )}
@@ -872,11 +835,14 @@ export function GroupActivityManager() {
               weekStart={week.weekStart}
               weekEnd={week.weekEnd}
               weekLabel={week.schoolWeekLabel}
-              assignments={roleDisplayAssignments}
+              assignments={roleDraft}
               hasGroups={resolvedGroups.some((g) => g.memberIds.length > 0)}
               isSaved={rolesSavedThisWeek}
               busy={busy}
-              onAssignRoles={() => void handleAssignRoles()}
+              onAssignmentChange={handleRoleAssignmentChange}
+              onAutoAssign={handleAutoRoleAssign}
+              onSave={() => void handleAssignRoles()}
+              onDelete={() => void handleDeleteRoles()}
             />
           )}
 

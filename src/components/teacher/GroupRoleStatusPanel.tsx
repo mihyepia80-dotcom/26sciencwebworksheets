@@ -1,8 +1,16 @@
 "use client";
 
-import { GROUP_COUNT, ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/group-activity/constants";
+import {
+  GROUP_COUNT,
+  ROLE_CODES,
+  ROLE_DESCRIPTIONS,
+  ROLE_LABELS,
+  type RoleCode,
+} from "@/lib/group-activity/constants";
 import type { StudentRoleAssignment } from "@/lib/group-activity/types";
 import { formatWeekRange } from "@/lib/group-activity/week-utils";
+
+const INPUT = "ui-input-compact";
 
 interface GroupRoleStatusPanelProps {
   weekStart: string;
@@ -12,7 +20,13 @@ interface GroupRoleStatusPanelProps {
   hasGroups: boolean;
   isSaved: boolean;
   busy: string;
-  onAssignRoles: () => void;
+  onAssignmentChange: (
+    rosterStudentId: string,
+    patch: { primaryRoleCode?: RoleCode; secondaryRoleCode?: RoleCode | null },
+  ) => void;
+  onAutoAssign: () => void;
+  onSave: () => void;
+  onDelete: () => void;
 }
 
 export function GroupRoleStatusPanel({
@@ -23,8 +37,12 @@ export function GroupRoleStatusPanel({
   hasGroups,
   isSaved,
   busy,
-  onAssignRoles,
+  onAssignmentChange,
+  onAutoAssign,
+  onSave,
+  onDelete,
 }: GroupRoleStatusPanelProps) {
+  const saving = busy === "roles" || busy === "roles-delete";
   const byGroup = new Map<number, StudentRoleAssignment[]>();
   for (const a of assignments) {
     if (!byGroup.has(a.groupNo)) byGroup.set(a.groupNo, []);
@@ -38,21 +56,37 @@ export function GroupRoleStatusPanel({
         {formatWeekRange(weekStart, weekEnd)} · {weekLabel} · 매주 월요일 갱신 (월~금)
       </p>
       <p className="mt-2 text-base text-slate-600">
-        4번 모둠 편성 명단을 바탕으로 주·보조 역할을 표시합니다. 저장 전에도 미리보기가 보입니다.
+        4번 모둠 편성 명단을 바탕으로 역할을 수정·저장·삭제할 수 있습니다.
       </p>
 
-      <div className="mt-6 flex flex-wrap items-center gap-4">
+      <div className="mt-6 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          className="ui-btn-secondary"
+          disabled={saving || !hasGroups || assignments.length === 0}
+          onClick={onAutoAssign}
+        >
+          자동 배정
+        </button>
         <button
           type="button"
           className="ui-btn-accent"
-          disabled={busy === "roles" || !hasGroups}
-          onClick={onAssignRoles}
+          disabled={saving || !hasGroups || assignments.length === 0}
+          onClick={onSave}
         >
-          역할 배정 저장 (이번 주)
+          역할 저장
+        </button>
+        <button
+          type="button"
+          className="ui-btn-secondary text-red-700"
+          disabled={saving || !isSaved}
+          onClick={onDelete}
+        >
+          역할 삭제
         </button>
         {isSaved && <span className="text-lg font-semibold text-emerald-700">✓ 학생 화면에 반영됨</span>}
         {!isSaved && assignments.length > 0 && (
-          <span className="text-base text-slate-600">미리보기 — 저장하면 학생이 조회합니다</span>
+          <span className="text-base text-slate-600">저장 전 — 아래에서 역할을 수정할 수 있습니다</span>
         )}
       </div>
 
@@ -64,7 +98,9 @@ export function GroupRoleStatusPanel({
         <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: GROUP_COUNT }, (_, i) => {
             const groupNo = i + 1;
-            const members = byGroup.get(groupNo) ?? [];
+            const members = [...(byGroup.get(groupNo) ?? [])].sort((a, b) =>
+              a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }),
+            );
             return (
               <div
                 key={groupNo}
@@ -77,21 +113,56 @@ export function GroupRoleStatusPanel({
                 <p className="text-xl font-bold text-slate-900">{groupNo}모둠</p>
                 {members.length > 0 ? (
                   <ul className="mt-3 space-y-3 text-base">
-                    {members
-                      .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }))
-                      .map((a) => (
-                        <li key={a.rosterStudentId} className="rounded-xl bg-slate-50 px-4 py-3">
-                          <span className="text-lg font-semibold text-slate-900">
-                            {a.studentNo} {a.studentName}
-                          </span>
-                          <p className="mt-1 text-slate-700">
-                            주: {ROLE_LABELS[a.primaryRoleCode]} — {ROLE_DESCRIPTIONS[a.primaryRoleCode]}
-                          </p>
-                          {a.secondaryRoleCode && (
-                            <p className="text-slate-600">보조: {ROLE_LABELS[a.secondaryRoleCode]}</p>
-                          )}
-                        </li>
-                      ))}
+                    {members.map((a) => (
+                      <li key={a.rosterStudentId} className="rounded-xl bg-slate-50 px-4 py-3">
+                        <span className="text-lg font-semibold text-slate-900">
+                          {a.studentNo} {a.studentName}
+                        </span>
+                        <div className="mt-2 space-y-2">
+                          <label className="flex flex-col gap-1 text-sm">
+                            <span className="font-medium text-slate-600">주역할</span>
+                            <select
+                              className={INPUT}
+                              disabled={saving}
+                              value={a.primaryRoleCode}
+                              onChange={(e) =>
+                                onAssignmentChange(a.rosterStudentId, {
+                                  primaryRoleCode: Number(e.target.value) as RoleCode,
+                                })
+                              }
+                            >
+                              {ROLE_CODES.map((code) => (
+                                <option key={code} value={code}>
+                                  {ROLE_LABELS[code]} — {ROLE_DESCRIPTIONS[code]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="flex flex-col gap-1 text-sm">
+                            <span className="font-medium text-slate-600">보조역할</span>
+                            <select
+                              className={INPUT}
+                              disabled={saving}
+                              value={a.secondaryRoleCode ?? ""}
+                              onChange={(e) =>
+                                onAssignmentChange(a.rosterStudentId, {
+                                  secondaryRoleCode: e.target.value
+                                    ? (Number(e.target.value) as RoleCode)
+                                    : null,
+                                })
+                              }
+                            >
+                              <option value="">없음</option>
+                              {ROLE_CODES.map((code) => (
+                                <option key={code} value={code}>
+                                  {ROLE_LABELS[code]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        </div>
+                      </li>
+                    ))}
                   </ul>
                 ) : (
                   <p className="mt-3 text-base text-slate-400">역할 없음</p>
