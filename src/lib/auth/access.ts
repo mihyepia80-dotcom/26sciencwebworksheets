@@ -28,6 +28,9 @@ export function isGuestBrowsablePath(pathname: string): boolean {
     pathname === "/login" ||
     pathname === "/workspace" ||
     pathname === "/inquiry-report" ||
+    pathname === "/privacy" ||
+    pathname === "/terms" ||
+    pathname === "/ai-ethics" ||
     pathname.startsWith("/templates/") ||
     pathname.startsWith("/share/") ||
     pathname.startsWith("/join/") ||

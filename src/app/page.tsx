@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
 import { HomeGuestNotice, HomeStudentBadgeBar } from "@/components/home/HomeGuestSections";
+import { SitePolicyLinks } from "@/components/legal/SitePolicyLinks";
 import { StudentGroupRoleCard } from "@/components/student/StudentGroupRoleCard";
 import { StudentTemplateGrid } from "@/components/student/StudentTemplateGrid";
 
@@ -33,6 +34,8 @@ export default function HomePage() {
         </section>
 
         <StudentTemplateGrid />
+
+        <SitePolicyLinks />
       </main>
     </div>
   );
