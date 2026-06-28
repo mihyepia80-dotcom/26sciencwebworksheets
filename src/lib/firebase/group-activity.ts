@@ -15,6 +15,10 @@ import {
 import { buildClassScheduleId, buildRosterId, buildRosterStudentId, normalizeClassPart, normalizeStudentNo, ROLE_WEEK_ANCHOR } from "@/lib/group-activity/constants";
 import { assignGroups } from "@/lib/group-activity/assign-groups";
 import { assignRolesForAllGroups } from "@/lib/group-activity/assign-roles";
+import {
+  normalizeSeparationRulesForAssign,
+  resolveSeparationStudentIds,
+} from "@/lib/group-activity/separation-rules";
 import type {
   AchievementLevel,
   ClassRosterMeta,
@@ -330,20 +334,7 @@ export async function listSeparationRules(
 }
 
 /** 분리 조건에 연결된 현재 명단 학생 ID */
-export function resolveSeparationStudentIds(
-  rule: Pick<SeparationRule, "studentIds" | "studentNos">,
-  students: RosterStudent[],
-): string[] {
-  const byId = new Set(students.map((s) => s.id));
-  const byNo = new Map(students.map((s) => [normalizeStudentNo(s.studentNo), s.id]));
-
-  const fromNos = (rule.studentNos ?? [])
-    .map((no) => byNo.get(normalizeStudentNo(no)))
-    .filter((id): id is string => Boolean(id));
-  const fromIds = rule.studentIds.filter((id) => byId.has(id));
-
-  return [...new Set([...fromNos, ...fromIds])];
-}
+export { resolveSeparationStudentIds, normalizeSeparationRulesForAssign } from "@/lib/group-activity/separation-rules";
 
 export function resolveSeparationStudentEntries(
   rule: SeparationRule,
@@ -372,18 +363,6 @@ export function buildSeparationStudentStatus(
     .sort((a, b) => a.student.studentNo.localeCompare(b.student.studentNo, "ko", { numeric: true }));
 }
 
-export function normalizeSeparationRulesForAssign(
-  separations: SeparationRule[],
-  students: RosterStudent[],
-): SeparationRule[] {
-  return separations
-    .map((rule) => ({
-      ...rule,
-      studentIds: resolveSeparationStudentIds(rule, students),
-    }))
-    .filter((rule) => rule.studentIds.length >= 2);
-}
-
 export async function saveSeparationRule(
   teacherUid: string,
   rosterId: string,
@@ -402,6 +381,11 @@ export async function saveSeparationRule(
   }
   await ensureRosterMeta(teacherUid, normalizedGrade, normalizedClassNo, teacherUser);
 
+  const uniqueIds = [...new Set(studentIds)];
+  if (uniqueIds.length !== 2) {
+    throw new Error("분리 조건은 같은 모둠에 두지 않을 학생 2명(한 쌍)만 등록할 수 있습니다.");
+  }
+
   const docId = id ?? doc(teacherCollection(teacherUid, "groupSeparations")).id;
   await setDoc(teacherDocument(teacherUid, "groupSeparations", docId), {
     rosterId,
@@ -409,8 +393,8 @@ export async function saveSeparationRule(
     grade: normalizedGrade,
     classNo: normalizedClassNo,
     typeLabel,
-    studentIds,
-    studentNos: studentNos.map(normalizeStudentNo),
+    studentIds: uniqueIds,
+    studentNos: studentNos.map(normalizeStudentNo).slice(0, 2),
     updatedAt: serverTimestamp(),
   });
   return docId;

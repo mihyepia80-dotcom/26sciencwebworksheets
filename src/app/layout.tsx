@@ -16,7 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
         />
       </head>
-      <body className="min-h-screen antialiased">
+      <body className="app-shell min-h-screen antialiased text-slate-800">
         <Providers>{children}</Providers>
       </body>
     </html>

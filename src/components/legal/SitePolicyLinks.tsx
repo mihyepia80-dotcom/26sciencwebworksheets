@@ -3,23 +3,23 @@ import { SITE_POLICIES } from "@/lib/legal/policies";
 
 export function SitePolicyLinks() {
   return (
-    <section className="mt-16 border-t border-slate-200 pt-10" aria-labelledby="policy-links-heading">
-      <h2 id="policy-links-heading" className="text-lg font-bold text-slate-900">
+    <section className="mt-16 border-t border-slate-200/80 pt-10" aria-labelledby="policy-links-heading">
+      <h2 id="policy-links-heading" className="ui-section-title">
         서비스 정책
       </h2>
-      <p className="mt-2 text-sm text-slate-600">
+      <p className="ui-section-desc">
         개인정보, 이용 조건, AI 이용 안내를 확인할 수 있습니다.
       </p>
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-3">
         {SITE_POLICIES.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className="ui-card block p-4 transition hover:border-violet-200 hover:shadow-sm"
+            className="ui-panel block transition hover:border-violet-200 hover:shadow-lg"
           >
-            <p className="font-semibold text-slate-900">{item.label}</p>
-            <p className="mt-1 text-sm text-slate-600">{item.description}</p>
-            <span className="mt-3 inline-block text-sm font-medium text-violet-700">전문 보기 →</span>
+            <p className="text-xl font-bold text-slate-900">{item.label}</p>
+            <p className="mt-2 text-base text-slate-600">{item.description}</p>
+            <span className="mt-4 inline-block text-base font-semibold text-violet-700">전문 보기 →</span>
           </Link>
         ))}
       </div>

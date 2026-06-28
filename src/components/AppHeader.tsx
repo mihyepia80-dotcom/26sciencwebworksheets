@@ -16,13 +16,13 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
   };
 
   return (
-    <header className="border-b border-slate-200/80 bg-white">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5 px-5 py-6">
+    <header className="border-b border-white/60 bg-white/80 shadow-sm backdrop-blur-md">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-6 px-6 py-7 sm:px-8">
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">{title}</h1>
-          {subtitle && <p className="mt-1.5 text-base text-slate-600">{subtitle}</p>}
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">{title}</h1>
+          {subtitle && <p className="mt-2 text-lg text-slate-600">{subtitle}</p>}
           {role === "student" && studentProfile && (
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-2 text-base text-slate-500">
               {studentProfile.grade}학년 {studentProfile.classNo}반 · {studentProfile.studentNo}번{" "}
               {studentProfile.studentName}
             </p>

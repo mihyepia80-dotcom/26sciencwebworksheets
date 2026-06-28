@@ -4,9 +4,6 @@ import { GROUP_COUNT, ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/group-activit
 import type { StudentRoleAssignment } from "@/lib/group-activity/types";
 import { formatWeekRange } from "@/lib/group-activity/week-utils";
 
-const BTN = "rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60";
-const BTN_PRIMARY = `${BTN} bg-violet-600 text-white hover:bg-violet-700`;
-
 interface GroupRoleStatusPanelProps {
   weekStart: string;
   weekEnd: string;
@@ -35,56 +32,56 @@ export function GroupRoleStatusPanel({
   }
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-lg font-bold text-slate-900">5. 역할 부여</h2>
-      <p className="mt-1 text-sm text-slate-600">
+    <section className="ui-panel">
+      <h2 className="ui-section-title">5. 역할 부여</h2>
+      <p className="ui-section-desc">
         {formatWeekRange(weekStart, weekEnd)} · {weekLabel} · 매주 월요일 갱신 (월~금)
       </p>
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-2 text-base text-slate-600">
         4번 모둠 편성 명단을 바탕으로 주·보조 역할을 표시합니다. 저장 전에도 미리보기가 보입니다.
       </p>
 
-      <div className="mt-4 flex flex-wrap items-center gap-2">
+      <div className="mt-6 flex flex-wrap items-center gap-4">
         <button
           type="button"
-          className={BTN_PRIMARY}
+          className="ui-btn-accent"
           disabled={busy === "roles" || !hasGroups}
           onClick={onAssignRoles}
         >
           역할 배정 저장 (이번 주)
         </button>
-        {isSaved && (
-          <span className="text-sm text-emerald-700">✓ 학생 화면에 반영됨</span>
-        )}
+        {isSaved && <span className="text-lg font-semibold text-emerald-700">✓ 학생 화면에 반영됨</span>}
         {!isSaved && assignments.length > 0 && (
-          <span className="text-sm text-slate-500">미리보기 — 저장하면 학생이 조회합니다</span>
+          <span className="text-base text-slate-600">미리보기 — 저장하면 학생이 조회합니다</span>
         )}
       </div>
 
       {!hasGroups && (
-        <p className="mt-4 text-sm text-slate-400">먼저 4번 모둠 편성에서 학생을 배정해 주세요.</p>
+        <p className="mt-6 text-lg text-slate-500">먼저 4번 모둠 편성에서 학생을 배정해 주세요.</p>
       )}
 
       {hasGroups && (
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {Array.from({ length: GROUP_COUNT }, (_, i) => {
             const groupNo = i + 1;
             const members = byGroup.get(groupNo) ?? [];
             return (
               <div
                 key={groupNo}
-                className={`rounded-lg border p-4 ${
-                  members.length > 0 ? "border-slate-200 bg-white" : "border-dashed border-slate-200 bg-slate-50/50"
+                className={`rounded-2xl border-2 p-5 ${
+                  members.length > 0
+                    ? "border-slate-200 bg-white shadow-sm"
+                    : "border-dashed border-slate-200 bg-slate-50/70"
                 }`}
               >
-                <p className="font-bold text-slate-900">{groupNo}모둠</p>
+                <p className="text-xl font-bold text-slate-900">{groupNo}모둠</p>
                 {members.length > 0 ? (
-                  <ul className="mt-2 space-y-2 text-sm">
+                  <ul className="mt-3 space-y-3 text-base">
                     {members
                       .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }))
                       .map((a) => (
-                        <li key={a.rosterStudentId} className="rounded-md bg-slate-50 px-2 py-2">
-                          <span className="font-medium text-slate-900">
+                        <li key={a.rosterStudentId} className="rounded-xl bg-slate-50 px-4 py-3">
+                          <span className="text-lg font-semibold text-slate-900">
                             {a.studentNo} {a.studentName}
                           </span>
                           <p className="mt-1 text-slate-700">
@@ -97,7 +94,7 @@ export function GroupRoleStatusPanel({
                       ))}
                   </ul>
                 ) : (
-                  <p className="mt-2 text-sm text-slate-400">역할 없음</p>
+                  <p className="mt-3 text-base text-slate-400">역할 없음</p>
                 )}
               </div>
             );

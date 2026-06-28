@@ -47,10 +47,10 @@ import {
 } from "@/lib/firebase/group-activity";
 import type { ClassRosterMeta } from "@/lib/group-activity/types";
 
-const INPUT = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
-const BTN = "rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-60";
-const BTN_PRIMARY = `${BTN} bg-violet-600 text-white hover:bg-violet-700`;
-const BTN_SECONDARY = `${BTN} border border-slate-300 text-slate-700 hover:bg-slate-50`;
+const INPUT = "ui-input-compact";
+const BTN_PRIMARY = "ui-btn-accent";
+const BTN_SECONDARY = "ui-btn-secondary";
+const PANEL = "ui-panel";
 
 type ActivitySection = "roster" | "separation" | "assign" | "roles" | "praise";
 
@@ -195,9 +195,6 @@ export function GroupActivityManager() {
         normalizeSeparationRulesForAssign(rules, roster),
       );
       setGroups(syncedGroups);
-      if (syncedGroups.some((g) => g.memberIds.length > 0) && !assignment?.groups?.length) {
-        setMessage((prev) => prev || "명단을 반영해 모둠 편성을 구성했습니다.");
-      }
       setAssignmentConfirmed(!!assignment?.confirmedAt);
       setPraises(praiseList);
       setRoleSchedule(schedule);
@@ -337,15 +334,24 @@ export function GroupActivityManager() {
     }
   };
 
-  const handleAutoAssign = (seed?: number) => {
+  const handleAutoAssign = async (seed?: number) => {
+    if (!user || !grade || !classNo) return;
     setError("");
+    setBusy("assign");
     try {
-      const result = computeGroupAssignment(students, separationRulesForAssign, seed);
-      setGroups(enrichGroupSlots(result, students));
+      const result = enrichGroupSlots(
+        computeGroupAssignment(students, separationRulesForAssign, seed),
+        students,
+      );
+      await saveMonthlyAssignment(user.uid, grade, classNo, year, month, result, false);
+      setGroups(result);
+      setAssignmentConfirmed(false);
       setActivitySection("assign");
-      setMessage("모둠을 자동 편성했습니다. 확인 후 「편성 확정」을 눌러 주세요.");
+      setMessage("모둠을 자동 편성해 저장했습니다. 확인 후 「편성 확정」을 눌러 주세요.");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "편성 실패");
+    } finally {
+      setBusy("");
     }
   };
 
@@ -390,8 +396,8 @@ export function GroupActivityManager() {
       setError("반을 먼저 선택하거나 등록해 주세요.");
       return;
     }
-    if (sepStudentIds.length < 2) {
-      setError("분리 조건에는 학생을 2명 이상 선택해 주세요.");
+    if (sepStudentIds.length !== 2) {
+      setError("분리 조건은 학생 2명(한 쌍)만 선택해 주세요.");
       return;
     }
     setBusy("sep");
@@ -416,7 +422,7 @@ export function GroupActivityManager() {
       setSeparations(rules);
       setRosterId(rid);
       setSepStudentIds([]);
-      setMessage(`「${sepLabel.trim() || "분리"}」 조건에 ${studentNos.length}명을 등록했습니다.`);
+      setMessage(`「${sepLabel.trim() || "분리"}」 분리 쌍을 등록했습니다.`);
       void loadClassData();
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "분리 조건 저장 실패"));
@@ -426,9 +432,11 @@ export function GroupActivityManager() {
   };
 
   const toggleSepStudent = (studentId: string) => {
-    setSepStudentIds((prev) =>
-      prev.includes(studentId) ? prev.filter((id) => id !== studentId) : [...prev, studentId],
-    );
+    setSepStudentIds((prev) => {
+      if (prev.includes(studentId)) return prev.filter((id) => id !== studentId);
+      if (prev.length >= 2) return [prev[1], studentId];
+      return [...prev, studentId];
+    });
   };
 
   const handlePraise = async () => {
@@ -477,13 +485,13 @@ export function GroupActivityManager() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-900">반 선택 · 등록</h2>
-        <p className="mt-1 text-xs text-slate-500">여러 반을 등록한 뒤, 선택한 반 단위로 명단·편성·역할을 관리합니다.</p>
+      <section className={PANEL}>
+        <h2 className="ui-section-title">반 선택 · 등록</h2>
+        <p className="ui-section-desc text-base">여러 반을 등록한 뒤, 선택한 반 단위로 명단·편성·역할을 관리합니다.</p>
 
         <div className="mt-4 flex flex-wrap items-end gap-4">
-          <label className="flex min-w-[12rem] flex-col gap-1 text-sm">
-            <span className="font-medium text-slate-600">관리 중인 반</span>
+          <label className="flex min-w-[12rem] flex-col gap-2 text-base">
+            <span className="font-semibold text-slate-700">관리 중인 반</span>
             <select
               className={INPUT}
               value={selectedClass}
@@ -502,13 +510,13 @@ export function GroupActivityManager() {
             </select>
           </label>
 
-          <div className="flex flex-wrap items-end gap-2 rounded-lg border border-dashed border-violet-200 bg-violet-50/50 px-3 py-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-600">학년</span>
+          <div className="flex flex-wrap items-end gap-3 rounded-2xl border-2 border-dashed border-violet-200 bg-violet-50/60 px-5 py-4">
+            <label className="flex flex-col gap-2 text-base">
+              <span className="font-semibold text-slate-700">학년</span>
               <input className={`${INPUT} w-20`} value={addGrade} onChange={(e) => setAddGrade(e.target.value)} />
             </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-600">반</span>
+            <label className="flex flex-col gap-2 text-base">
+              <span className="font-semibold text-slate-700">반</span>
               <input className={`${INPUT} w-20`} value={addClassNo} onChange={(e) => setAddClassNo(e.target.value)} />
             </label>
             <button type="button" className={BTN_PRIMARY} disabled={busy === "register"} onClick={() => void handleRegisterClass()}>
@@ -518,31 +526,31 @@ export function GroupActivityManager() {
         </div>
 
         {selectedMeta && (
-          <p className="mt-2 text-xs text-slate-500">
-            현재: {grade}학년 {classNo}반 · {year}년 {month}월 · {week.schoolWeekLabel}
+          <p className="mt-4 text-base text-slate-600">
+            현재: <strong>{grade}학년 {classNo}반</strong> · {year}년 {month}월 · {week.schoolWeekLabel}
           </p>
         )}
       </section>
 
-      {message && <p className="rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{message}</p>}
-      {error && <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>}
+      {message && <p className="ui-message-success">{message}</p>}
+      {error && <p className="ui-message-error">{error}</p>}
 
       {!selectedMeta && !loading && (
-        <p className="rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+        <p className="ui-panel text-center text-lg text-slate-500">
           먼저 「반 추가 등록」으로 학년·반을 등록해 주세요.
         </p>
       )}
 
-      {selectedMeta && loading && <p className="text-sm text-slate-500">불러오는 중...</p>}
+      {selectedMeta && loading && <p className="text-lg text-slate-500">불러오는 중...</p>}
 
       {selectedMeta && !loading && (
         <>
-          <nav className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm" aria-label="모둠 활동 메뉴">
+          <nav className="ui-tab-nav" aria-label="모둠 활동 메뉴">
             {ACTIVITY_SECTIONS.map((item) => (
               <button
                 key={item.id}
                 type="button"
-                className={activitySection === item.id ? BTN_PRIMARY : BTN_SECONDARY}
+                className={`ui-tab ${activitySection === item.id ? "ui-tab-active" : "ui-tab-inactive"}`}
                 onClick={() => setActivitySection(item.id)}
               >
                 {item.label}
@@ -551,9 +559,9 @@ export function GroupActivityManager() {
           </nav>
 
           {(activitySection === "roster") && (
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-bold text-slate-900">1. 명렬표 ({grade}학년 {classNo}반)</h2>
+          <section className={PANEL}>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="ui-section-title">1. 명렬표 ({grade}학년 {classNo}반)</h2>
               <div className="flex gap-2">
                 <button type="button" className={rosterTab === "list" ? BTN_PRIMARY : BTN_SECONDARY} onClick={() => setRosterTab("list")}>
                   명단
@@ -678,9 +686,11 @@ export function GroupActivityManager() {
           )}
 
           {(activitySection === "separation") && (
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-slate-900">2. 분리 조건</h2>
-            <p className="mt-1 text-xs text-slate-500">같은 모둠에 배치하지 않을 학생을 유형별로 지정합니다.</p>
+          <section className={PANEL}>
+            <h2 className="ui-section-title">2. 분리 조건</h2>
+            <p className="ui-section-desc text-base">
+              같은 모둠에 두지 않을 학생 <strong>2명씩(쌍)</strong>을 등록합니다. 여러 쌍은 OR 규칙으로 편성에 반영됩니다.
+            </p>
 
             <div className="mt-4 flex flex-wrap gap-3 text-sm">
               <span className="rounded-full bg-slate-100 px-3 py-1 text-slate-700">
@@ -693,15 +703,15 @@ export function GroupActivityManager() {
 
             <div className="mt-4 flex flex-wrap items-end gap-2">
               <input className={`${INPUT} w-28`} value={sepLabel} onChange={(e) => setSepLabel(e.target.value)} placeholder="유형" />
-              <button type="button" className={BTN_PRIMARY} disabled={busy === "sep" || sepStudentIds.length < 2} onClick={() => void handleSaveSeparation()}>
-                쌍 추가 ({sepStudentIds.length}명 선택)
+              <button type="button" className={BTN_PRIMARY} disabled={busy === "sep" || sepStudentIds.length !== 2} onClick={() => void handleSaveSeparation()}>
+                쌍 추가 ({sepStudentIds.length}/2명)
               </button>
             </div>
             {students.length === 0 ? (
               <p className="mt-3 text-sm text-slate-400">명단을 먼저 등록해 주세요.</p>
             ) : (
               <div className="mt-3 max-h-48 overflow-y-auto rounded-lg border border-slate-200 p-3">
-                <p className="mb-2 text-xs font-medium text-slate-600">같은 모둠에 두지 않을 학생 선택 (2명 이상)</p>
+                <p className="mb-2 text-xs font-medium text-slate-600">분리할 학생 2명 선택 (한 쌍)</p>
                 <div className="flex flex-wrap gap-2">
                   {students.map((s) => {
                     const selected = sepStudentIds.includes(s.id);
@@ -727,7 +737,7 @@ export function GroupActivityManager() {
             {separationStudentStatus.length > 0 && (
               <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50/60 p-4">
                 <h3 className="text-sm font-bold text-amber-950">분리 조건 등록 학생 현황</h3>
-                <p className="mt-1 text-xs text-amber-900/80">아래 학생들은 지정한 유형끼리 같은 모둠에 배치되지 않습니다.</p>
+                <p className="mt-1 text-xs text-amber-900/80">등록한 쌍끼리 같은 모둠에 배치되지 않습니다.</p>
                 <div className="mt-3">
                   <RosterScrollTable>
                   <RosterStickyHead
@@ -783,14 +793,20 @@ export function GroupActivityManager() {
                       </button>
                     </div>
                     <ul className="mt-2 flex flex-wrap gap-2">
-                      {members.map((s) => (
-                        <li
-                          key={s.id}
-                          className="rounded-md bg-white px-2 py-1 text-xs text-slate-700 ring-1 ring-slate-200"
-                        >
-                          {s.studentNo}번 {s.studentName}
+                      {members.length >= 2 ? (
+                        <li className="rounded-md bg-white px-2 py-1 text-xs text-slate-700 ring-1 ring-slate-200">
+                          {members[0].studentNo}번 {members[0].studentName} ↔ {members[1].studentNo}번 {members[1].studentName}
                         </li>
-                      ))}
+                      ) : (
+                        members.map((s) => (
+                          <li
+                            key={s.id}
+                            className="rounded-md bg-white px-2 py-1 text-xs text-slate-700 ring-1 ring-slate-200"
+                          >
+                            {s.studentNo}번 {s.studentName}
+                          </li>
+                        ))
+                      )}
                       {members.length === 0 && (
                         <li className="text-xs text-red-600">명단과 연결되지 않은 조건입니다. 삭제 후 다시 등록해 주세요.</li>
                       )}
@@ -831,9 +847,9 @@ export function GroupActivityManager() {
           )}
 
           {(activitySection === "praise") && (
-          <section className="rounded-xl border border-amber-200 bg-amber-50/40 p-5 shadow-sm">
-            <h2 className="text-lg font-bold text-amber-900">6. 모둠 활동 칭찬</h2>
-            <p className="mt-1 text-xs text-amber-800">학습지 칭찬 배지(<Link href="/teacher/badges" className="underline">/teacher/badges</Link>)와 별도입니다.</p>
+          <section className="ui-panel border-amber-200/80 bg-gradient-to-br from-amber-50/90 to-white">
+            <h2 className="ui-section-title text-amber-950">6. 모둠 활동 칭찬</h2>
+            <p className="mt-2 text-base text-amber-900/80">학습지 칭찬 배지(<Link href="/teacher/badges" className="font-semibold underline">/teacher/badges</Link>)와 별도입니다.</p>
             <div className="mt-4 flex flex-wrap items-end gap-2">
               <select className={INPUT} value={praiseStudentId} onChange={(e) => setPraiseStudentId(e.target.value)}>
                 <option value="">학생 선택</option>

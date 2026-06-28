@@ -47,11 +47,11 @@ export function ServiceConsentModal({ onAccepted }: ServiceConsentModalProps) {
       aria-modal="true"
       aria-labelledby="service-consent-title"
     >
-      <div className="ui-card max-h-[90vh] w-full max-w-lg overflow-y-auto p-6 shadow-xl">
-        <h2 id="service-consent-title" className="text-xl font-bold text-slate-900">
+      <div className="ui-panel max-h-[90vh] w-full max-w-xl overflow-y-auto shadow-2xl">
+        <h2 id="service-consent-title" className="ui-section-title">
           서비스 이용 안내 및 동의
         </h2>
-        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+        <p className="ui-section-desc text-base">
           사고도구 톡톡은 초등 과학 탐구·사고기법 학습지를 제공합니다. 학생 로그인 시 학년·반·번호·이름과
           작성 내용이 저장될 수 있으며, AI 보조 기능 이용 시 학습 내용 일부가 전송될 수 있습니다. 아래 내용을
           확인한 뒤 동의해 주세요.
@@ -61,11 +61,11 @@ export function ServiceConsentModal({ onAccepted }: ServiceConsentModalProps) {
           <ServiceConsentForm value={consent} onChange={setConsent} idPrefix="home-consent" />
         </div>
 
-        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+        {error && <p className="ui-message-error mt-4 py-3 text-base">{error}</p>}
 
         <button
           type="button"
-          className="ui-btn-primary mt-5 w-full"
+          className="ui-btn-primary mt-6 w-full"
           onClick={handleAccept}
         >
           동의하고 시작하기

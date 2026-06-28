@@ -16,13 +16,8 @@ export function RosterScrollTable({
   children,
 }: RosterScrollTableProps) {
   return (
-    <div
-      className="mt-4 overflow-auto rounded-lg border border-slate-200"
-      style={{ maxHeight: ROSTER_TABLE_MAX_HEIGHT }}
-    >
-      <table className="min-w-full border-collapse text-sm">
-        {children}
-      </table>
+    <div className="ui-table-wrap" style={{ maxHeight: ROSTER_TABLE_MAX_HEIGHT }}>
+      <table className="ui-table">{children}</table>
     </div>
   );
 }
@@ -37,12 +32,12 @@ export function RosterStickyHead({
   extraHeaders: ReactNode;
 }) {
   return (
-    <thead className="sticky top-0 z-30 bg-slate-50 shadow-sm">
-      <tr className="border-b text-left text-slate-600">
-        <th className="sticky left-0 z-40 min-w-[4.5rem] border-r border-slate-200 bg-slate-50 px-3 py-2">
+    <thead className="ui-table-head">
+      <tr className="border-b text-left">
+        <th className="ui-table-cell sticky left-0 z-40 min-w-[5rem] border-r border-slate-200 bg-slate-100/95">
           {noLabel}
         </th>
-        <th className="sticky left-[4.5rem] z-40 min-w-[7rem] border-r border-slate-200 bg-slate-50 px-3 py-2">
+        <th className="ui-table-cell sticky left-[5rem] z-40 min-w-[8rem] border-r border-slate-200 bg-slate-100/95">
           {nameLabel}
         </th>
         {extraHeaders}
@@ -61,11 +56,11 @@ export function RosterStickyRow({
   cells: ReactNode;
 }) {
   return (
-    <tr className="border-b border-slate-100 hover:bg-slate-50/80">
-      <td className="sticky left-0 z-20 min-w-[4.5rem] border-r border-slate-100 bg-white px-3 py-2 font-medium">
+    <tr className="border-b border-slate-100 hover:bg-violet-50/40">
+      <td className="ui-table-cell sticky left-0 z-20 min-w-[5rem] border-r border-slate-100 bg-white font-semibold">
         {studentNo}
       </td>
-      <td className="sticky left-[4.5rem] z-20 min-w-[7rem] border-r border-slate-100 bg-white px-3 py-2">
+      <td className="ui-table-cell sticky left-[5rem] z-20 min-w-[8rem] border-r border-slate-100 bg-white">
         {studentName}
       </td>
       {cells}

@@ -50,20 +50,20 @@ export function ServiceConsentForm({ value, onChange, idPrefix = "consent" }: Se
           <label
             key={item.key}
             htmlFor={inputId}
-            className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm leading-relaxed text-slate-800"
+            className="flex cursor-pointer items-start gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base leading-relaxed text-slate-800 shadow-sm"
           >
             <input
               id={inputId}
               type="checkbox"
               checked={value[item.key]}
               onChange={() => toggle(item.key)}
-              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+              className="mt-1 h-5 w-5 shrink-0 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
             />
-            <span>
+            <span className="text-lg">
               <span className="font-semibold text-violet-700">(필수)</span>{" "}
               {item.href ? (
                 <>
-                  <Link href={item.href} className="font-medium text-blue-700 underline-offset-2 hover:underline">
+                  <Link href={item.href} className="font-semibold text-violet-700 underline-offset-2 hover:underline">
                     {item.label}
                   </Link>
                   에 동의합니다.

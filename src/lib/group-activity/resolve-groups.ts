@@ -71,19 +71,24 @@ export function isGroupAssignmentStale(groups: GroupSlot[], students: RosterStud
 export function syncGroupsFromRoster(
   currentGroups: GroupSlot[],
   students: RosterStudent[],
-  rules: SeparationRule[],
+  _rules: SeparationRule[],
+  options?: { autoAssignIfEmpty?: boolean },
 ): GroupSlot[] {
   const resolved = resolveGroupSlots(currentGroups, students);
-  if (!isGroupAssignmentStale(resolved, students)) {
+
+  // 저장된 편성이 있으면 학번 기준으로만 복원 (무작위 재편성하지 않음)
+  if (resolved.some((g) => g.memberIds.length > 0)) {
     return enrichGroupSlots(resolved, students);
   }
 
-  const activeCount = students.filter((s) => s.active).length;
-  if (activeCount >= GROUP_COUNT * 3) {
-    try {
-      return enrichGroupSlots(assignGroups(students, rules), students);
-    } catch {
-      return enrichGroupSlots(resolved, students);
+  if (options?.autoAssignIfEmpty) {
+    const activeCount = students.filter((s) => s.active).length;
+    if (activeCount >= GROUP_COUNT * 3) {
+      try {
+        return enrichGroupSlots(assignGroups(students, _rules), students);
+      } catch {
+        return enrichGroupSlots(resolved, students);
+      }
     }
   }
 

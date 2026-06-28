@@ -55,24 +55,24 @@ export function HomeServiceConsentSection() {
   };
 
   return (
-    <section className="mb-8 ui-card border-violet-200 bg-violet-50/40 p-6" aria-labelledby="home-consent-heading">
-      <h2 id="home-consent-heading" className="text-lg font-bold text-slate-900">
+    <section className="ui-panel-soft mb-8" aria-labelledby="home-consent-heading">
+      <h2 id="home-consent-heading" className="ui-section-title text-2xl">
         서비스 이용 안내 및 동의
       </h2>
       {completed || hasServiceConsent() ? (
-        <p className="mt-3 text-sm leading-relaxed text-emerald-800">
+        <p className="mt-4 text-lg leading-relaxed text-emerald-800">
           필수 약관·정책 확인 및 동의가 완료되었습니다. 변경된 정책이 있으면 다시 안내드립니다.
         </p>
       ) : (
         <>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600">
+          <p className="ui-section-desc text-base">
             학습지 체험·저장·제출 및 AI 보조 기능 이용 전, 아래 내용을 확인하고 동의해 주세요.
           </p>
           <div className="mt-4">
             <ServiceConsentForm value={consent} onChange={setConsent} idPrefix="home-section-consent" />
           </div>
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
-          <button type="button" className="ui-btn-primary mt-4" onClick={handleSave}>
+          {error && <p className="ui-message-error mt-4 py-3 text-base">{error}</p>}
+          <button type="button" className="ui-btn-primary mt-6" onClick={handleSave}>
             동의하고 계속하기
           </button>
         </>

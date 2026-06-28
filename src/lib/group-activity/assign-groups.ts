@@ -1,5 +1,6 @@
 import type { AchievementLevel, Gender, GroupSlot, RosterStudent, SeparationRule } from "./types";
 import { GROUP_COUNT } from "./constants";
+import { expandSeparationToPairRules } from "./separation-rules";
 
 function mulberry32(seed: number) {
   return () => {
@@ -21,8 +22,10 @@ function shuffle<T>(items: T[], rand: () => number): T[] {
 
 function violatesSeparation(groupIds: string[], rules: SeparationRule[]): boolean {
   for (const rule of rules) {
-    const inGroup = rule.studentIds.filter((id) => groupIds.includes(id));
-    if (inGroup.length >= 2) return true;
+    const ids = rule.studentIds.filter((id) => groupIds.includes(id));
+    // 쌍(OR) 규칙: 정확히 2명이 같은 모둠이면 위반
+    if (rule.studentIds.length === 2 && ids.length === 2) return true;
+    if (rule.studentIds.length !== 2 && ids.length >= 2) return true;
   }
   return false;
 }
@@ -102,16 +105,38 @@ function assignWithSeed(students: RosterStudent[], rules: SeparationRule[], seed
   }));
 }
 
+function tryAssignWithRules(
+  active: RosterStudent[],
+  rules: SeparationRule[],
+  seed: number,
+): GroupSlot[] | null {
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const result = assignWithSeed(active, rules, seed + attempt);
+    if (result) return result;
+  }
+  return null;
+}
+
 export function assignGroups(students: RosterStudent[], rules: SeparationRule[], seed = Date.now()): GroupSlot[] {
   const active = students.filter((s) => s.active);
   if (active.length < GROUP_COUNT * 3) {
     throw new Error(`학생 수가 부족합니다. 최소 ${GROUP_COUNT * 3}명이 필요합니다. (현재 ${active.length}명)`);
   }
 
-  for (let attempt = 0; attempt < 200; attempt++) {
-    const result = assignWithSeed(active, rules, seed + attempt);
+  const pairs = expandSeparationToPairRules(rules);
+
+  let result = tryAssignWithRules(active, pairs, seed);
+  if (result) return result;
+
+  // OR 완화: 쌍 규칙을 하나씩 제외하며 6모둠 구성 시도
+  for (let relax = 1; relax <= pairs.length; relax++) {
+    const relaxed = pairs.slice(0, pairs.length - relax);
+    result = tryAssignWithRules(active, relaxed, seed + relax * 997);
     if (result) return result;
   }
+
+  result = tryAssignWithRules(active, [], seed + 9999);
+  if (result) return result;
 
   throw new Error("조건을 만족하는 모둠 편성을 찾지 못했습니다. 분리 조건을 줄이거나 학생 수·성별 구성을 확인해 주세요.");
 }

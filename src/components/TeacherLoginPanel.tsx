@@ -36,9 +36,9 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
   };
 
   return (
-    <form onSubmit={handleTeacherLogin} className="ui-card space-y-4 p-6">
-      <h2 className="text-lg font-bold text-slate-800">교사 로그인</h2>
-      <p className="text-sm leading-relaxed text-slate-600">
+    <form onSubmit={handleTeacherLogin} className="ui-panel space-y-5">
+      <h2 className="ui-section-title text-2xl">교사 로그인</h2>
+      <p className="text-lg leading-relaxed text-slate-600">
         교사 암호로 로그인하면 제출된 활동지·지도안·유도 질문을 관리할 수 있습니다.
       </p>
       <input
@@ -53,7 +53,7 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
       <button type="submit" disabled={loading || !consentComplete} className="ui-btn-primary w-full">
         {loading ? "로그인 중..." : "교사로 시작하기"}
       </button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-base text-red-600">{error}</p>}
     </form>
   );
 }
