@@ -356,10 +356,29 @@ service cloud.firestore {
         && !isStudent();
     }
 
+    function normalizeClassPart(value) {
+      return value is string
+        ? value.replace('학년', '').replace('반', '').trim()
+        : '';
+    }
+
     function isSameClassDoc(data) {
       return isStudent()
-        && studentData(request.auth.uid).grade == data.grade
-        && studentData(request.auth.uid).classNo == data.classNo;
+        && normalizeClassPart(studentData(request.auth.uid).grade) == normalizeClassPart(data.grade)
+        && normalizeClassPart(studentData(request.auth.uid).classNo) == normalizeClassPart(data.classNo);
+    }
+
+    function isValidClassGroupPraise(data) {
+      return data.keys().hasAll([
+          'grade', 'classNo', 'studentNo', 'studentName', 'groupNo', 'weekIndex', 'primaryRoleCode', 'createdAt'
+        ])
+        && data.grade is string
+        && data.classNo is string
+        && data.studentNo is string
+        && data.studentName is string
+        && data.groupNo is number
+        && data.weekIndex is number
+        && data.primaryRoleCode in [1, 2, 3, 4];
     }
 
     match /groupRoleSchedules/{scheduleId} {
@@ -374,6 +393,15 @@ service cloud.firestore {
       allow create: if isTeacherOwner(request.resource.data);
       allow update: if isTeacherOwner(resource.data) && isTeacherOwner(request.resource.data);
       allow delete: if isTeacherOwner(resource.data);
+    }
+
+    match /classGroupPraises/{praiseId} {
+      allow read: if request.auth != null && (
+        isTeacher() || (isStudent() && resource.exists && isSameClassDoc(resource.data))
+      );
+      allow create: if isTeacher() && isValidClassGroupPraise(request.resource.data);
+      allow delete: if isTeacher();
+      allow update: if false;
     }
   }
 }

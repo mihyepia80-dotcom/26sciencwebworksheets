@@ -204,6 +204,15 @@
         { "fieldPath": "rosterId", "order": "ASCENDING" },
         { "fieldPath": "weekIndex", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "classGroupPraises",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "grade", "order": "ASCENDING" },
+        { "fieldPath": "classNo", "order": "ASCENDING" },
+        { "fieldPath": "weekIndex", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

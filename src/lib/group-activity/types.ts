@@ -65,8 +65,32 @@ export interface RoleWeekSchedule {
   weekIndex: number;
   weekStart: string;
   weekEnd: string;
+  groups: GroupSlot[];
   assignments: StudentRoleAssignment[];
+  year?: number;
+  month?: number;
   updatedAt: import("firebase/firestore").Timestamp | null;
+}
+
+export interface StudentGroupMemberView {
+  studentNo: string;
+  studentName: string;
+}
+
+export interface StudentGroupActivityView {
+  groupNo: number | null;
+  groupMembers: StudentGroupMemberView[];
+  primaryRoleCode: RoleCode | null;
+  secondaryRoleCode: RoleCode | null;
+  weekStart: string;
+  weekEnd: string;
+  weekIndex: number;
+  year: number | null;
+  month: number | null;
+  myPraises: GroupActivityPraise[];
+  classPraises: GroupActivityPraise[];
+  hasGroups: boolean;
+  hasRoles: boolean;
 }
 
 export interface GroupActivityPraise {

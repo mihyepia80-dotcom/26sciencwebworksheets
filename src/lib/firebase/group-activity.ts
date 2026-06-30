@@ -6,8 +6,10 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   setDoc,
+  where,
   type CollectionReference,
   type DocumentReference,
   type Timestamp,
@@ -29,6 +31,7 @@ import type {
   RoleWeekSchedule,
   RosterStudent,
   SeparationRule,
+  StudentGroupActivityView,
   StudentRoleAssignment,
 } from "@/lib/group-activity/types";
 import { getWeekInfo } from "@/lib/group-activity/week-utils";
@@ -44,6 +47,44 @@ function teacherCollection(teacherUid: string, name: string): CollectionReferenc
 
 function teacherDocument(teacherUid: string, name: string, id: string): DocumentReference {
   return doc(getClientDb(), "teachers", teacherUid, name, id);
+}
+
+async function syncClassGroupBoard(
+  teacherUid: string,
+  grade: string,
+  classNo: string,
+  patch: Record<string, unknown>,
+): Promise<void> {
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
+  await setDoc(
+    doc(getClientDb(), "groupRoleSchedules", buildClassScheduleId(normalizedGrade, normalizedClassNo)),
+    {
+      teacherUid,
+      grade: normalizedGrade,
+      classNo: normalizedClassNo,
+      ...patch,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
+}
+
+function mapGroupActivityPraise(id: string, data: Record<string, unknown>, fallbackTeacherUid = ""): GroupActivityPraise {
+  return {
+    id,
+    rosterId: String(data.rosterId ?? ""),
+    teacherUid: String(data.teacherUid ?? fallbackTeacherUid),
+    rosterStudentId: String(data.rosterStudentId ?? ""),
+    studentNo: String(data.studentNo ?? ""),
+    studentName: String(data.studentName ?? ""),
+    groupNo: Number(data.groupNo),
+    weekIndex: Number(data.weekIndex),
+    weekStart: String(data.weekStart ?? ""),
+    primaryRoleCode: Number(data.primaryRoleCode) as 1 | 2 | 3 | 4,
+    note: data.note ? String(data.note) : undefined,
+    createdAt: (data.createdAt as Timestamp | null) ?? null,
+  };
 }
 
 function belongsToRoster(
@@ -471,6 +512,11 @@ export async function saveMonthlyAssignment(
     confirmedAt: confirmed ? serverTimestamp() : null,
     updatedAt: serverTimestamp(),
   });
+  await syncClassGroupBoard(teacherUid, grade, classNo, {
+    groups,
+    year,
+    month,
+  });
 }
 
 export async function deleteMonthlyAssignment(
@@ -482,6 +528,11 @@ export async function deleteMonthlyAssignment(
 ): Promise<void> {
   const rosterId = buildRosterId(teacherUid, grade, classNo);
   await deleteDoc(teacherDocument(teacherUid, "groupAssignments", assignmentDocId(rosterId, year, month)));
+  await syncClassGroupBoard(teacherUid, grade, classNo, {
+    groups: [],
+    year,
+    month,
+  });
 }
 
 export function computeGroupAssignment(
@@ -536,6 +587,7 @@ export async function saveRoleScheduleAssignments(
     weekIndex: idx,
     weekStart: week.weekStart,
     weekEnd: week.weekEnd,
+    groups,
     assignments,
     updatedAt: null,
   };
@@ -557,7 +609,18 @@ export async function saveRoleSchedule(
 }
 
 export async function deleteRoleSchedule(grade: string, classNo: string): Promise<void> {
-  await deleteDoc(doc(getClientDb(), "groupRoleSchedules", buildClassScheduleId(grade, classNo)));
+  const scheduleId = buildClassScheduleId(grade, classNo);
+  await setDoc(
+    doc(getClientDb(), "groupRoleSchedules", scheduleId),
+    {
+      assignments: [],
+      weekIndex: 0,
+      weekStart: "",
+      weekEnd: "",
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
 }
 
 export async function getRoleScheduleForClass(
@@ -579,8 +642,98 @@ export async function getRoleScheduleForClass(
     weekIndex: Number(data.weekIndex ?? 1),
     weekStart: String(data.weekStart ?? ""),
     weekEnd: String(data.weekEnd ?? ""),
+    groups: (data.groups as GroupSlot[]) ?? [],
     assignments: (data.assignments as StudentRoleAssignment[]) ?? [],
+    year: data.year != null ? Number(data.year) : undefined,
+    month: data.month != null ? Number(data.month) : undefined,
     updatedAt: (data.updatedAt as Timestamp | null) ?? null,
+  };
+}
+
+export async function listClassGroupPraisesForStudent(
+  grade: string,
+  classNo: string,
+  weekIndex: number,
+): Promise<GroupActivityPraise[]> {
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
+  const snap = await getDocs(
+    query(
+      collection(getClientDb(), "classGroupPraises"),
+      where("grade", "==", normalizedGrade),
+      where("classNo", "==", normalizedClassNo),
+      where("weekIndex", "==", weekIndex),
+    ),
+  );
+  return snap.docs
+    .map((d) => mapGroupActivityPraise(d.id, d.data()))
+    .sort((a, b) => {
+      const aTime = a.createdAt?.toMillis?.() ?? 0;
+      const bTime = b.createdAt?.toMillis?.() ?? 0;
+      return bTime - aTime;
+    });
+}
+
+export async function getStudentGroupActivityView(
+  grade: string,
+  classNo: string,
+  studentNo: string,
+  weekIndex: number,
+): Promise<StudentGroupActivityView> {
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
+  const normalizedNo = normalizeStudentNo(studentNo);
+  const [schedule, classPraises] = await Promise.all([
+    getRoleScheduleForClass(normalizedGrade, normalizedClassNo),
+    listClassGroupPraisesForStudent(normalizedGrade, normalizedClassNo, weekIndex),
+  ]);
+
+  const groups = schedule?.groups ?? [];
+  const assignments = schedule?.assignments ?? [];
+  const hasGroups = groups.some((g) => (g.memberNos?.length ?? g.memberIds.length) > 0);
+  const hasRoles = assignments.length > 0;
+
+  const myAssignment = assignments.find((a) => normalizeStudentNo(a.studentNo) === normalizedNo);
+  let groupNo = myAssignment?.groupNo ?? null;
+  if (groupNo === null) {
+    const slot = groups.find((g) =>
+      (g.memberNos ?? []).some((no) => normalizeStudentNo(no) === normalizedNo),
+    );
+    groupNo = slot?.groupNo ?? null;
+  }
+
+  let groupMembers: StudentGroupActivityView["groupMembers"] = [];
+  if (groupNo !== null) {
+    const named = assignments
+      .filter((a) => a.groupNo === groupNo)
+      .map((a) => ({ studentNo: a.studentNo, studentName: a.studentName }))
+      .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
+    if (named.length > 0) {
+      groupMembers = named;
+    } else {
+      const slot = groups.find((g) => g.groupNo === groupNo);
+      groupMembers = (slot?.memberNos ?? [])
+        .map((no) => ({ studentNo: no, studentName: `${no}번` }))
+        .sort((a, b) => a.studentNo.localeCompare(b.studentNo, "ko", { numeric: true }));
+    }
+  }
+
+  const myPraises = classPraises.filter((p) => normalizeStudentNo(p.studentNo) === normalizedNo);
+
+  return {
+    groupNo,
+    groupMembers,
+    primaryRoleCode: myAssignment?.primaryRoleCode ?? null,
+    secondaryRoleCode: myAssignment?.secondaryRoleCode ?? null,
+    weekStart: schedule?.weekStart ?? "",
+    weekEnd: schedule?.weekEnd ?? "",
+    weekIndex: schedule?.weekIndex ?? weekIndex,
+    year: schedule?.year ?? null,
+    month: schedule?.month ?? null,
+    myPraises,
+    classPraises,
+    hasGroups,
+    hasRoles,
   };
 }
 
@@ -591,23 +744,7 @@ export async function listGroupActivityPraises(
 ): Promise<GroupActivityPraise[]> {
   const snap = await getDocs(teacherCollection(teacherUid, "groupActivityPraises"));
   return snap.docs
-    .map((d) => {
-      const data = d.data();
-      return {
-        id: d.id,
-        rosterId: String(data.rosterId ?? ""),
-        teacherUid: String(data.teacherUid ?? teacherUid),
-        rosterStudentId: String(data.rosterStudentId ?? ""),
-        studentNo: String(data.studentNo ?? ""),
-        studentName: String(data.studentName ?? ""),
-        groupNo: Number(data.groupNo),
-        weekIndex: Number(data.weekIndex),
-        weekStart: String(data.weekStart ?? ""),
-        primaryRoleCode: Number(data.primaryRoleCode) as 1 | 2 | 3 | 4,
-        note: data.note ? String(data.note) : undefined,
-        createdAt: (data.createdAt as Timestamp | null) ?? null,
-      };
-    })
+    .map((d) => mapGroupActivityPraise(d.id, d.data(), teacherUid))
     .filter((praise) => praise.rosterId === rosterId && praise.weekIndex === weekIndex);
 }
 
@@ -623,14 +760,16 @@ export async function addGroupActivityPraise(
   primaryRoleCode: 1 | 2 | 3 | 4,
   note?: string,
 ): Promise<void> {
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
   const id = doc(teacherCollection(teacherUid, "groupActivityPraises")).id;
-  await setDoc(teacherDocument(teacherUid, "groupActivityPraises", id), {
+  const payload = {
     rosterId,
     teacherUid,
-    grade,
-    classNo,
+    grade: normalizedGrade,
+    classNo: normalizedClassNo,
     rosterStudentId: student.id,
-    studentNo: student.studentNo,
+    studentNo: normalizeStudentNo(student.studentNo),
     studentName: student.studentName,
     groupNo,
     weekIndex,
@@ -638,5 +777,7 @@ export async function addGroupActivityPraise(
     primaryRoleCode,
     note: note ?? "",
     createdAt: serverTimestamp(),
-  });
+  };
+  await setDoc(teacherDocument(teacherUid, "groupActivityPraises", id), payload);
+  await setDoc(doc(getClientDb(), "classGroupPraises", id), payload);
 }
