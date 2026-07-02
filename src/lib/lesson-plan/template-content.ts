@@ -1,5 +1,12 @@
 import type { LessonPlanForm } from "./types";
 import { EMPTY_LESSON_PLAN, EMPTY_PROCESS_ROW } from "./types";
+import {
+  DEFAULT_LESSON_UNIT_ID,
+  getLessonUnit,
+  getPeriodPreset,
+  LESSON_UNITS,
+  resolveUnitLabel,
+} from "./unit-curriculum";
 
 /** 지도안(틀) — AI·교사 UI 참조용 요약 */
 export const LESSON_PLAN_FRAMEWORK_SUMMARY = `
@@ -88,16 +95,58 @@ export const EXPERIMENT_LESSON_SAMPLE: LessonPlanForm = {
   ],
 };
 
-export const CURRENT_UNIT_ID = "dissolution-solution";
+export const CURRENT_UNIT_ID = DEFAULT_LESSON_UNIT_ID;
 
-export const CURRENT_UNIT_LABEL = "3. 용해와 용액";
+export const CURRENT_UNIT_LABEL = LESSON_UNITS[0].label;
 
-export function getExperimentLessonSeed(period?: string): LessonPlanForm {
-  const base = { ...EXPERIMENT_LESSON_SAMPLE };
-  if (period?.trim()) {
-    base.period = period.trim();
-    base.planTitle = `[실험반] ${CURRENT_UNIT_LABEL} ${period.trim()}차시`;
+export function getExperimentLessonSeed(
+  period?: string,
+  unitId: string = DEFAULT_LESSON_UNIT_ID,
+  customUnitLabel?: string,
+): LessonPlanForm {
+  const unit = getLessonUnit(unitId);
+  const label = resolveUnitLabel(unitId, customUnitLabel);
+  const periodTrim = period?.trim();
+  const preset = periodTrim ? getPeriodPreset(unitId, periodTrim) : undefined;
+
+  const base: LessonPlanForm =
+    unitId === "dissolution-solution"
+      ? { ...EXPERIMENT_LESSON_SAMPLE }
+      : {
+          ...EXPERIMENT_LESSON_SAMPLE,
+          planTitle: `[실험반] ${label}${periodTrim ? ` ${periodTrim}차시` : ""}`,
+          unit: label,
+          coreIdea: unit.coreIdea,
+          learningTopic: preset?.learningTopic ?? "",
+          achievementStandards: preset?.achievementStandards ?? unit.defaultAchievementStandards,
+          inquiryQuestions: preset?.inquiryQuestions ?? "",
+          thinkingTool: preset?.thinkingTool ?? "",
+          teachingModel: preset?.teachingModel ?? "개념기반 탐구학습",
+          processRows: EXPERIMENT_LESSON_SAMPLE.processRows.map((r) => ({
+            ...EMPTY_PROCESS_ROW,
+            stage: r.stage,
+            time: r.time,
+          })),
+        };
+
+  if (periodTrim) {
+    base.period = periodTrim;
+    base.planTitle = `[실험반] ${label} ${periodTrim}차시`;
   }
+
+  if (preset) {
+    base.learningTopic = preset.learningTopic;
+    base.achievementStandards = preset.achievementStandards;
+    if (preset.inquiryQuestions) base.inquiryQuestions = preset.inquiryQuestions;
+    if (preset.thinkingTool) base.thinkingTool = preset.thinkingTool;
+    if (preset.teachingModel) base.teachingModel = preset.teachingModel;
+  }
+
+  base.unit = label;
+  if (unit.coreIdea && unitId !== "dissolution-solution") {
+    base.coreIdea = unit.coreIdea;
+  }
+
   return base;
 }
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import {
   createLessonPlan,
@@ -29,10 +30,22 @@ import {
 } from "@/lib/lesson-plan/thinking-tools";
 import { generateLessonPlanWithAi } from "@/lib/ai/lesson-plan-client";
 import {
-  CURRENT_UNIT_LABEL,
   EXPERIMENT_LESSON_SAMPLE,
   getExperimentLessonSeed,
 } from "@/lib/lesson-plan/template-content";
+import {
+  DEFAULT_LESSON_UNIT_ID,
+  getLessonUnit,
+  getPeriodPreset,
+  LESSON_UNITS,
+  resolveUnitLabel,
+} from "@/lib/lesson-plan/unit-curriculum";
+import {
+  buildTeachingDesignHref,
+  getWorksheetPresetForPeriod,
+  parseTeachingDesignContext,
+} from "@/lib/curriculum/design-flow";
+import { TeachingDesignSteps } from "@/components/teacher/TeachingDesignSteps";
 import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 
 const PRIMARY_STAGE_LABELS: { key: PrimaryInquiryStageKey; label: string }[] = [
@@ -60,6 +73,7 @@ function GridCell({ label, children, className = "" }: { label: string; children
 }
 
 export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | null }) {
+  const searchParams = useSearchParams();
   const { user, role } = useAuth();
   const [plans, setPlans] = useState<LessonPlanDoc[]>([]);
   const [form, setForm] = useState<LessonPlanForm>(EMPTY_LESSON_PLAN);
@@ -70,9 +84,91 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
+  const [selectedUnitId, setSelectedUnitId] = useState(DEFAULT_LESSON_UNIT_ID);
+  const [customUnitLabel, setCustomUnitLabel] = useState("");
   const [aiPeriod, setAiPeriod] = useState("1/12");
   const [aiTopic, setAiTopic] = useState("");
   const [aiInstruction, setAiInstruction] = useState("");
+
+  const selectedUnit = getLessonUnit(selectedUnitId);
+  const resolvedUnitLabel = resolveUnitLabel(selectedUnitId, customUnitLabel || form.unit);
+
+  const designCtx = useMemo(() => {
+    const worksheet = getWorksheetPresetForPeriod(selectedUnitId, aiPeriod);
+    return {
+      unitId: selectedUnitId,
+      unitLabel: resolvedUnitLabel,
+      period: aiPeriod,
+      learningTopic: aiTopic || form.learningTopic,
+      inquiryQuestion: form.inquiryQuestions,
+      achievementStandards: form.achievementStandards,
+      thinkingTool: form.thinkingTool,
+      templateId: worksheet?.templateId ?? "",
+      templateLabel: worksheet?.templateLabel ?? form.thinkingTool,
+    };
+  }, [
+    aiPeriod,
+    aiTopic,
+    form.achievementStandards,
+    form.inquiryQuestions,
+    form.learningTopic,
+    form.thinkingTool,
+    resolvedUnitLabel,
+    selectedUnitId,
+  ]);
+
+  useEffect(() => {
+    if (initialPlanId) return;
+    const ctx = parseTeachingDesignContext(searchParams);
+    setSelectedUnitId(ctx.unitId);
+    if (ctx.unitId === "custom") setCustomUnitLabel(ctx.unitLabel);
+    setAiPeriod(ctx.period);
+    setAiTopic(ctx.learningTopic);
+    setForm((prev) => ({
+      ...prev,
+      unit: ctx.unitLabel,
+      period: ctx.period,
+      learningTopic: ctx.learningTopic,
+      achievementStandards: ctx.achievementStandards || prev.achievementStandards,
+      inquiryQuestions: ctx.inquiryQuestion || prev.inquiryQuestions,
+      thinkingTool: ctx.thinkingTool || prev.thinkingTool,
+    }));
+  }, [initialPlanId, searchParams]);
+
+  const applyPeriodPreset = (period: string) => {
+    setAiPeriod(period);
+    patch("period", period);
+
+    const preset = getPeriodPreset(selectedUnitId, period);
+    if (!preset) return;
+
+    setAiTopic(preset.learningTopic);
+    patch("learningTopic", preset.learningTopic);
+    patch("achievementStandards", preset.achievementStandards);
+    if (preset.inquiryQuestions) patch("inquiryQuestions", preset.inquiryQuestions);
+    if (preset.thinkingTool) patch("thinkingTool", preset.thinkingTool);
+    if (preset.teachingModel) patch("teachingModel", preset.teachingModel);
+  };
+
+  const handleUnitChange = (unitId: string) => {
+    setSelectedUnitId(unitId);
+    const unit = getLessonUnit(unitId);
+    if (!unit.customLabel) {
+      patch("unit", unit.label);
+      setCustomUnitLabel("");
+    } else {
+      patch("unit", customUnitLabel);
+    }
+    if (unit.coreIdea) patch("coreIdea", unit.coreIdea);
+    if (unit.defaultAchievementStandards) {
+      patch("achievementStandards", unit.defaultAchievementStandards);
+    }
+    if (unit.periodPresets[0]) {
+      applyPeriodPreset(unit.periodPresets[0].period);
+    } else {
+      setAiTopic("");
+    }
+  };
 
   const loadList = useCallback(() => {
     if (!user || role !== "teacher") return;
@@ -253,29 +349,43 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
   };
 
   const handleApplyExperimentSample = () => {
-    const seed = getExperimentLessonSeed(aiPeriod);
+    const seed = getExperimentLessonSeed(aiPeriod, selectedUnitId, customUnitLabel || form.unit);
     setForm(seed);
     setPlanId(null);
-    setMessage(`${CURRENT_UNIT_LABEL} 실험반 지도안 예시(${aiPeriod})를 불러왔습니다. 수정 후 저장하세요.`);
+    setAiTopic(seed.learningTopic);
+    setMessage(`${resolvedUnitLabel} 실험반 지도안 예시(${aiPeriod})를 불러왔습니다. 수정 후 저장하세요.`);
     setError("");
     window.history.replaceState(null, "", "/teacher/lesson-plans");
   };
 
   const handleGenerateWithAi = async () => {
+    const unitLabel = resolvedUnitLabel;
+    if (selectedUnit.customLabel && !customUnitLabel.trim() && !form.unit.trim()) {
+      setError("단원명을 입력한 뒤 AI 생성을 시도해 주세요.");
+      return;
+    }
+    const topic = aiTopic.trim() || form.learningTopic.trim();
+    if (!topic) {
+      setError("학습 주제를 입력하거나 차시 프리셋을 선택해 주세요.");
+      return;
+    }
+
     setAiLoading(true);
     setError("");
     setMessage("");
     try {
+      const preset = getPeriodPreset(selectedUnitId, aiPeriod);
       const { plan } = await generateLessonPlanWithAi({
-        unit: form.unit || CURRENT_UNIT_LABEL,
+        unitId: selectedUnitId,
+        unit: unitLabel,
         period: aiPeriod,
-        learningTopic: aiTopic || form.learningTopic,
-        achievementStandards: form.achievementStandards,
+        learningTopic: topic,
+        achievementStandards: form.achievementStandards || preset?.achievementStandards,
         instruction: aiInstruction,
       });
       setForm(plan);
       setPlanId(null);
-      setMessage(`AI가 ${plan.period}차시 실험반 지도안 초안을 생성했습니다. 확인 후 저장하세요.`);
+      setMessage(`AI가 「${unitLabel}」 ${plan.period}차시 실험반 지도안 초안을 생성했습니다. 확인 후 저장하세요.`);
       window.history.replaceState(null, "", "/teacher/lesson-plans");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "AI 생성 실패");
@@ -297,8 +407,8 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-slate-900">수업지도안 설계</h1>
           <p className="mt-1 text-sm text-slate-600">
-            차시별로 직접 구성·저장합니다. 한 차시에는 <strong>주 사고도구 1개</strong>, 필요 시{" "}
-            <strong>성찰 단계 사고도구 1개</strong>만 사용합니다.
+            ① 사고 활동지에서 정한 주제를 바탕으로 차시별 지도안을 구성·저장합니다. 한 차시에는{" "}
+            <strong>주 사고도구 1개</strong>, 필요 시 <strong>성찰 단계 사고도구 1개</strong>만 사용합니다.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -336,26 +446,97 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
       {message && <p className="mt-4 text-sm text-green-600 print:hidden">{message}</p>}
       {error && <p className="mt-4 text-sm text-red-600 print:hidden">{error}</p>}
 
+      <div className="mt-6 print:hidden">
+        <TeachingDesignSteps currentStep={2} ctx={designCtx} />
+      </div>
+
       <section className="mt-6 rounded-xl border border-teal-200 bg-teal-50/40 p-5 print:hidden">
-        <h2 className="text-base font-bold text-teal-950">실험반 지도안 설계 도구</h2>
+        <h2 className="text-base font-bold text-teal-950">② 실험반 지도안 설계</h2>
         <p className="mt-1 text-sm leading-relaxed text-teal-900/90">
-          한글 원본 <strong>지도안(틀)</strong>·<strong>실험반 지도안</strong>을 Markdown으로 변환해 반영했습니다.
-          현재 단원({CURRENT_UNIT_LABEL}) 예시를 불러오거나 AI로 차시별 교수학습지도안 초안을 생성할 수 있습니다.
+          ①에서 정한 단원·차시·학습 주제를 바탕으로 교수학습지도안을 작성합니다. AI 생성 후 저장하고, ③에서
+          학습지 안내 문구를 배포하세요.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-teal-900">단원</span>
+            <select
+              className={SELECT}
+              value={selectedUnitId}
+              onChange={(e) => handleUnitChange(e.target.value)}
+            >
+              {LESSON_UNITS.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.customLabel ? u.label : u.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {selectedUnit.customLabel && (
+            <label className="block sm:col-span-2">
+              <span className="mb-1 block text-xs font-semibold text-teal-900">단원명 (직접 입력)</span>
+              <input
+                className={INPUT}
+                value={customUnitLabel}
+                onChange={(e) => {
+                  setCustomUnitLabel(e.target.value);
+                  patch("unit", e.target.value);
+                }}
+                placeholder="예: 5. 생물과 환경"
+              />
+            </label>
+          )}
+          <label className="block">
             <span className="mb-1 block text-xs font-semibold text-teal-900">차시</span>
-            <input className={INPUT} value={aiPeriod} onChange={(e) => setAiPeriod(e.target.value)} placeholder="1/12" />
+            <input
+              className={INPUT}
+              value={aiPeriod}
+              onChange={(e) => {
+                setAiPeriod(e.target.value);
+                patch("period", e.target.value);
+              }}
+              placeholder="1/12"
+            />
           </label>
           <label className="block sm:col-span-2">
-            <span className="mb-1 block text-xs font-semibold text-teal-900">학습 주제 (선택)</span>
-            <input className={INPUT} value={aiTopic} onChange={(e) => setAiTopic(e.target.value)} placeholder="AI에 전달할 주제" />
+            <span className="mb-1 block text-xs font-semibold text-teal-900">학습 주제</span>
+            <input
+              className={INPUT}
+              value={aiTopic}
+              onChange={(e) => {
+                setAiTopic(e.target.value);
+                patch("learningTopic", e.target.value);
+              }}
+              placeholder="AI에 전달할 학습 주제 (필수)"
+            />
           </label>
           <label className="block sm:col-span-2 lg:col-span-4">
             <span className="mb-1 block text-xs font-semibold text-teal-900">AI 추가 지시 (선택)</span>
             <input className={INPUT} value={aiInstruction} onChange={(e) => setAiInstruction(e.target.value)} placeholder="예: STW 중심, 영상 촬영 활동 포함" />
           </label>
         </div>
+
+        {selectedUnit.periodPresets.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs font-semibold text-teal-900">차시별 주제·성취기준 프리셋</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {selectedUnit.periodPresets.map((p) => (
+                <button
+                  key={p.period}
+                  type="button"
+                  onClick={() => applyPeriodPreset(p.period)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
+                    aiPeriod === p.period
+                      ? "bg-teal-700 text-white"
+                      : "border border-teal-300 bg-white text-teal-900 hover:bg-teal-50"
+                  }`}
+                >
+                  {p.period}
+                  {p.thinkingTool ? ` · ${p.thinkingTool.split("(")[0].trim()}` : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             type="button"
@@ -377,8 +558,18 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
           </span>
         </div>
         <p className="mt-3 text-xs text-teal-800/80">
-          예시 1차시: {EXPERIMENT_LESSON_SAMPLE.thinkingTool} · {EXPERIMENT_LESSON_SAMPLE.learningTopic}
+          용해와 용액 1차시 예시: {EXPERIMENT_LESSON_SAMPLE.thinkingTool} · {EXPERIMENT_LESSON_SAMPLE.learningTopic}
         </p>
+        {designCtx.templateId && (
+          <div className="mt-4">
+            <Link
+              href={buildTeachingDesignHref(3, designCtx)}
+              className="inline-flex rounded-lg border border-indigo-300 bg-white px-4 py-2 text-sm font-medium text-indigo-900 hover:bg-indigo-50"
+            >
+              ③ 학습지 텍스트 편집으로 →
+            </Link>
+          </div>
+        )}
       </section>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[220px_1fr] print:mt-0 print:block">

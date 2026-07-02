@@ -6,9 +6,16 @@ import {
   LESSON_PLAN_FRAMEWORK_SUMMARY,
   mergeGeneratedLessonPlan,
 } from "@/lib/lesson-plan/template-content";
+import {
+  DEFAULT_LESSON_UNIT_ID,
+  getLessonUnit,
+  getPeriodPreset,
+  resolveUnitLabel,
+} from "@/lib/lesson-plan/unit-curriculum";
 import type { InquiryStages, LessonPlanForm, LessonProcessRow } from "@/lib/lesson-plan/types";
 
 interface GenerateRequest {
+  unitId?: string;
   unit?: string;
   period?: string;
   learningTopic?: string;
@@ -17,36 +24,79 @@ interface GenerateRequest {
   mode?: "experiment" | "framework-only";
 }
 
-function buildPrompt(body: GenerateRequest): string {
-  const unit = body.unit?.trim() || CURRENT_UNIT_LABEL;
+function resolveGenerationContext(body: GenerateRequest) {
+  const unitId = body.unitId?.trim() || DEFAULT_LESSON_UNIT_ID;
+  const unitDef = getLessonUnit(unitId);
+  const unit = body.unit?.trim() || resolveUnitLabel(unitId, body.unit);
   const period = body.period?.trim() || "1/12";
+  const preset = getPeriodPreset(unitId, period);
+
+  const learningTopic =
+    body.learningTopic?.trim() ||
+    preset?.learningTopic ||
+    "";
+
+  const achievementStandards =
+    body.achievementStandards?.trim() ||
+    preset?.achievementStandards ||
+    unitDef.defaultAchievementStandards ||
+    "해당 단원 교과서 성취기준을 반영하세요.";
+
+  return {
+    unitId,
+    unit,
+    unitDef,
+    period,
+    preset,
+    learningTopic,
+    achievementStandards,
+  };
+}
+
+function buildPrompt(body: GenerateRequest): string {
+  const ctx = resolveGenerationContext(body);
   const sample = JSON.stringify(EXPERIMENT_LESSON_SAMPLE, null, 0);
   const extra = body.instruction?.trim() ? `\n교사 추가 지시: ${body.instruction.trim()}` : "";
+  const topicLine = ctx.learningTopic
+    ? ctx.learningTopic
+    : "(아래 단원·차시에 맞는 학습 주제를 교과서 수준으로 구체적으로 작성)";
+
+  const unitContext = [
+    ctx.unitDef.coreIdea ? `- 핵심 아이디어: ${ctx.unitDef.coreIdea}` : "",
+    ctx.preset?.inquiryQuestions ? `- 탐구 질문 참고: ${ctx.preset.inquiryQuestions}` : "",
+    ctx.preset?.thinkingTool ? `- 권장 사고도구: ${ctx.preset.thinkingTool}` : "",
+    ctx.preset?.teachingModel ? `- 교수학습모형 참고: ${ctx.preset.teachingModel}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   return `당신은 초등학교(5~6학년) 과학 개념기반 탐구 수업 설계 전문 교사입니다.
-아래 지도안 설계 틀과 실험반 지도안 예시를 참고하여, "${unit}" 단원 ${period}차시 실험반 교수학습지도안을 작성하세요.
+아래 설계 틀과 JSON 예시의 **구조·분량·작성 방식**을 참고하되, 내용은 반드시 입력된 단원·차시·학습 주제에 맞게 새로 작성하세요.
+예시 JSON은 「3. 용해와 용액」 1차시이므로, 다른 단원·주제일 때 예시의 용어·실험·활동을 그대로 복사하지 마세요.
 
 ## 설계 틀
 ${LESSON_PLAN_FRAMEWORK_SUMMARY}
 
-## 실험반 지도안 예시 (JSON)
+## JSON 구조 예시 (형식 참고용)
 ${sample}
 
-입력:
-- 단원: ${unit}
-- 차시: ${period}
-- 학습 주제: ${body.learningTopic?.trim() || "(예시와 유사 주제로 작성)"}
-- 성취기준: ${body.achievementStandards?.trim() || "[6과03-01] 용해 관련 성취기준 활용"}
+## 이번에 작성할 수업 (최우선 반영)
+- 단원: ${ctx.unit}
+- 차시: ${ctx.period}
+- 학습 주제: ${topicLine}
+- 성취기준: ${ctx.achievementStandards}
+${unitContext ? `\n## 단원·차시 맥락\n${unitContext}` : ""}
 ${extra}
 
 요구사항:
-- planTitle, unit, period, teachingModel, coreIdea 포함
+- planTitle, unit, period, teachingModel, coreIdea 포함 — unit 필드는 반드시 「${ctx.unit}」
 - inquiryStages: 해당 차시 주 탐구 단계 1개만 true (questioning/inquiring/generalizing/transferring/reflecting)
-- learningTopic, achievementStandards, learningObjectives, inquiryKnowledge, inquiryProcess, inquiryValues, inquiryQuestions
-- thinkingTool: 주 사고도구 1개 (예: See/Think/Wonder, GSCE, CSQ 등)
+- learningTopic은 위 학습 주제와 일치하거나 더 구체화
+- achievementStandards, learningObjectives, inquiryKnowledge, inquiryProcess, inquiryValues, inquiryQuestions
+- thinkingTool: 주 사고도구 1개 (단원·주제에 맞게 선택)
 - thinkingStep1~3, writingTask, writingContext, aiWebApp, usageTips, reflection
 - evaluationKnowledge, evaluationProcess, evaluationValues
-- processRows: 3행 (생각 만들기 5분 / 생각 모으기 30분 / 표현하기 5분) — activities에 STW·실험·AI 피드백 구체적으로
+- processRows: 3행 (생각 만들기 5분 / 생각 모으기 30분 / 표현하기 5분) — 선택 단원·주제에 맞는 탐구·글쓰기 활동을 구체적으로
 - 초등 과학 수업에 맞는 쉬운 한국어
 
 반드시 아래 JSON 형식만 출력 (LessonPlanForm):
@@ -100,6 +150,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       framework: LESSON_PLAN_FRAMEWORK_SUMMARY,
       sample: EXPERIMENT_LESSON_SAMPLE,
+      defaultUnitLabel: CURRENT_UNIT_LABEL,
     });
   }
 
@@ -110,6 +161,9 @@ export async function POST(request: Request) {
     });
     const parsed = parseGeminiJsonObject<Partial<LessonPlanForm> & { inquiryStages?: InquiryStages; processRows?: LessonProcessRow[] }>(raw);
     const plan = mergeGeneratedLessonPlan(parsed);
+    const ctx = resolveGenerationContext(body);
+    if (!plan.unit?.trim()) plan.unit = ctx.unit;
+    if (!plan.learningTopic?.trim() && ctx.learningTopic) plan.learningTopic = ctx.learningTopic;
 
     return NextResponse.json({ plan, source: "ai" as const });
   } catch (error: unknown) {

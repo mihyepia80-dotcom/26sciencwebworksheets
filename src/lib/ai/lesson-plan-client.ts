@@ -1,6 +1,7 @@
 import type { LessonPlanForm } from "@/lib/lesson-plan/types";
 
 export interface GenerateLessonPlanInput {
+  unitId?: string;
   unit?: string;
   period?: string;
   learningTopic?: string;

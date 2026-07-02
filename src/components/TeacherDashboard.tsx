@@ -164,22 +164,28 @@ export function TeacherDashboard() {
             칭찬 배지 관리
           </Link>
           <Link
+            href="/teacher/thinking-worksheets"
+            className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-900 hover:bg-violet-100"
+          >
+            ① 사고 활동지
+          </Link>
+          <Link
+            href="/teacher/lesson-plans"
+            className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
+          >
+            ② 수업지도안
+          </Link>
+          <Link
             href="/teacher/worksheet-content"
             className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-800 hover:bg-indigo-100"
           >
-            학습지 텍스트 편집
+            ③ 학습지 텍스트
           </Link>
           <Link
             href="/teacher/guided-questions"
             className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
           >
             유도 질문 관리
-          </Link>
-          <Link
-            href="/teacher/lesson-plans"
-            className="rounded-lg border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-medium text-teal-800 hover:bg-teal-100"
-          >
-            수업지도안 설계
           </Link>
           <button
           type="button"
@@ -206,34 +212,35 @@ export function TeacherDashboard() {
       <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-bold text-slate-900">수업 설계 · 활동지 관리</h2>
         <p className="mt-1 text-sm text-slate-600">
-          용해와 용액 단원 한글 원본(지도안·실험반 활동지·사고도구 활동지)을 웹에 반영했습니다.
+          같은 학습 주제로 <strong>① 사고 활동지 → ② 수업지도안 → ③ 학습지 텍스트</strong> 순서로 설계하세요.
+          「3. 용해와 용액」은 차시별 프리셋이 ①~③에 연동됩니다.
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <Link
+            href="/teacher/thinking-worksheets"
+            className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 hover:bg-violet-50"
+          >
+            <p className="font-semibold text-violet-950">① 사고 활동지</p>
+            <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
+              단원·차시·학습 주제 · 사고도구 활동지 선택
+            </p>
+          </Link>
           <Link
             href="/teacher/lesson-plans"
             className="rounded-xl border border-teal-200 bg-teal-50/60 p-4 hover:bg-teal-50"
           >
-            <p className="font-semibold text-teal-950">수업지도안 설계</p>
+            <p className="font-semibold text-teal-950">② 수업지도안 설계</p>
             <p className="mt-1 text-xs leading-relaxed text-teal-900/90">
-              지도안 틀 · 실험반 예시 불러오기 · AI 교수학습지도안 생성
+              ① 주제에 맞는 교수학습지도안 · AI 생성
             </p>
           </Link>
           <Link
             href="/teacher/worksheet-content"
             className="rounded-xl border border-indigo-200 bg-indigo-50/60 p-4 hover:bg-indigo-50"
           >
-            <p className="font-semibold text-indigo-950">학습지 텍스트 편집</p>
+            <p className="font-semibold text-indigo-950">③ 학습지 텍스트 편집</p>
             <p className="mt-1 text-xs leading-relaxed text-indigo-900/90">
-              차시별 실험반·사고도구 활동지 프리셋 · GSCE·STW 등 배포
-            </p>
-          </Link>
-          <Link
-            href="/templates/gsce"
-            className="rounded-xl border border-violet-200 bg-violet-50/60 p-4 hover:bg-violet-50"
-          >
-            <p className="font-semibold text-violet-950">실험반 GSCE 활동지 미리보기</p>
-            <p className="mt-1 text-xs leading-relaxed text-violet-900/90">
-              생성·분류·연결·정교화 반응형 활동지 (4~5차시)
+              ①·②와 연동된 안내 문구 편집 · 학생 배포
             </p>
           </Link>
         </div>

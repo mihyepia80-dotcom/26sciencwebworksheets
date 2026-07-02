@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { reviseWorksheetContentWithAi } from "@/lib/ai/worksheet-content-client";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
@@ -12,8 +13,15 @@ import {
   type WorksheetContentFieldDef,
   type WorksheetContentSchema,
 } from "@/lib/worksheet-content/registry";
-import { DISSOLUTION_UNIT_PRESETS } from "@/lib/worksheet-content/dissolution-unit";
-import { CURRENT_UNIT_LABEL } from "@/lib/lesson-plan/template-content";
+import {
+  applyDesignPreset,
+  getDesignPresetsForUnit,
+  getLessonUnit,
+  getWorksheetPresetForPeriod,
+  LESSON_UNITS,
+  parseTeachingDesignContext,
+} from "@/lib/curriculum/design-flow";
+import { TeachingDesignSteps } from "@/components/teacher/TeachingDesignSteps";
 
 const INPUT = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
 
@@ -65,8 +73,14 @@ function FieldEditor({
 }
 
 export function WorksheetContentEditor() {
+  const searchParams = useSearchParams();
   const { user, role } = useAuth();
-  const [selectedId, setSelectedId] = useState(WORKSHEET_CONTENT_SCHEMAS[0]?.templateId ?? "");
+  const initialCtx = useMemo(() => parseTeachingDesignContext(searchParams), [searchParams]);
+  const [unitId, setUnitId] = useState(initialCtx.unitId);
+  const [period, setPeriod] = useState(initialCtx.period);
+  const [selectedId, setSelectedId] = useState(
+    (initialCtx.templateId || WORKSHEET_CONTENT_SCHEMAS[0]?.templateId) ?? "",
+  );
   const [fields, setFields] = useState<Record<string, string>>({});
   const [aiInstruction, setAiInstruction] = useState("");
   const [loading, setLoading] = useState(false);
@@ -76,6 +90,38 @@ export function WorksheetContentEditor() {
   const [error, setError] = useState("");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const skipLoadRef = useRef(false);
+
+  const designCtx = useMemo(() => {
+    const ctx = applyDesignPreset(unitId, period);
+    const worksheet = getWorksheetPresetForPeriod(unitId, period);
+    return {
+      ...ctx,
+      templateId: selectedId || worksheet?.templateId || ctx.templateId,
+      templateLabel: worksheet?.templateLabel ?? ctx.templateLabel,
+      learningTopic: fields.topic || ctx.learningTopic,
+    };
+  }, [unitId, period, selectedId, fields.topic]);
+
+  const selectedUnit = getLessonUnit(unitId);
+  const periodPresets = getDesignPresetsForUnit(unitId);
+
+  useEffect(() => {
+    const ctx = parseTeachingDesignContext(searchParams);
+    setUnitId(ctx.unitId);
+    setPeriod(ctx.period);
+    if (ctx.templateId) setSelectedId(ctx.templateId);
+
+    const worksheet = getWorksheetPresetForPeriod(ctx.unitId, ctx.period);
+    if (worksheet && (!ctx.templateId || ctx.templateId === worksheet.templateId)) {
+      skipLoadRef.current = true;
+      setSelectedId(worksheet.templateId);
+      setFields((prev) => ({
+        ...getDefaultWorksheetContent(worksheet.templateId),
+        ...worksheet.fields,
+        ...prev,
+      }));
+    }
+  }, [searchParams]);
 
   const schema: WorksheetContentSchema | undefined = WORKSHEET_CONTENT_SCHEMAS.find(
     (s) => s.templateId === selectedId,
@@ -136,15 +182,18 @@ export function WorksheetContentEditor() {
     setFields(getDefaultWorksheetContent(selectedId));
   };
 
-  const handleApplyUnitPreset = (period: string) => {
-    const preset = DISSOLUTION_UNIT_PRESETS.find((p) => p.period === period);
-    if (!preset) return;
+  const handleApplyUnitPreset = (presetPeriod: string) => {
+    const worksheet = getWorksheetPresetForPeriod(unitId, presetPeriod);
+    if (!worksheet) return;
+    setPeriod(presetPeriod);
     skipLoadRef.current = true;
-    if (preset.templateId !== selectedId) {
-      setSelectedId(preset.templateId);
+    if (worksheet.templateId !== selectedId) {
+      setSelectedId(worksheet.templateId);
     }
-    setFields({ ...getDefaultWorksheetContent(preset.templateId), ...preset.fields });
-    setMessage(`${CURRENT_UNIT_LABEL} ${period}차시(${preset.templateLabel}) 프리셋을 적용했습니다. 배포 전 확인하세요.`);
+    setFields({ ...getDefaultWorksheetContent(worksheet.templateId), ...worksheet.fields });
+    setMessage(
+      `${designCtx.unitLabel} ${presetPeriod}차시(${worksheet.templateLabel}) 프리셋을 적용했습니다. 배포 전 확인하세요.`,
+    );
   };
 
   const handleAiRevise = async () => {
@@ -183,8 +232,60 @@ export function WorksheetContentEditor() {
 
   return (
     <div className="space-y-6">
+      <TeachingDesignSteps currentStep={3} ctx={designCtx} />
+
+      <section className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+        <h3 className="text-sm font-bold text-indigo-950">③ 학습지 텍스트 — 단원·차시 연동</h3>
+        <p className="mt-1 text-xs leading-relaxed text-indigo-900/90">
+          ①·②에서 정한 단원·차시·사고 활동지에 맞는 안내 문구를 편집·배포합니다.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-indigo-900">단원</span>
+            <select className={INPUT} value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+              {LESSON_UNITS.filter((u) => !u.customLabel).map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-semibold text-indigo-900">차시</span>
+            <input className={INPUT} value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="1/12" />
+          </label>
+        </div>
+        {periodPresets.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {periodPresets.map((p) => {
+              const ws = getWorksheetPresetForPeriod(unitId, p.period);
+              if (!ws) return null;
+              return (
+                <button
+                  key={p.period}
+                  type="button"
+                  onClick={() => handleApplyUnitPreset(p.period)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
+                    period === p.period && ws.templateId === selectedId
+                      ? "bg-indigo-600 text-white"
+                      : "border border-indigo-200 bg-white text-indigo-800 hover:bg-indigo-50"
+                  }`}
+                >
+                  {p.period} · {ws.templateLabel}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {selectedUnit.periodPresets.length === 0 && (
+          <p className="mt-2 text-xs text-indigo-800/80">
+            이 단원은 차시 프리셋이 없습니다. 아래에서 학습지를 직접 선택하세요.
+          </p>
+        )}
+      </section>
+
       <div>
-        <label className="mb-1 block text-xs font-medium text-slate-500">학습지 선택</label>
+        <label className="mb-1 block text-xs font-medium text-slate-500">사고 활동지(학습지) 선택</label>
         <select
           className={INPUT}
           value={selectedId}
@@ -196,29 +297,6 @@ export function WorksheetContentEditor() {
             </option>
           ))}
         </select>
-      </div>
-
-      <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-        <h3 className="text-sm font-bold text-indigo-950">{CURRENT_UNIT_LABEL} — 실험반·사고도구 활동지 프리셋</h3>
-        <p className="mt-1 text-xs leading-relaxed text-indigo-900/90">
-          한글 원본 「실험반 활동지」「사고 도구 활동지」 내용을 차시별로 반영했습니다.
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          {DISSOLUTION_UNIT_PRESETS.map((p) => (
-            <button
-              key={p.period}
-              type="button"
-              onClick={() => handleApplyUnitPreset(p.period)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-                p.templateId === selectedId
-                  ? "bg-indigo-600 text-white"
-                  : "border border-indigo-200 bg-white text-indigo-800 hover:bg-indigo-50"
-              }`}
-            >
-              {p.period} · {p.templateLabel}
-            </button>
-          ))}
-        </div>
       </div>
 
       {lastUpdated && (
