@@ -141,7 +141,7 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
 
   const handleSave = async () => {
     if (!user || role !== "student") {
-      setError("학생 로그인 후 저장할 수 있습니다.");
+      setError("로그인 후 저장할 수 있습니다.");
       return;
     }
     setSaving(true);
@@ -186,7 +186,7 @@ export function InquiryReportEditor({ initialReportId }: { initialReportId?: str
 
   const handleSubmit = async () => {
     if (!user || role !== "student") {
-      setError("학생 로그인 후 제출할 수 있습니다.");
+      setError("로그인 후 제출할 수 있습니다.");
       return;
     }
     const errors = validateInquiryReport(form);

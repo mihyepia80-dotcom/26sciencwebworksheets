@@ -92,7 +92,7 @@ export function WorksheetActionBar({
       </button>
       {!persistEnabled && !submitted && (
         <Link href="/login" className="ui-btn-primary min-w-[7rem]">
-          학생 로그인
+          로그인
         </Link>
       )}
       {persistEnabled && !submitted && (

@@ -45,7 +45,7 @@ export function AppHeader({ title, subtitle }: { title: string; subtitle?: strin
                 탐구 활동실
               </Link>
               <Link href="/login" className="ui-btn-primary ui-btn-sm">
-                학생 로그인
+                로그인
               </Link>
             </>
           )}

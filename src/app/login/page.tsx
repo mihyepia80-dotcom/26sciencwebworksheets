@@ -67,7 +67,7 @@ export default function LoginPage() {
         <p className="text-base font-semibold text-violet-600">사고도구 톡톡</p>
         <h1 className="ui-page-title mt-2">로그인</h1>
         <p className="ui-page-desc text-slate-700">
-          로그인 없이 체험하거나, 학생 로그인 후 활동지를 저장·제출하세요.
+          로그인 없이 체험하거나, 로그인 후 활동지를 저장·제출하세요.
         </p>
       </header>
 
@@ -76,7 +76,7 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleStudentLogin} className="ui-panel mt-8 space-y-5">
-        <h2 className="ui-section-title text-2xl">학생 로그인</h2>
+        <h2 className="ui-section-title text-2xl">로그인</h2>
         <p className="text-base text-slate-600">
           담임 선생님이 명단에 등록한 학생만 로그인할 수 있습니다. 암호는 선생님이 알려주신 6자리 숫자입니다.
         </p>

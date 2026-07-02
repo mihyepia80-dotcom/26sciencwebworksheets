@@ -20,8 +20,8 @@ import {
   type WorksheetSubmission,
 } from "@/lib/firebase/submissions";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
-import { getTemplateById } from "@/lib/templates/registry";
-import { formatTemplateTitle } from "@/lib/templates/curriculum";
+import { getSortedTemplates, getTemplateById } from "@/lib/templates/registry";
+import { formatTemplateTitle, getGlobalSequenceNumber } from "@/lib/templates/curriculum";
 import {
   CONSOLIDATED_INQUIRY_SECTIONS,
   EMPTY_CONSOLIDATED_INQUIRY,
@@ -254,6 +254,64 @@ export function InquiryWorkspace() {
     [activeSubmissionId, reportId, refreshWorksheets],
   );
 
+  const handleSelectTemplate = async (tid: string) => {
+    if (!tid) return;
+
+    setActiveTemplateId(tid);
+    setPanelFocus((prev) => (prev === "report" ? "split" : prev));
+
+    if (guestMode || !canPersist) {
+      setActiveSubmissionId(null);
+      const query = reportId
+        ? `/workspace?report=${reportId}&template=${tid}`
+        : `/workspace?template=${tid}`;
+      router.replace(query, { scroll: false });
+      return;
+    }
+
+    if (!user || !reportId) return;
+
+    const existing = worksheets.find((w) => w.templateId === tid && w.status === "draft" && w.id);
+    if (existing?.id) {
+      setActiveSubmissionId(existing.id);
+      router.replace(
+        `/workspace?report=${reportId}&template=${tid}&submission=${existing.id}`,
+        { scroll: false },
+      );
+      return;
+    }
+
+    try {
+      setError("");
+      const instanceNo = await getNextInstanceNo(user.uid, tid, reportId);
+      const tpl = getTemplateById(tid);
+      const newId = await saveSubmissionDraft({
+        templateId: tid,
+        templateName: tpl?.name ?? tid,
+        meta: {
+          grade: studentProfile?.grade ?? "",
+          classNo: studentProfile?.classNo ?? "",
+          studentNo: studentProfile?.studentNo ?? "",
+          studentName: studentProfile?.studentName ?? "",
+          topic: "",
+        },
+        values: {},
+        studentUid: user.uid,
+        linkedReportId: reportId,
+        instanceNo,
+      });
+      await linkSubmissionToReport(reportId, newId);
+      await refreshWorksheets(reportId);
+      setActiveSubmissionId(newId);
+      router.replace(
+        `/workspace?report=${reportId}&template=${tid}&submission=${newId}`,
+        { scroll: false },
+      );
+    } catch (e: unknown) {
+      setError(getFirebaseErrorMessage(e, "활동지를 불러오지 못했습니다."));
+    }
+  };
+
   const handleAddSameTemplate = async (tid: string) => {
     if (!user || !reportId) return;
     const instanceNo = await getNextInstanceNo(user.uid, tid, reportId);
@@ -283,7 +341,7 @@ export function InquiryWorkspace() {
 
   const handleSaveReport = async () => {
     if (!canPersist || !user || !reportId) {
-      setError("학생 로그인 후 탐구보고서를 저장할 수 있습니다.");
+      setError("로그인 후 탐구보고서를 저장할 수 있습니다.");
       return;
     }
     setReportSaving(true);
@@ -308,7 +366,7 @@ export function InquiryWorkspace() {
 
   const handleSubmitReport = async () => {
     if (!canPersist || !user || !reportId) {
-      setError("학생 로그인 후 탐구보고서를 제출할 수 있습니다.");
+      setError("로그인 후 탐구보고서를 제출할 수 있습니다.");
       return;
     }
     const errors = validateConsolidatedInquiry(form);
@@ -411,7 +469,27 @@ export function InquiryWorkspace() {
             <div className="border-b border-slate-100 px-5 py-4">
               <h2 className="text-lg font-bold text-slate-800">사고 활동지</h2>
               <p className="mt-1 text-sm text-slate-500">작성 후 오른쪽 탐구보고서를 완성하세요.</p>
-              <div className="mt-3 flex flex-wrap gap-2">
+
+              <label className="mt-4 block">
+                <span className="ui-label text-base">사고 활동지 선택하기</span>
+                <select
+                  className="ui-input mt-1"
+                  value={activeTemplateId}
+                  onChange={(e) => void handleSelectTemplate(e.target.value)}
+                >
+                  <option value="">활동지를 선택하세요</option>
+                  {getSortedTemplates().map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {getGlobalSequenceNumber(tpl)}. {formatTemplateTitle(tpl)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              {worksheets.length > 0 && (
+                <p className="mt-3 text-xs font-medium text-slate-500">이번 탐구에 연결된 활동지</p>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
                 {canPersist &&
                   worksheets.map((w) => {
                   const tpl = getTemplateById(w.templateId);
@@ -468,7 +546,7 @@ export function InquiryWorkspace() {
                 />
               ) : (
                 <p className="py-16 text-center text-base text-slate-500">
-                  홈에서 사고 활동지를 선택하거나 + 버튼으로 추가하세요.
+                  위에서 사고 활동지를 선택하면 왼쪽에 작성 화면이 나타납니다.
                 </p>
               )}
             </div>
@@ -504,7 +582,7 @@ export function InquiryWorkspace() {
                   </>
                 ) : (
                   <Link href="/login" className="ui-btn-primary ui-btn-sm">
-                    학생 로그인
+                    로그인
                   </Link>
                 )}
               </div>

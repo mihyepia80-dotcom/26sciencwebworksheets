@@ -219,8 +219,8 @@ export function WorksheetViewer({
     if (!canPersist) {
       setSubmitError(
         guestMode
-          ? "학생 로그인 후 임시 저장할 수 있습니다. 로그인 없이 작성한 내용은 저장되지 않습니다."
-          : "학생 로그인 후 임시 저장할 수 있습니다.",
+          ? "로그인 후 임시 저장할 수 있습니다. 로그인 없이 작성한 내용은 저장되지 않습니다."
+          : "로그인 후 임시 저장할 수 있습니다.",
       );
       return;
     }
@@ -235,8 +235,8 @@ export function WorksheetViewer({
     if (!canPersist) {
       setSubmitError(
         guestMode
-          ? "학생 로그인 후 제출할 수 있습니다. 로그인 없이 작성한 내용은 저장되지 않습니다."
-          : "학생 로그인 후 제출할 수 있습니다.",
+          ? "로그인 후 제출할 수 있습니다. 로그인 없이 작성한 내용은 저장되지 않습니다."
+          : "로그인 후 제출할 수 있습니다.",
       );
       return;
     }
@@ -451,14 +451,14 @@ export function WorksheetViewer({
       )}
 
       {!canPersist && !submitted && role === "teacher" && (
-        <p className="text-center text-sm text-amber-700 print:hidden">학생 로그인 후 제출할 수 있습니다.</p>
+        <p className="text-center text-sm text-amber-700 print:hidden">로그인 후 제출할 수 있습니다.</p>
       )}
 
       {guestMode && !submitted && (
         <p className="text-center text-sm text-amber-800 print:hidden">
           체험 모드입니다. PDF 출력은 가능하지만 저장·제출은{" "}
           <Link href="/login" className="font-semibold text-blue-700 underline-offset-2 hover:underline">
-            학생 로그인
+            로그인
           </Link>
           후 이용할 수 있습니다.
         </p>
