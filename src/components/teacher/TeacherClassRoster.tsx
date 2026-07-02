@@ -48,9 +48,10 @@ function statusBadge(status: SubmissionStatus): { label: string; className: stri
 
 interface TeacherClassRosterProps {
   submissions: WorksheetSubmission[];
+  teacherUid: string;
 }
 
-export function TeacherClassRoster({ submissions }: TeacherClassRosterProps) {
+export function TeacherClassRoster({ submissions, teacherUid }: TeacherClassRosterProps) {
   const [students, setStudents] = useState<StudentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -62,7 +63,7 @@ export function TeacherClassRoster({ submissions }: TeacherClassRosterProps) {
     setLoading(true);
     setError("");
 
-    listStudentsForTeacher()
+    listStudentsForTeacher(teacherUid)
       .then((items) => {
         if (!cancelled) setStudents(items);
       })
@@ -78,7 +79,7 @@ export function TeacherClassRoster({ submissions }: TeacherClassRosterProps) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [teacherUid]);
 
   const classes = useMemo(() => {
     const map = new Map<string, { grade: string; classNo: string; count: number }>();

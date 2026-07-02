@@ -10,6 +10,7 @@ import {
   isConsentFormComplete,
   saveServiceConsent,
 } from "@/lib/legal/consent";
+import { ACCESS_PIN_HINT, ACCESS_PIN_LENGTH } from "@/lib/constants";
 import { isFirebaseConfigured, signInStudent, getFirebaseErrorMessage } from "@/lib/firebase";
 
 export default function LoginPage() {
@@ -76,6 +77,10 @@ export default function LoginPage() {
 
       <form onSubmit={handleStudentLogin} className="ui-panel mt-8 space-y-5">
         <h2 className="ui-section-title text-2xl">학생 로그인</h2>
+        <p className="text-base text-slate-600">
+          담임 선생님이 명단에 등록한 학생만 로그인할 수 있습니다. 암호는 선생님이 알려주신 6자리 숫자입니다.
+        </p>
+        <p className="rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-900">{ACCESS_PIN_HINT}</p>
         <div className="grid grid-cols-3 gap-3">
           <input className="ui-input" placeholder="학년" value={grade} onChange={(e) => setGrade(e.target.value)} required disabled={!consentComplete} />
           <input className="ui-input" placeholder="반" value={classNo} onChange={(e) => setClassNo(e.target.value)} required disabled={!consentComplete} />
@@ -84,10 +89,13 @@ export default function LoginPage() {
         <input className="ui-input" placeholder="이름" value={studentName} onChange={(e) => setStudentName(e.target.value)} required disabled={!consentComplete} />
         <input
           type="password"
-          className="ui-input"
-          placeholder="암호"
+          inputMode="numeric"
+          pattern="\d{6}"
+          maxLength={ACCESS_PIN_LENGTH}
+          className="ui-input text-center tracking-[0.35em]"
+          placeholder="6자리 숫자 암호"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value.replace(/\D/g, "").slice(0, ACCESS_PIN_LENGTH))}
           required
           disabled={!consentComplete}
         />

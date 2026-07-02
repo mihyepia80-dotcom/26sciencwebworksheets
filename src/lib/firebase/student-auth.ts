@@ -1,13 +1,14 @@
 "use client";
 
 import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
+  signInWithCustomToken,
+  signOut,
   updateProfile,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, getDocs, collection, limit, query, serverTimestamp, setDoc } from "firebase/firestore";
-import { getFirebaseStudentPassword, STUDENT_EMAIL_DOMAIN, STUDENT_PASSWORD } from "@/lib/constants";
+import { doc, getDoc, getDocs, collection, limit, query, where } from "firebase/firestore";
+import { isValidAccessPin, normalizeAccessPin } from "@/lib/auth/pin";
+import { STUDENT_EMAIL_DOMAIN } from "@/lib/constants";
 import { getClientAuth, getClientDb } from "./client";
 
 export interface StudentProfile {
@@ -15,6 +16,7 @@ export interface StudentProfile {
   classNo: string;
   studentNo: string;
   studentName: string;
+  teacherUid?: string;
 }
 
 export interface StudentRecord extends StudentProfile {
@@ -35,11 +37,14 @@ export async function getStudentProfile(uid: string): Promise<StudentProfile | n
     classNo: String(data.classNo ?? ""),
     studentNo: String(data.studentNo ?? ""),
     studentName: String(data.studentName ?? ""),
+    teacherUid: data.teacherUid ? String(data.teacherUid) : undefined,
   };
 }
 
-export async function listStudentsForTeacher(max = 500): Promise<StudentRecord[]> {
-  const snap = await getDocs(query(collection(getClientDb(), "students"), limit(max)));
+export async function listStudentsForTeacher(teacherUid: string, max = 500): Promise<StudentRecord[]> {
+  const snap = await getDocs(
+    query(collection(getClientDb(), "students"), where("teacherUid", "==", teacherUid), limit(max)),
+  );
   return snap.docs
     .map((d) => {
       const data = d.data();
@@ -49,6 +54,7 @@ export async function listStudentsForTeacher(max = 500): Promise<StudentRecord[]
         classNo: String(data.classNo ?? ""),
         studentNo: String(data.studentNo ?? ""),
         studentName: String(data.studentName ?? ""),
+        teacherUid: String(data.teacherUid ?? teacherUid),
       };
     })
     .filter((s) => s.studentName.trim())
@@ -61,44 +67,44 @@ export async function listStudentsForTeacher(max = 500): Promise<StudentRecord[]
     });
 }
 
-async function saveStudentProfile(uid: string, profile: StudentProfile): Promise<void> {
-  await setDoc(
-    doc(getClientDb(), "students", uid),
-    { ...profile, updatedAt: serverTimestamp() },
-    { merge: true },
-  );
-}
-
 export async function checkIsStudent(user: User): Promise<boolean> {
   if (user.email?.endsWith(`@${STUDENT_EMAIL_DOMAIN}`)) return true;
   const profile = await getStudentProfile(user.uid);
   return profile !== null;
 }
 
-export async function signInStudent(profile: StudentProfile, password: string): Promise<User> {
-  if (password !== STUDENT_PASSWORD) {
-    throw new Error("암호가 올바르지 않습니다.");
+export async function signInStudent(profile: StudentProfile, accessPin: string): Promise<User> {
+  const normalizedPin = normalizeAccessPin(accessPin);
+  if (!isValidAccessPin(normalizedPin)) {
+    throw new Error("암호는 6자리 숫자만 입력할 수 있습니다.");
   }
 
-  const email = buildStudentEmail(profile.grade, profile.classNo, profile.studentNo);
   const auth = getClientAuth();
-  const firebasePassword = getFirebaseStudentPassword();
-
-  try {
-    const result = await signInWithEmailAndPassword(auth, email, firebasePassword);
-    await saveStudentProfile(result.user.uid, profile);
-    if (profile.studentName) {
-      await updateProfile(result.user, { displayName: profile.studentName });
-    }
-    return result.user;
-  } catch (error: unknown) {
-    const code = typeof error === "object" && error && "code" in error ? String((error as { code: string }).code) : "";
-    if (code === "auth/user-not-found" || code === "auth/invalid-credential") {
-      const created = await createUserWithEmailAndPassword(auth, email, firebasePassword);
-      await saveStudentProfile(created.user.uid, profile);
-      await updateProfile(created.user, { displayName: profile.studentName || profile.studentNo });
-      return created.user;
-    }
-    throw error;
+  const current = auth.currentUser;
+  if (current && !current.email?.endsWith(`@${STUDENT_EMAIL_DOMAIN}`)) {
+    await signOut(auth);
   }
+
+  const response = await fetch("/api/auth/student-login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      grade: profile.grade,
+      classNo: profile.classNo,
+      studentNo: profile.studentNo,
+      studentName: profile.studentName,
+      accessPin: normalizedPin,
+    }),
+  });
+
+  const payload = (await response.json()) as { customToken?: string; error?: string };
+  if (!response.ok || !payload.customToken) {
+    throw new Error(payload.error || "로그인에 실패했습니다.");
+  }
+
+  const result = await signInWithCustomToken(auth, payload.customToken);
+  if (profile.studentName) {
+    await updateProfile(result.user, { displayName: profile.studentName });
+  }
+  return result.user;
 }

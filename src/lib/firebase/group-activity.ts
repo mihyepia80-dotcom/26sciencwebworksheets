@@ -37,6 +37,8 @@ import type {
 import { getWeekInfo } from "@/lib/group-activity/week-utils";
 import { parseAchievementLevel, parseGender } from "@/lib/group-activity/parse-roster";
 import { getClientDb } from "./client";
+import { getFirebaseErrorCode } from "./errors";
+import { syncTeacherStudentLoginSlots } from "./student-login-slots";
 import { ensureTeacherProfile, prepareTeacherFirestoreAccess } from "./teacher-auth";
 
 export { parseAchievementLevel, parseGender };
@@ -167,6 +169,20 @@ function mapStudent(id: string, data: Record<string, unknown>): RosterStudent {
   };
 }
 
+async function refreshTeacherLoginSlots(teacherUid: string): Promise<void> {
+  const snap = await getDocs(teacherCollection(teacherUid, "groupRosterStudents"));
+  const students = snap.docs
+    .map((d) => mapStudent(d.id, d.data()))
+    .filter((student) => student.active !== false)
+    .map((student) => ({
+      grade: student.grade,
+      classNo: student.classNo,
+      studentNo: student.studentNo,
+      studentName: student.studentName,
+    }));
+  await syncTeacherStudentLoginSlots(teacherUid, students);
+}
+
 export async function ensureRosterMeta(
   teacherUid: string,
   grade: string,
@@ -274,6 +290,7 @@ export async function bulkUpsertRosterStudents(
     normalizedClassNo,
     studentNos,
   );
+  await refreshTeacherLoginSlots(teacherUid);
   return uniqueRows.length;
 }
 
@@ -335,11 +352,13 @@ export async function upsertRosterStudent(
     normalizedClassNo,
     new Set([studentNo]),
   );
+  await refreshTeacherLoginSlots(teacherUid);
   return id;
 }
 
 export async function deleteRosterStudent(teacherUid: string, studentId: string): Promise<void> {
   await deleteDoc(teacherDocument(teacherUid, "groupRosterStudents", studentId));
+  await refreshTeacherLoginSlots(teacherUid);
 }
 
 export async function updateAchievementLevel(
@@ -559,15 +578,17 @@ export async function saveRoleScheduleAssignments(
   assignments: StudentRoleAssignment[],
   weekIndex?: number,
 ): Promise<RoleWeekSchedule> {
-  const rosterId = buildRosterId(teacherUid, grade, classNo);
+  const normalizedGrade = normalizeClassPart(grade);
+  const normalizedClassNo = normalizeClassPart(classNo);
+  const rosterId = buildRosterId(teacherUid, normalizedGrade, normalizedClassNo);
   const week = getWeekInfo(new Date(), ROLE_WEEK_ANCHOR);
   const idx = weekIndex ?? week.weekIndex;
 
   const payload = {
     rosterId,
     teacherUid,
-    grade,
-    classNo,
+    grade: normalizedGrade,
+    classNo: normalizedClassNo,
     weekIndex: idx,
     weekStart: week.weekStart,
     weekEnd: week.weekEnd,
@@ -576,14 +597,14 @@ export async function saveRoleScheduleAssignments(
     updatedAt: serverTimestamp(),
   };
 
-  const scheduleId = buildClassScheduleId(grade, classNo);
+  const scheduleId = buildClassScheduleId(normalizedGrade, normalizedClassNo);
   await setDoc(doc(getClientDb(), "groupRoleSchedules", scheduleId), payload);
   return {
     id: scheduleId,
     rosterId,
     teacherUid,
-    grade,
-    classNo,
+    grade: normalizedGrade,
+    classNo: normalizedClassNo,
     weekIndex: idx,
     weekStart: week.weekStart,
     weekEnd: week.weekEnd,
@@ -674,6 +695,33 @@ export async function listClassGroupPraisesForStudent(
     });
 }
 
+async function loadStudentGroupSchedule(
+  grade: string,
+  classNo: string,
+): Promise<RoleWeekSchedule | null> {
+  try {
+    return await getRoleScheduleForClass(grade, classNo);
+  } catch (error) {
+    const code = getFirebaseErrorCode(error);
+    if (code === "permission-denied" || code === "failed-precondition") return null;
+    throw error;
+  }
+}
+
+async function loadStudentGroupPraises(
+  grade: string,
+  classNo: string,
+  weekIndex: number,
+): Promise<GroupActivityPraise[]> {
+  try {
+    return await listClassGroupPraisesForStudent(grade, classNo, weekIndex);
+  } catch (error) {
+    const code = getFirebaseErrorCode(error);
+    if (code === "permission-denied" || code === "failed-precondition") return [];
+    throw error;
+  }
+}
+
 export async function getStudentGroupActivityView(
   grade: string,
   classNo: string,
@@ -684,8 +732,8 @@ export async function getStudentGroupActivityView(
   const normalizedClassNo = normalizeClassPart(classNo);
   const normalizedNo = normalizeStudentNo(studentNo);
   const [schedule, classPraises] = await Promise.all([
-    getRoleScheduleForClass(normalizedGrade, normalizedClassNo),
-    listClassGroupPraisesForStudent(normalizedGrade, normalizedClassNo, weekIndex),
+    loadStudentGroupSchedule(normalizedGrade, normalizedClassNo),
+    loadStudentGroupPraises(normalizedGrade, normalizedClassNo, weekIndex),
   ]);
 
   const groups = schedule?.groups ?? [];

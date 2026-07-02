@@ -88,6 +88,18 @@ export function InquiryWorkspace() {
   }, [panelParam]);
 
   useEffect(() => {
+    if (templateId) setActiveTemplateId(templateId);
+  }, [templateId]);
+
+  useEffect(() => {
+    setActiveSubmissionId(submissionIdParam);
+  }, [submissionIdParam]);
+
+  useEffect(() => {
+    if (reportParam) setReportId(reportParam);
+  }, [reportParam]);
+
+  useEffect(() => {
     if (guestMode) {
       setInitLoading(false);
       setError("");
@@ -163,6 +175,31 @@ export function InquiryWorkspace() {
               setActiveSubmissionId(match.id);
               router.replace(
                 `/workspace?report=${rid}&template=${templateId}&submission=${match.id}`,
+                { scroll: false },
+              );
+            } else {
+              const instanceNo = await getNextInstanceNo(user.uid, templateId, rid);
+              const tpl = getTemplateById(templateId);
+              const newId = await saveSubmissionDraft({
+                templateId,
+                templateName: tpl?.name ?? templateId,
+                meta: {
+                  grade: studentProfile?.grade ?? "",
+                  classNo: studentProfile?.classNo ?? "",
+                  studentNo: studentProfile?.studentNo ?? "",
+                  studentName: studentProfile?.studentName ?? "",
+                  topic: "",
+                },
+                values: {},
+                studentUid: user.uid,
+                linkedReportId: rid,
+                instanceNo,
+              });
+              await linkSubmissionToReport(rid, newId);
+              setActiveSubmissionId(newId);
+              await refreshWorksheets(rid);
+              router.replace(
+                `/workspace?report=${rid}&template=${templateId}&submission=${newId}`,
                 { scroll: false },
               );
             }
@@ -385,8 +422,10 @@ export function InquiryWorkspace() {
                       key={w.id}
                       type="button"
                       onClick={() => {
+                        if (!reportId || !w.id) return;
                         setActiveTemplateId(w.templateId);
-                        setActiveSubmissionId(w.id ?? null);
+                        setActiveSubmissionId(w.id);
+                        setPanelFocus((prev) => (prev === "report" ? "split" : prev));
                         router.replace(
                           `/workspace?report=${reportId}&template=${w.templateId}&submission=${w.id}`,
                           { scroll: false },
@@ -416,7 +455,7 @@ export function InquiryWorkspace() {
                 )}
               </div>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-5">
+            <div className="min-h-[420px] flex-1 overflow-y-auto p-5 lg:min-h-[calc(100vh-11rem)]">
               {activeTemplateId ? (
                 <WorksheetViewer
                   key={`${activeTemplateId}-${activeSubmissionId ?? "new"}`}

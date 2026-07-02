@@ -73,6 +73,8 @@ export function useWorksheetLoader({
         if (!submission || submission.studentUid !== studentUid || submission.templateId !== templateId) {
           if (editSubmissionId) {
             setLoadError("활동지를 불러올 수 없습니다.");
+          } else {
+            setLoadError("");
           }
           return;
         }

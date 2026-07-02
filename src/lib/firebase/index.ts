@@ -18,7 +18,14 @@ export {
   type WorksheetSubmissionStatus,
 } from "./submissions";
 export {
-  signInTeacher,
+  signInTeacherWithGoogle,
+  completeTeacherGoogleRedirect,
+  isTeacherGoogleRedirectInProgress,
+  verifyTeacherAccessPin,
+  setupTeacherAccessPin,
+  resetTeacherAccessPin,
+  getTeacherProfile,
+  teacherHasAccessPin,
   signOutUser,
   checkIsTeacher,
   ensureTeacherProfile,
@@ -27,6 +34,7 @@ export {
   subscribeAppAuth,
   type AppAuthState,
   type AuthRole,
+  type TeacherProfile,
 } from "./teacher-auth";
 export {
   signInStudent,

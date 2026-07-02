@@ -5,6 +5,7 @@ import {
   deleteInquiryReport,
   getFirebaseErrorMessage,
   listAllInquiryReports,
+  listStudentsForTeacher,
   type InquiryReportDoc,
 } from "@/lib/firebase";
 import { inquiryReportTitle } from "@/lib/inquiry-report/types";
@@ -40,7 +41,7 @@ const PROCESS_STEP_KEYS = [
   "processStep5",
 ] as const;
 
-export function TeacherInquiryReports() {
+export function TeacherInquiryReports({ teacherUid }: { teacherUid: string }) {
   const [reports, setReports] = useState<InquiryReportDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -52,9 +53,11 @@ export function TeacherInquiryReports() {
     setLoading(true);
     setError("");
 
-    listAllInquiryReports()
-      .then((items) => {
-        if (!cancelled) setReports(items);
+    Promise.all([listAllInquiryReports(), listStudentsForTeacher(teacherUid)])
+      .then(([items, students]) => {
+        if (cancelled) return;
+        const uidSet = new Set(students.map((student) => student.uid));
+        setReports(items.filter((item) => uidSet.has(item.studentUid)));
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(getFirebaseErrorMessage(err, "탐구보고서 목록을 불러오지 못했습니다."));
@@ -66,7 +69,7 @@ export function TeacherInquiryReports() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [teacherUid]);
 
   const handleDelete = async (report: InquiryReportDoc) => {
     if (!report.id) return;

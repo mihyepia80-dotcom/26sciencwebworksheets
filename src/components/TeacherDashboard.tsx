@@ -68,7 +68,7 @@ export function TeacherDashboard() {
     setListLoading(true);
     setListError("");
 
-    listTeacherSubmissions()
+    listTeacherSubmissions(user.uid)
       .then((items) => {
         if (!cancelled) setSubmissions(items);
       })
@@ -129,7 +129,9 @@ export function TeacherDashboard() {
           ← 로그인
         </Link>
         <h1 className="mt-4 text-2xl font-bold text-slate-900">교사 로그인</h1>
-        <p className="mt-2 text-sm text-slate-600">교사 암호로 로그인하면 제출된 활동지를 조회할 수 있습니다.</p>
+        <p className="mt-2 text-sm text-slate-600">
+          Google 계정으로 로그인한 뒤 6자리 숫자 암호를 설정·입력하면 대시보드를 사용할 수 있습니다.
+        </p>
 
         <div className="mt-8">
           <TeacherLoginPanel />
@@ -191,6 +193,16 @@ export function TeacherDashboard() {
 
       <TeacherStudentInvitePanel teacherUid={user.uid} />
 
+      <section className="mt-8 rounded-xl border border-violet-200 bg-violet-50/70 p-5">
+        <h2 className="text-lg font-bold text-violet-950">학생 가입 안내</h2>
+        <ul className="mt-3 space-y-2 text-sm leading-relaxed text-violet-950">
+          <li>1. Google 로그인 후 설정한 6자리 숫자 암호를 학생에게 알려 주세요.</li>
+          <li>2. <Link href="/teacher/groups" className="font-semibold underline">모둠 활동</Link>에서 학생 명단을 등록해야 학생이 로그인할 수 있습니다.</li>
+          <li>3. 이 대시보드에는 명단에 등록되고 암호로 가입한 학생만 표시됩니다.</li>
+          <li>4. Firebase Console 등 서비스 설정은 각 교사의 개인 Google 계정에서 확인하세요.</li>
+        </ul>
+      </section>
+
       <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-bold text-slate-900">수업 설계 · 활동지 관리</h2>
         <p className="mt-1 text-sm text-slate-600">
@@ -230,7 +242,7 @@ export function TeacherDashboard() {
       {listLoading && <p className="mt-8 text-sm text-slate-500">불러오는 중...</p>}
       {listError && <p className="mt-8 text-sm text-red-600">{listError}</p>}
 
-      {!listLoading && !listError && <TeacherClassRoster submissions={submissions} />}
+      {!listLoading && !listError && <TeacherClassRoster submissions={submissions} teacherUid={user.uid} />}
 
       {!listLoading && !listError && submissions.length === 0 && (
         <p className="mt-8 rounded-lg border border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
@@ -340,9 +352,9 @@ export function TeacherDashboard() {
         })}
       </div>
 
-      <TeacherInquiryReports />
+      <TeacherInquiryReports teacherUid={user.uid} />
 
-      <TeacherPeerFeedbacks />
+      <TeacherPeerFeedbacks teacherUid={user.uid} />
     </div>
   );
 }

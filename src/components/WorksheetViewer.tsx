@@ -122,7 +122,7 @@ export function WorksheetViewer({
     templateId,
     studentUid: user?.uid,
     linkedReportId,
-    enabled: isStudent,
+    enabled: worksheetEditorMode && Boolean(user?.uid),
     onLoaded: handleLoaded,
   });
 
@@ -205,6 +205,10 @@ export function WorksheetViewer({
     }));
   }, [editSubmissionId, studentProfile]);
 
+  useEffect(() => {
+    setSubmissionId(editSubmissionId);
+  }, [editSubmissionId]);
+
   if (!template) return null;
 
   const onMetaChange = (key: keyof WorksheetMeta, value: string) => {
@@ -247,7 +251,7 @@ export function WorksheetViewer({
     clearDraftFeedback();
   };
 
-  if (loading) {
+  if (loading && !embedded) {
     return (
       <div className={`text-center text-base text-slate-500 ${embedded ? "py-10" : "mx-auto max-w-5xl px-5 py-20"}`}>
         활동지 불러오는 중...
@@ -260,6 +264,9 @@ export function WorksheetViewer({
       data-worksheet-embedded={embedded ? "true" : undefined}
       className={`print:max-w-none print:space-y-0 print:p-0 ${embedded ? "worksheet-embedded-shell space-y-3" : `mx-auto space-y-4 px-4 py-6 ${worksheetEditorMode ? "max-w-7xl" : "max-w-5xl"}`}`}
     >
+      {embedded && loading && (
+        <p className="print:hidden rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-500">활동지 불러오는 중...</p>
+      )}
       {guestMode && !embedded && (
         <div className="print:hidden">
           <GuestNotice />

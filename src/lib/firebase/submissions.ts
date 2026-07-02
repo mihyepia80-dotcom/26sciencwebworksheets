@@ -19,6 +19,7 @@ import type { AiRating } from "@/lib/ai/feedback";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 import { getClientDb } from "./client";
 import { deleteSharesForSubmission } from "./shares";
+import { listStudentsForTeacher } from "./student-auth";
 
 export type WorksheetSubmissionStatus = "draft" | "submitted";
 
@@ -246,9 +247,10 @@ export async function listSubmissions(max = 100): Promise<WorksheetSubmission[]>
     .filter((s) => s.status === "submitted");
 }
 
-/** 교사용: 제출·임시저장 포함 최근 활동지 목록 */
-export async function listTeacherSubmissions(max = 200): Promise<WorksheetSubmission[]> {
-  const [byUpdated, bySubmitted] = await Promise.all([
+/** 교사용: 본인 학생의 제출·임시저장 포함 최근 활동지 목록 */
+export async function listTeacherSubmissions(teacherUid: string, max = 200): Promise<WorksheetSubmission[]> {
+  const [students, byUpdated, bySubmitted] = await Promise.all([
+    listStudentsForTeacher(teacherUid, 500),
     getDocs(
       query(collection(getClientDb(), "submissions"), orderBy("updatedAt", "desc"), limit(max)),
     ),
@@ -257,9 +259,12 @@ export async function listTeacherSubmissions(max = 200): Promise<WorksheetSubmis
     ),
   ]);
 
+  const uidSet = new Set(students.map((student) => student.uid));
   const merged = new Map<string, WorksheetSubmission>();
   for (const docSnap of [...byUpdated.docs, ...bySubmitted.docs]) {
-    merged.set(docSnap.id, mapSubmissionDoc(docSnap.id, docSnap.data()));
+    const submission = mapSubmissionDoc(docSnap.id, docSnap.data());
+    if (!uidSet.has(submission.studentUid)) continue;
+    merged.set(docSnap.id, submission);
   }
 
   return [...merged.values()]

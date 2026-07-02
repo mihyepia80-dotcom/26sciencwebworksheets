@@ -6,8 +6,13 @@ service cloud.firestore {
       return email is string && email.matches('(?i).*@sagodogu-teacher\\.app$');
     }
 
+    function isGoogleTeacher() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'google.com';
+    }
+
     function isTeacher() {
-      return request.auth != null && teacherDomainEmail(request.auth.token.email);
+      return isGoogleTeacher();
     }
 
     function isStudent() {
@@ -23,29 +28,25 @@ service cloud.firestore {
     function isTeacherAt(teacherId) {
       return request.auth != null
         && request.auth.uid == teacherId
-        && (
-          isTeacher()
-          || (
-            hasTeacherProfile(teacherId)
-            && teacherDomainEmail(
-              get(/databases/$(database)/documents/teachers/$(teacherId)).data.get('email', '')
-            )
-          )
-        );
+        && isGoogleTeacher();
     }
 
     function canCreateTeacherProfile(teacherId) {
       return request.auth != null
         && request.auth.uid == teacherId
-        && !isStudent()
-        && teacherDomainEmail(request.resource.data.get('email', ''));
+        && isGoogleTeacher()
+        && request.resource.data.email == request.auth.token.email;
     }
 
-    /** 교사 본인 데이터 — 학생 계정 제외, uid 일치 */
+    function isValidTeacherAccessPin(value) {
+      return value is string && value.matches('^\\d{6}$');
+    }
+
+    /** 교사 본인 데이터 — Google 교사 계정, uid 일치 */
     function ownsTeacherScope(teacherId) {
       return request.auth != null
         && request.auth.uid == teacherId
-        && !isStudent();
+        && isGoogleTeacher();
     }
 
     function studentData(uid) {
@@ -139,7 +140,12 @@ service cloud.firestore {
     match /teachers/{teacherId} {
       allow read: if request.auth != null && request.auth.uid == teacherId;
       allow create: if canCreateTeacherProfile(teacherId);
-      allow update: if ownsTeacherScope(teacherId) || isTeacherAt(teacherId);
+      allow update: if ownsTeacherScope(teacherId)
+        && request.resource.data.email == request.auth.token.email
+        && (
+          !('accessPin' in request.resource.data)
+          || isValidTeacherAccessPin(request.resource.data.accessPin)
+        );
 
       match /classRosters/{rosterId} {
         allow read, write: if ownsTeacherScope(teacherId);
@@ -163,11 +169,19 @@ service cloud.firestore {
     }
 
     match /students/{uid} {
-      allow read: if isTeacher()
-        || request.auth.uid == uid
-        || (isStudent() && isSameClass(uid));
+      allow read: if request.auth.uid == uid
+        || (isStudent() && isSameClass(uid))
+        || (isTeacher() && resource.data.get('teacherUid', '') == request.auth.uid);
       allow create, update: if request.auth != null && request.auth.uid == uid && isStudent();
       allow delete: if false;
+    }
+
+    match /studentLoginSlots/{slotId} {
+      allow read: if false;
+      allow create, update: if isTeacher()
+        && request.resource.data.teacherUid == request.auth.uid;
+      allow delete: if isTeacher()
+        && resource.data.teacherUid == request.auth.uid;
     }
 
     match /submissions/{submissionId} {
@@ -353,7 +367,7 @@ service cloud.firestore {
       return request.auth != null
         && data.teacherUid is string
         && data.teacherUid == request.auth.uid
-        && !isStudent();
+        && isGoogleTeacher();
     }
 
     function normalizeClassPart(value) {
@@ -362,10 +376,30 @@ service cloud.firestore {
         : '';
     }
 
+    function studentProfileExists() {
+      return exists(/databases/$(database)/documents/students/$(request.auth.uid));
+    }
+
+    function studentClassScheduleId() {
+      return normalizeClassPart(studentData(request.auth.uid).grade)
+        + '__'
+        + normalizeClassPart(studentData(request.auth.uid).classNo);
+    }
+
     function isSameClassDoc(data) {
       return isStudent()
+        && studentProfileExists()
         && normalizeClassPart(studentData(request.auth.uid).grade) == normalizeClassPart(data.grade)
         && normalizeClassPart(studentData(request.auth.uid).classNo) == normalizeClassPart(data.classNo);
+    }
+
+    function canStudentReadGroupRoleSchedule(scheduleId) {
+      return isStudent()
+        && studentProfileExists()
+        && (
+          (!resource.exists && scheduleId == studentClassScheduleId())
+          || (resource.exists && isSameClassDoc(resource.data))
+        );
     }
 
     function isValidClassGroupPraise(data) {
@@ -383,7 +417,7 @@ service cloud.firestore {
 
     match /groupRoleSchedules/{scheduleId} {
       allow read: if request.auth != null && (
-        (isStudent() && resource.exists && isSameClassDoc(resource.data))
+        canStudentReadGroupRoleSchedule(scheduleId)
         || (!isStudent() && (
           !resource.exists
           || isTeacherOwner(resource.data)
@@ -397,7 +431,7 @@ service cloud.firestore {
 
     match /classGroupPraises/{praiseId} {
       allow read: if request.auth != null && (
-        isTeacher() || (isStudent() && resource.exists && isSameClassDoc(resource.data))
+        isTeacher() || isSameClassDoc(resource.data)
       );
       allow create: if isTeacher() && isValidClassGroupPraise(request.resource.data);
       allow delete: if isTeacher();

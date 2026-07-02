@@ -5,6 +5,7 @@ import {
   deletePeerFeedback,
   getFirebaseErrorMessage,
   listAllPeerFeedbacks,
+  listStudentsForTeacher,
   type PeerFeedbackDoc,
 } from "@/lib/firebase";
 
@@ -13,7 +14,7 @@ function formatDate(feedback: PeerFeedbackDoc): string {
   return feedback.createdAt.toDate().toLocaleString("ko-KR");
 }
 
-export function TeacherPeerFeedbacks() {
+export function TeacherPeerFeedbacks({ teacherUid }: { teacherUid: string }) {
   const [feedbacks, setFeedbacks] = useState<PeerFeedbackDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -25,15 +26,19 @@ export function TeacherPeerFeedbacks() {
   const load = () => {
     setLoading(true);
     setError("");
-    listAllPeerFeedbacks()
-      .then(setFeedbacks)
+    Promise.all([listAllPeerFeedbacks(), listStudentsForTeacher(teacherUid)])
+      .then(([items, students]) => {
+        const uidSet = new Set(students.map((student) => student.uid));
+        const authorSet = uidSet;
+        setFeedbacks(items.filter((item) => authorSet.has(item.authorUid) || authorSet.has(item.targetUid)));
+      })
       .catch((e: unknown) => setError(getFirebaseErrorMessage(e, "동료 피드백 목록을 불러오지 못했습니다.")))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     load();
-  }, []);
+  }, [teacherUid]);
 
   const grades = useMemo(
     () => [...new Set(feedbacks.map((f) => f.grade).filter(Boolean))].sort(),

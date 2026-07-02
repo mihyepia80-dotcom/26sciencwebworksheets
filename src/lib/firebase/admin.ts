@@ -1,4 +1,5 @@
 import { cert, getApps, initializeApp, type ServiceAccount } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
@@ -26,6 +27,11 @@ export function getAdminDb() {
     initializeApp({ credential: cert(account) });
   }
   return getFirestore();
+}
+
+export function getAdminAuth() {
+  getAdminDb();
+  return getAuth();
 }
 
 export function isAdminConfigured(): boolean {

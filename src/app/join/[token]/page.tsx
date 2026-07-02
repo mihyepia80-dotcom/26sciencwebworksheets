@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
+import { ACCESS_PIN_HINT, ACCESS_PIN_LENGTH } from "@/lib/constants";
 import {
   getTeacherInviteByToken,
   getFirebaseErrorMessage,
@@ -159,12 +160,16 @@ export default function JoinInvitePage({ params }: { params: Promise<{ token: st
             required
           />
         </div>
+        <p className="text-sm text-slate-600">{ACCESS_PIN_HINT}</p>
         <input
           type="password"
-          className="ui-input"
-          placeholder="암호"
+          inputMode="numeric"
+          pattern="\d{6}"
+          maxLength={ACCESS_PIN_LENGTH}
+          className="ui-input text-center tracking-[0.35em]"
+          placeholder="6자리 숫자 암호"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value.replace(/\D/g, "").slice(0, ACCESS_PIN_LENGTH))}
           required
         />
         <button type="submit" disabled={submitting} className="ui-btn-primary w-full">

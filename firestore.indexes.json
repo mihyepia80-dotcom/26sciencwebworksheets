@@ -213,6 +213,13 @@
         { "fieldPath": "classNo", "order": "ASCENDING" },
         { "fieldPath": "weekIndex", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "studentLoginSlots",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "teacherUid", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
