@@ -10,4 +10,4 @@ export function normalizeAccessPin(value: string): string {
   return value.trim();
 }
 
-export const ACCESS_PIN_HINT = "6자리 숫자만 입력할 수 있습니다. (예: 260026)";
+export const ACCESS_PIN_HINT = "6자리 숫자만 입력할 수 있습니다. (예: 123456)";
