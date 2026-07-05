@@ -138,7 +138,7 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
         <p className="text-base leading-relaxed text-slate-600">
           {teacherEmail && <span className="block font-medium text-slate-800">{teacherEmail}</span>}
           {step === "setup-pin"
-            ? "학생 로그인에 사용할 6자리 숫자 암호를 설정하세요. 설정 후 학생 명단을 등록하면 학생이 가입할 수 있습니다."
+            ? "학생 로그인에 사용할 6자리 숫자 암호를 설정하세요. 학생은 이 암호만 맞으면 로그인할 수 있습니다."
             : "대시보드에 들어가려면 설정한 6자리 숫자 암호를 입력하세요."}
         </p>
         <p className="rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-900">{ACCESS_PIN_HINT}</p>

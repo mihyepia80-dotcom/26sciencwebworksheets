@@ -203,9 +203,9 @@ export function TeacherDashboard() {
         <h2 className="text-lg font-bold text-violet-950">학생 가입 안내</h2>
         <ul className="mt-3 space-y-2 text-sm leading-relaxed text-violet-950">
           <li>1. Google 로그인 후 설정한 6자리 숫자 암호를 학생에게 알려 주세요.</li>
-          <li>2. <Link href="/teacher/groups" className="font-semibold underline">모둠 활동</Link>에서 학생 명단을 등록해야 학생이 로그인할 수 있습니다.</li>
-          <li>3. 이 대시보드에는 명단에 등록되고 암호로 가입한 학생만 표시됩니다.</li>
-          <li>4. Firebase Console 등 서비스 설정은 각 교사의 개인 Google 계정에서 확인하세요.</li>
+          <li>2. 학생은 로그인 화면에서 학년·반·번호·이름과 선생님이 정한 <strong>6자리 암호</strong>를 입력합니다.</li>
+          <li>3. 모둠 활동·역할 배정은 <Link href="/teacher/groups" className="font-semibold underline">모둠 활동</Link>에서 명단을 등록하면 이용할 수 있습니다.</li>
+          <li>4. 이 대시보드에는 로그인한 학생의 활동지·탐구보고서가 표시됩니다.</li>
         </ul>
       </section>
 

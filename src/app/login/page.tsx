@@ -78,7 +78,7 @@ export default function LoginPage() {
       <form onSubmit={handleStudentLogin} className="ui-panel mt-8 space-y-5">
         <h2 className="ui-section-title text-2xl">로그인</h2>
         <p className="text-base text-slate-600">
-          담임 선생님이 명단에 등록한 학생만 로그인할 수 있습니다. 암호는 선생님이 알려주신 6자리 숫자입니다.
+          학년·반·번호·이름을 입력하고, 담임 선생님이 알려주신 6자리 숫자 암호가 맞으면 로그인할 수 있습니다.
         </p>
         <p className="rounded-lg bg-violet-50 px-3 py-2 text-sm text-violet-900">{ACCESS_PIN_HINT}</p>
         <div className="grid grid-cols-3 gap-3">

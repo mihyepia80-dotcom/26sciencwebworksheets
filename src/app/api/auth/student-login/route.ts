@@ -57,34 +57,19 @@ export async function POST(request: Request) {
 
   try {
     const db = getAdminDb();
-    const slotId = `${normalizedGrade}__${normalizedClassNo}__${normalizedNo}`.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const slotSnap = await db.collection("studentLoginSlots").doc(slotId).get();
 
-    if (!slotSnap.exists) {
+    const teachersSnap = await db.collection("teachers").where("accessPin", "==", accessPin).limit(2).get();
+    if (teachersSnap.empty) {
+      return NextResponse.json({ error: "암호가 올바르지 않습니다." }, { status: 403 });
+    }
+    if (teachersSnap.size > 1) {
       return NextResponse.json(
-        { error: "교사 명단에 등록되지 않은 학생입니다. 담임 선생님께 문의해 주세요." },
+        { error: "같은 암호를 사용하는 교사가 여러 명입니다. 담임 선생님께 문의해 주세요." },
         { status: 403 },
       );
     }
 
-    const slot = slotSnap.data() ?? {};
-    const teacherUid = String(slot.teacherUid ?? "");
-    const rosterName = normalizeName(String(slot.studentName ?? ""));
-
-    if (rosterName && rosterName !== studentName) {
-      return NextResponse.json({ error: "이름이 교사 명단과 일치하지 않습니다." }, { status: 403 });
-    }
-
-    const teacherSnap = await db.collection("teachers").doc(teacherUid).get();
-    if (!teacherSnap.exists) {
-      return NextResponse.json({ error: "담임 교사 정보를 찾을 수 없습니다." }, { status: 403 });
-    }
-
-    const teacherPin = String(teacherSnap.data()?.accessPin ?? "");
-    if (!isValidAccessPin(teacherPin) || teacherPin !== accessPin) {
-      return NextResponse.json({ error: "암호가 올바르지 않습니다." }, { status: 403 });
-    }
-
+    const teacherUid = teachersSnap.docs[0].id;
     const email = buildStudentEmail(normalizedGrade, normalizedClassNo, normalizedNo);
     const auth = getAdminAuth();
     const firebasePassword = getStudentAuthPassword();
