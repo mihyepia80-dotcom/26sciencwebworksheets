@@ -9,7 +9,7 @@ import {
   signOut,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc, deleteDoc } from "firebase/firestore";
 import { isValidAccessPin, normalizeAccessPin } from "@/lib/auth/pin";
 import { STUDENT_EMAIL_DOMAIN } from "@/lib/constants";
 import { isFirebaseConfigured } from "./config";
@@ -90,6 +90,28 @@ export async function saveTeacherAccessPin(user: User, pin: string): Promise<voi
   if (!isValidAccessPin(normalized)) {
     throw new Error("암호는 6자리 숫자만 입력할 수 있습니다.");
   }
+
+  const profile = await getTeacherProfile(user.uid);
+  const oldPin = profile?.accessPin;
+
+  const pinRef = doc(getClientDb(), "studentAccessPins", normalized);
+  const existingPin = await getDoc(pinRef);
+  if (existingPin.exists() && String(existingPin.data().teacherUid ?? "") !== user.uid) {
+    throw new Error("다른 교사가 이미 사용 중인 암호입니다. 다른 숫자를 선택해 주세요.");
+  }
+
+  if (oldPin && oldPin !== normalized && isValidAccessPin(oldPin)) {
+    const oldPinRef = doc(getClientDb(), "studentAccessPins", oldPin);
+    const oldPinSnap = await getDoc(oldPinRef);
+    if (oldPinSnap.exists() && String(oldPinSnap.data().teacherUid ?? "") === user.uid) {
+      await deleteDoc(oldPinRef);
+    }
+  }
+
+  await setDoc(pinRef, {
+    teacherUid: user.uid,
+    updatedAt: serverTimestamp(),
+  });
 
   await setDoc(
     doc(getClientDb(), "teachers", user.uid),

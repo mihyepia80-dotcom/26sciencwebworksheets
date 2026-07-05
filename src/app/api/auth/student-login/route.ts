@@ -3,6 +3,10 @@ import { FieldValue } from "firebase-admin/firestore";
 import { isValidAccessPin, normalizeAccessPin } from "@/lib/auth/pin";
 import { normalizeClassPart, normalizeStudentNo } from "@/lib/group-activity/constants";
 import { getAdminAuth, getAdminDb, isAdminConfigured } from "@/lib/firebase/admin";
+import { resolveTeacherUidByAccessPin } from "@/lib/firebase/student-login-server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function getStudentAuthPassword(): string {
   const secret = process.env.STUDENT_AUTH_SECRET?.trim() || "sagodogu-student-internal";
@@ -28,7 +32,10 @@ interface StudentLoginBody {
 
 export async function POST(request: Request) {
   if (!isAdminConfigured()) {
-    return NextResponse.json({ error: "서버 인증 설정이 필요합니다." }, { status: 503 });
+    return NextResponse.json(
+      { error: "서버 인증 설정이 필요합니다. FIREBASE_SERVICE_ACCOUNT_JSON 환경 변수를 확인해 주세요." },
+      { status: 503 },
+    );
   }
 
   let body: StudentLoginBody;
@@ -57,19 +64,12 @@ export async function POST(request: Request) {
 
   try {
     const db = getAdminDb();
-
-    const teachersSnap = await db.collection("teachers").where("accessPin", "==", accessPin).limit(2).get();
-    if (teachersSnap.empty) {
-      return NextResponse.json({ error: "암호가 올바르지 않습니다." }, { status: 403 });
-    }
-    if (teachersSnap.size > 1) {
-      return NextResponse.json(
-        { error: "같은 암호를 사용하는 교사가 여러 명입니다. 담임 선생님께 문의해 주세요." },
-        { status: 403 },
-      );
+    const resolved = await resolveTeacherUidByAccessPin(db, accessPin);
+    if (!resolved.ok) {
+      return NextResponse.json({ error: resolved.error }, { status: resolved.status });
     }
 
-    const teacherUid = teachersSnap.docs[0].id;
+    const teacherUid = resolved.teacherUid;
     const email = buildStudentEmail(normalizedGrade, normalizedClassNo, normalizedNo);
     const auth = getAdminAuth();
     const firebasePassword = getStudentAuthPassword();
@@ -111,6 +111,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ customToken });
   } catch (error: unknown) {
     console.error("student-login failed", error);
-    return NextResponse.json({ error: "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요." }, { status: 500 });
+    const message = error instanceof Error ? error.message : "로그인에 실패했습니다.";
+    return NextResponse.json(
+      { error: message.includes("서비스 계정") ? "서버 인증 설정 오류입니다. 관리자에게 문의해 주세요." : "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요." },
+      { status: 500 },
+    );
   }
 }

@@ -9,6 +9,7 @@ import {
 import { doc, getDoc, getDocs, collection, limit, query, where } from "firebase/firestore";
 import { isValidAccessPin, normalizeAccessPin } from "@/lib/auth/pin";
 import { STUDENT_EMAIL_DOMAIN } from "@/lib/constants";
+import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
 import { getClientAuth, getClientDb } from "./client";
 
 export interface StudentProfile {
@@ -97,7 +98,10 @@ export async function signInStudent(profile: StudentProfile, accessPin: string):
     }),
   });
 
-  const payload = (await response.json()) as { customToken?: string; error?: string };
+  const payload = await parseApiJsonResponse<{ customToken?: string; error?: string }>(
+    response,
+    "서버 연결에 문제가 있습니다. 배포 환경에 FIREBASE_SERVICE_ACCOUNT_JSON이 설정되어 있는지 확인해 주세요.",
+  );
   if (!response.ok || !payload.customToken) {
     throw new Error(payload.error || "로그인에 실패했습니다.");
   }

@@ -184,6 +184,15 @@ service cloud.firestore {
         && resource.data.teacherUid == request.auth.uid;
     }
 
+    match /studentAccessPins/{pin} {
+      allow read: if false;
+      allow create, update: if isTeacher()
+        && request.resource.data.teacherUid == request.auth.uid
+        && isValidTeacherAccessPin(pin);
+      allow delete: if isTeacher()
+        && resource.data.teacherUid == request.auth.uid;
+    }
+
     match /submissions/{submissionId} {
       allow create: if isStudent() && isValidSubmissionCreate(request.resource.data);
       allow read: if isTeacher()
