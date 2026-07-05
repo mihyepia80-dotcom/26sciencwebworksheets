@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { reviseWorksheetContentWithAi } from "@/lib/ai/worksheet-content-client";
 import { getFirebaseErrorMessage } from "@/lib/firebase";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/worksheet-content/registry";
 import {
   applyDesignPreset,
+  buildTeachingDesignHrefWithExtra,
   getDesignPresetsForUnit,
   getLessonUnit,
   getWorksheetPresetForPeriod,
@@ -73,6 +74,7 @@ function FieldEditor({
 }
 
 export function WorksheetContentEditor() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { user, role } = useAuth();
   const initialCtx = useMemo(() => parseTeachingDesignContext(searchParams), [searchParams]);
@@ -104,6 +106,14 @@ export function WorksheetContentEditor() {
 
   const selectedUnit = getLessonUnit(unitId);
   const periodPresets = getDesignPresetsForUnit(unitId);
+
+  const syncDesignUrl = useCallback(
+    (ctxOverride?: Partial<typeof designCtx>) => {
+      const ctx = ctxOverride ? { ...designCtx, ...ctxOverride } : designCtx;
+      router.replace(buildTeachingDesignHrefWithExtra(3, ctx), { scroll: false });
+    },
+    [router, designCtx],
+  );
 
   useEffect(() => {
     const ctx = parseTeachingDesignContext(searchParams);
@@ -194,6 +204,9 @@ export function WorksheetContentEditor() {
     setMessage(
       `${designCtx.unitLabel} ${presetPeriod}차시(${worksheet.templateLabel}) 프리셋을 적용했습니다. 배포 전 확인하세요.`,
     );
+    syncDesignUrl(
+      applyDesignPreset(unitId, presetPeriod, fields.unit || undefined),
+    );
   };
 
   const handleAiRevise = async () => {
@@ -242,7 +255,30 @@ export function WorksheetContentEditor() {
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-indigo-900">단원</span>
-            <select className={INPUT} value={unitId} onChange={(e) => setUnitId(e.target.value)}>
+            <select
+              className={INPUT}
+              value={unitId}
+              onChange={(e) => {
+                const nextUnitId = e.target.value;
+                setUnitId(nextUnitId);
+                const first = getDesignPresetsForUnit(nextUnitId)[0];
+                if (first) {
+                  const ws = getWorksheetPresetForPeriod(nextUnitId, first.period);
+                  setPeriod(first.period);
+                  if (ws) {
+                    skipLoadRef.current = true;
+                    setSelectedId(ws.templateId);
+                    setFields({ ...getDefaultWorksheetContent(ws.templateId), ...ws.fields });
+                  }
+                  syncDesignUrl(applyDesignPreset(nextUnitId, first.period));
+                } else {
+                  syncDesignUrl({
+                    unitId: nextUnitId,
+                    unitLabel: getLessonUnit(nextUnitId).label,
+                  });
+                }
+              }}
+            >
               {LESSON_UNITS.filter((u) => !u.customLabel).map((u) => (
                 <option key={u.id} value={u.id}>
                   {u.label}
@@ -252,7 +288,15 @@ export function WorksheetContentEditor() {
           </label>
           <label className="block">
             <span className="mb-1 block text-xs font-semibold text-indigo-900">차시</span>
-            <input className={INPUT} value={period} onChange={(e) => setPeriod(e.target.value)} placeholder="1/12" />
+            <input
+              className={INPUT}
+              value={period}
+              onChange={(e) => {
+                setPeriod(e.target.value);
+                syncDesignUrl({ period: e.target.value });
+              }}
+              placeholder="1/12"
+            />
           </label>
         </div>
         {periodPresets.length > 0 && (

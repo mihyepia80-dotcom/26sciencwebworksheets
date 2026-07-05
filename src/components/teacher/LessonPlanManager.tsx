@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import {
   createLessonPlan,
@@ -41,11 +41,14 @@ import {
   resolveUnitLabel,
 } from "@/lib/lesson-plan/unit-curriculum";
 import {
+  applyDesignPreset,
   buildTeachingDesignHref,
+  buildTeachingDesignHrefWithExtra,
   getWorksheetPresetForPeriod,
   parseTeachingDesignContext,
 } from "@/lib/curriculum/design-flow";
 import { TeachingDesignSteps } from "@/components/teacher/TeachingDesignSteps";
+import { getTemplateById } from "@/lib/templates/registry";
 import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 
 const PRIMARY_STAGE_LABELS: { key: PrimaryInquiryStageKey; label: string }[] = [
@@ -73,6 +76,7 @@ function GridCell({ label, children, className = "" }: { label: string; children
 }
 
 export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | null }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { user, role } = useAuth();
   const [plans, setPlans] = useState<LessonPlanDoc[]>([]);
@@ -135,6 +139,18 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
     }));
   }, [initialPlanId, searchParams]);
 
+  const syncDesignUrl = useCallback(
+    (savedPlanId?: string | null, ctxOverride?: Partial<typeof designCtx>) => {
+      const id = savedPlanId !== undefined ? savedPlanId : planId;
+      const ctx = ctxOverride ? { ...designCtx, ...ctxOverride } : designCtx;
+      router.replace(
+        buildTeachingDesignHrefWithExtra(2, ctx, id ? { plan: id } : {}),
+        { scroll: false },
+      );
+    },
+    [router, designCtx, planId],
+  );
+
   const applyPeriodPreset = (period: string) => {
     setAiPeriod(period);
     patch("period", period);
@@ -146,8 +162,15 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
     patch("learningTopic", preset.learningTopic);
     patch("achievementStandards", preset.achievementStandards);
     if (preset.inquiryQuestions) patch("inquiryQuestions", preset.inquiryQuestions);
-    if (preset.thinkingTool) patch("thinkingTool", preset.thinkingTool);
+    const worksheet = getWorksheetPresetForPeriod(selectedUnitId, period);
+    if (worksheet) {
+      const tpl = getTemplateById(worksheet.templateId);
+      if (tpl) patch("thinkingTool", formatToolOption(tpl));
+    } else if (preset.thinkingTool) {
+      patch("thinkingTool", preset.thinkingTool);
+    }
     if (preset.teachingModel) patch("teachingModel", preset.teachingModel);
+    syncDesignUrl(null, applyDesignPreset(selectedUnitId, period, customUnitLabel || form.unit || undefined));
   };
 
   const handleUnitChange = (unitId: string) => {
@@ -168,6 +191,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
     } else {
       setAiTopic("");
     }
+    syncDesignUrl(null);
   };
 
   const loadList = useCallback(() => {
@@ -308,11 +332,12 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
       if (planId) {
         await updateLessonPlan(planId, saveForm, user.uid);
         setForm(saveForm);
+        syncDesignUrl(planId);
       } else {
         const id = await createLessonPlan(saveForm, user.uid);
         setPlanId(id);
         setForm(saveForm);
-        window.history.replaceState(null, "", `/teacher/lesson-plans?plan=${id}`);
+        syncDesignUrl(id);
       }
       setMessage("저장되었습니다.");
       loadList();
@@ -331,7 +356,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
       setPlanId(null);
       setForm(EMPTY_LESSON_PLAN);
       setMessage("삭제되었습니다.");
-      window.history.replaceState(null, "", "/teacher/lesson-plans");
+      syncDesignUrl(null);
       loadList();
     } catch (e: unknown) {
       setError(getFirebaseErrorMessage(e, "삭제 실패"));
@@ -345,7 +370,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
     setForm(EMPTY_LESSON_PLAN);
     setMessage("");
     setError("");
-    window.history.replaceState(null, "", "/teacher/lesson-plans");
+    syncDesignUrl(null);
   };
 
   const handleApplyExperimentSample = () => {
@@ -355,7 +380,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
     setAiTopic(seed.learningTopic);
     setMessage(`${resolvedUnitLabel} 실험반 지도안 예시(${aiPeriod})를 불러왔습니다. 수정 후 저장하세요.`);
     setError("");
-    window.history.replaceState(null, "", "/teacher/lesson-plans");
+    syncDesignUrl(null);
   };
 
   const handleGenerateWithAi = async () => {
@@ -386,7 +411,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
       setForm(plan);
       setPlanId(null);
       setMessage(`AI가 「${unitLabel}」 ${plan.period}차시 실험반 지도안 초안을 생성했습니다. 확인 후 저장하세요.`);
-      window.history.replaceState(null, "", "/teacher/lesson-plans");
+      syncDesignUrl(null);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "AI 생성 실패");
     } finally {
@@ -491,8 +516,10 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
               className={INPUT}
               value={aiPeriod}
               onChange={(e) => {
-                setAiPeriod(e.target.value);
-                patch("period", e.target.value);
+                const v = e.target.value;
+                setAiPeriod(v);
+                patch("period", v);
+                syncDesignUrl(undefined, { period: v });
               }}
               placeholder="1/12"
             />
@@ -503,8 +530,10 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
               className={INPUT}
               value={aiTopic}
               onChange={(e) => {
-                setAiTopic(e.target.value);
-                patch("learningTopic", e.target.value);
+                const v = e.target.value;
+                setAiTopic(v);
+                patch("learningTopic", v);
+                syncDesignUrl(undefined, { learningTopic: v });
               }}
               placeholder="AI에 전달할 학습 주제 (필수)"
             />

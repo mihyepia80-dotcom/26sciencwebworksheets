@@ -89,6 +89,34 @@ export function buildTeachingDesignHref(step: TeachingDesignStep, ctx: Partial<T
   return `${def?.path ?? "/teacher"}${buildTeachingDesignQuery(ctx)}`;
 }
 
+/** plan 등 추가 쿼리와 설계 맥락을 함께 URL로 만듭니다. */
+export function buildTeachingDesignHrefWithExtra(
+  step: TeachingDesignStep,
+  ctx: Partial<TeachingDesignContext>,
+  extra?: Record<string, string | undefined | null>,
+): string {
+  const stepDef = TEACHING_DESIGN_STEPS.find((s) => s.step === step);
+  const path = stepDef?.path ?? "/teacher";
+  const q = new URLSearchParams();
+
+  if (extra) {
+    for (const [key, value] of Object.entries(extra)) {
+      if (value?.trim()) q.set(key, value.trim());
+    }
+  }
+
+  const ctxQuery = buildTeachingDesignQuery(ctx);
+  if (ctxQuery) {
+    const ctxParams = new URLSearchParams(ctxQuery.startsWith("?") ? ctxQuery.slice(1) : ctxQuery);
+    ctxParams.forEach((value, key) => {
+      if (!q.has(key)) q.set(key, value);
+    });
+  }
+
+  const serialized = q.toString();
+  return serialized ? `${path}?${serialized}` : path;
+}
+
 export function getWorksheetPresetForPeriod(unitId: string, period: string) {
   if (unitId !== "dissolution-solution") return undefined;
   return DISSOLUTION_UNIT_PRESETS.find((p) => p.period === period.trim());
