@@ -1,6 +1,12 @@
 import { PadletApiError, parsePadletErrorMessage } from "@/lib/padlet/errors";
-import { PADLET_DEFAULT_ROLE } from "@/lib/padlet/presets";
-import type { PadletBoardSummary, PadletPostInput, PadletPostSummary, PadletRecipeBoardStatus } from "@/lib/padlet/types";
+import { buildColumnLabels, PADLET_DEFAULT_ROLE, PADLET_PASTEL_POST_COLORS, type PadletBulletinColumnMode } from "@/lib/padlet/presets";
+import type {
+  PadletBoardSummary,
+  PadletPostColor,
+  PadletPostInput,
+  PadletPostSummary,
+  PadletRecipeBoardStatus,
+} from "@/lib/padlet/types";
 
 const PADLET_API_BASE = "https://api.padlet.dev/v1";
 
@@ -165,6 +171,61 @@ export async function waitForAiRecipeBoard(
   throw new PadletApiError("패들렛 생성 시간이 초과되었습니다. 잠시 후 상태 조회를 다시 시도해 주세요.", 504);
 }
 
+interface GetBoardResponse {
+  data?: Record<string, unknown>;
+  included?: Array<{
+    type: string;
+    id: string;
+    attributes?: Record<string, unknown>;
+  }>;
+}
+
+export async function getBoardSections(boardId: string): Promise<Array<{ id: string; title: string }>> {
+  const payload = await padletRequest<GetBoardResponse>(
+    `/boards/${encodeURIComponent(boardId)}?include=sections`,
+  );
+  const included = payload.included ?? [];
+  return included
+    .filter((item) => item.type === "section")
+    .map((item) => {
+      const attrs = item.attributes ?? {};
+      const title = String(attrs.title ?? attrs.name ?? attrs.label ?? "").trim();
+      return { id: item.id, title };
+    });
+}
+
+export async function seedBulletinColumnPosts(
+  boardId: string,
+  columnMode: PadletBulletinColumnMode,
+  topic: string,
+): Promise<{ columnsApplied: number; columnLabels: string[] }> {
+  const labels = buildColumnLabels(columnMode);
+  const sections = await getBoardSections(boardId);
+  let applied = 0;
+
+  for (let i = 0; i < labels.length; i++) {
+    const label = labels[i];
+    const matched =
+      sections.find((section) => section.title.includes(label) || section.title.includes(String(i + 1))) ??
+      sections[i];
+    const color = PADLET_PASTEL_POST_COLORS[i % PADLET_PASTEL_POST_COLORS.length] as PadletPostColor;
+
+    try {
+      await createBoardPost(boardId, {
+        subject: label,
+        body: `${label} · "${topic.trim() || "자유 주제"}" 활동 공간입니다.\n여기에 모둠(번호) 아이디어를 올려 주세요.`,
+        color,
+        sectionId: matched?.id,
+      });
+      applied += 1;
+    } catch (error) {
+      console.error(`padlet column seed failed (${label})`, error);
+    }
+  }
+
+  return { columnsApplied: applied, columnLabels: labels };
+}
+
 export async function getBoardById(boardId: string): Promise<PadletBoardSummary> {
   const payload = await padletRequest<BoardResponse>(`/boards/${encodeURIComponent(boardId)}`);
   if (!payload.data) {
@@ -175,15 +236,15 @@ export async function getBoardById(boardId: string): Promise<PadletBoardSummary>
 
 export async function createBoardPost(boardId: string, input: PadletPostInput): Promise<PadletPostSummary> {
   const subject = String(input.subject ?? "").trim();
-  const body = String(input.body ?? "").trim();
+  const postBody = String(input.body ?? "").trim();
   const attachmentUrl = String(input.attachmentUrl ?? "").trim();
-  if (!subject && !body && !attachmentUrl) {
+  if (!subject && !postBody && !attachmentUrl) {
     throw new PadletApiError("게시글 subject, body, attachmentUrl 중 하나 이상이 필요합니다.", 400);
   }
 
   const content: Record<string, unknown> = {};
   if (subject) content.subject = subject;
-  if (body) content.body = body;
+  if (postBody) content.body = postBody;
   if (attachmentUrl) {
     content.attachment = {
       url: attachmentUrl,
@@ -194,14 +255,27 @@ export async function createBoardPost(boardId: string, input: PadletPostInput): 
   const attributes: Record<string, unknown> = { content };
   if (input.color) attributes.color = input.color;
 
+  const requestBody: Record<string, unknown> = {
+    data: {
+      type: "post",
+      attributes,
+    },
+  };
+
+  if (input.sectionId?.trim()) {
+    (requestBody.data as Record<string, unknown>).relationships = {
+      section: {
+        data: {
+          type: "section",
+          id: input.sectionId.trim(),
+        },
+      },
+    };
+  }
+
   const payload = await padletRequest<PostResponse>(`/boards/${encodeURIComponent(boardId)}/posts`, {
     method: "POST",
-    body: JSON.stringify({
-      data: {
-        type: "post",
-        attributes,
-      },
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!payload.data) {

@@ -1,4 +1,8 @@
+import type { PadletBulletinColumnMode, PadletSandboxType } from "@/lib/padlet/presets";
+
 export type PadletRecipeBoardStatus = "in_progress" | "success" | "failed";
+
+export type PadletPostColor = "red" | "orange" | "green" | "blue" | "purple";
 
 export interface PadletBoardWebUrl {
   live?: string;
@@ -20,17 +24,22 @@ export interface PadletBoardSummary {
 
 export interface PadletCreateBoardRequest {
   mode: "sandbox" | "bulletin" | "custom";
+  sandboxType?: PadletSandboxType;
+  columnMode?: PadletBulletinColumnMode;
   instructions?: string;
   topic?: string;
   role?: string;
   workspaceId?: string;
   wait?: boolean;
+  seedColumns?: boolean;
 }
 
 export interface PadletCreateBoardResponse {
   statusKey: string;
   status: PadletRecipeBoardStatus;
   board?: PadletBoardSummary;
+  columnsApplied?: number;
+  columnLabels?: string[];
 }
 
 export interface PadletPostInput {
@@ -38,7 +47,8 @@ export interface PadletPostInput {
   body?: string;
   attachmentUrl?: string;
   attachmentCaption?: string;
-  color?: "red" | "orange" | "green" | "blue" | "purple";
+  color?: PadletPostColor;
+  sectionId?: string;
 }
 
 export interface PadletPostSummary {

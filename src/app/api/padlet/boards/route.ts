@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { isTeacherAuthResponse, requireTeacherRequest } from "@/lib/auth/verify-teacher-request";
 import { PadletApiError } from "@/lib/padlet/errors";
+import type { PadletBulletinColumnMode } from "@/lib/padlet/presets";
 import { resolveBoardInstructions } from "@/lib/padlet/presets";
 import type { PadletCreateBoardRequest } from "@/lib/padlet/types";
 import {
   createAiRecipeBoard,
   getAiRecipeBoardStatus,
   isPadletConfigured,
+  seedBulletinColumnPosts,
   waitForAiRecipeBoard,
 } from "@/lib/padlet/server";
 
@@ -36,11 +38,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "mode는 sandbox, bulletin, custom 중 하나여야 합니다." }, { status: 400 });
   }
 
+  const columnMode: PadletBulletinColumnMode = body.columnMode === "numbers" ? "numbers" : "groups";
+  const seedColumns = body.mode === "bulletin" && body.seedColumns !== false;
+
   try {
     const instructions = resolveBoardInstructions({
       mode,
+      sandboxType: body.sandboxType,
       instructions: body.instructions,
       topic: body.topic,
+      columnMode,
     });
 
     const created = await createAiRecipeBoard({
@@ -51,10 +58,21 @@ export async function POST(request: Request) {
 
     if (body.wait !== false) {
       const board = await waitForAiRecipeBoard(created.statusKey);
+      let columnsApplied: number | undefined;
+      let columnLabels: string[] | undefined;
+
+      if (seedColumns) {
+        const seeded = await seedBulletinColumnPosts(board.id, columnMode, body.topic ?? "");
+        columnsApplied = seeded.columnsApplied;
+        columnLabels = seeded.columnLabels;
+      }
+
       return NextResponse.json({
         statusKey: created.statusKey,
         status: "success" as const,
         board,
+        columnsApplied,
+        columnLabels,
       });
     }
 
