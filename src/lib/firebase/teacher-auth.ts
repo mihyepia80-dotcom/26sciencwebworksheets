@@ -20,6 +20,10 @@ const REDIRECT_IN_PROGRESS = "REDIRECT_IN_PROGRESS";
 
 let redirectResultPromise: Promise<User | null> | null = null;
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 const POPUP_FALLBACK_CODES = new Set([
   "auth/popup-blocked",
   "auth/popup-closed-by-user",
@@ -55,14 +59,30 @@ function hasGoogleProviderData(user: User): boolean {
 
 async function isGoogleSignIn(user: User): Promise<boolean> {
   if (hasGoogleProviderData(user)) return true;
+
+  try {
+    await user.reload();
+    if (hasGoogleProviderData(user)) return true;
+  } catch {
+    /* ignore */
+  }
+
   try {
     const token = await user.getIdTokenResult();
     if (token.signInProvider === "google.com") return true;
     const firebase = token.claims.firebase as { sign_in_provider?: string } | undefined;
-    return firebase?.sign_in_provider === "google.com";
+    if (firebase?.sign_in_provider === "google.com") return true;
   } catch {
-    return false;
+    /* ignore */
   }
+
+  return false;
+}
+
+async function isTeacherAccount(user: User): Promise<boolean> {
+  if (isStudentAccount(user)) return false;
+  if (await isGoogleSignIn(user)) return true;
+  return Boolean(user.email);
 }
 
 async function refreshUserProfile(user: User): Promise<void> {
@@ -103,7 +123,7 @@ export async function teacherHasAccessPin(uid: string): Promise<boolean> {
 }
 
 export async function saveTeacherAccessPin(user: User, pin: string): Promise<void> {
-  if (!(await isGoogleSignIn(user))) {
+  if (!(await isTeacherAccount(user))) {
     throw new Error("Google 로그인이 필요합니다.");
   }
   const normalized = normalizeAccessPin(pin);
@@ -166,23 +186,34 @@ export async function prepareTeacherFirestoreAccess(user: User): Promise<void> {
 
 export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
   if (!user) return null;
-  if (await isGoogleSignIn(user)) {
+  if (isStudentAccount(user)) return "student";
+  if (await isTeacherAccount(user)) {
     return isTeacherPinVerified(user.uid) ? "teacher" : "teacher-pending";
   }
-  if (user.email?.endsWith(`@${STUDENT_EMAIL_DOMAIN}`)) return "student";
   return null;
+}
+
+async function consumeGoogleRedirectResult(): Promise<User | null> {
+  try {
+    const auth = getClientAuth();
+    const result = await Promise.race([
+      getRedirectResult(auth),
+      sleep(12_000).then(() => null),
+    ]);
+    if (!result?.user) return null;
+    await refreshUserProfile(result.user);
+    await syncTeacherProfileSafely(result.user);
+    return result.user;
+  } catch (error) {
+    console.error("Google redirect result failed", error);
+    redirectResultPromise = null;
+    return null;
+  }
 }
 
 export async function completeTeacherGoogleRedirect(): Promise<User | null> {
   if (!redirectResultPromise) {
-    redirectResultPromise = (async () => {
-      const auth = getClientAuth();
-      const result = await getRedirectResult(auth);
-      if (!result?.user) return null;
-      await refreshUserProfile(result.user);
-      await syncTeacherProfileSafely(result.user);
-      return result.user;
-    })();
+    redirectResultPromise = consumeGoogleRedirectResult();
   }
   return redirectResultPromise;
 }
@@ -219,7 +250,7 @@ export function isTeacherGoogleRedirectInProgress(error: unknown): boolean {
 }
 
 export async function verifyTeacherAccessPin(user: User, pin: string): Promise<boolean> {
-  if (!(await isGoogleSignIn(user))) return false;
+  if (!(await isTeacherAccount(user))) return false;
   const normalized = normalizeAccessPin(pin);
   if (!isValidAccessPin(normalized)) return false;
 
@@ -255,7 +286,7 @@ export async function signOutUser(): Promise<void> {
 }
 
 export async function checkIsTeacher(user: User): Promise<boolean> {
-  return (await isGoogleSignIn(user)) && isTeacherPinVerified(user.uid);
+  return (await isTeacherAccount(user)) && isTeacherPinVerified(user.uid);
 }
 
 export type AuthRole = "student" | "teacher" | "teacher-pending" | null;
@@ -280,7 +311,7 @@ export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
 
   void (async () => {
     try {
-      await completeTeacherGoogleRedirect();
+      await Promise.race([completeTeacherGoogleRedirect(), sleep(12_000)]);
     } catch (error) {
       console.error("Google redirect login failed", error);
     }

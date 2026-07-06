@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { ACCESS_PIN_HINT, ACCESS_PIN_LENGTH, isValidAccessPin, normalizeAccessPin } from "@/lib/constants";
 import {
-  completeTeacherGoogleRedirect,
   getFirebaseErrorMessage,
   getTeacherProfile,
   isTeacherGoogleRedirectInProgress,
@@ -22,7 +21,7 @@ interface TeacherLoginPanelProps {
 type TeacherAuthStep = "google" | "setup-pin" | "verify-pin";
 
 export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeLogin }: TeacherLoginPanelProps) {
-  const { user, role, confirmTeacherPin } = useAuth();
+  const { user, role, loading, confirmTeacherPin } = useAuth();
   const [step, setStep] = useState<TeacherAuthStep>("google");
   const [accessPin, setAccessPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -31,24 +30,8 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
   const [submitLoading, setSubmitLoading] = useState(false);
   const [resetMode, setResetMode] = useState(false);
   const [teacherEmail, setTeacherEmail] = useState("");
-  const [redirectPending, setRedirectPending] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    setRedirectPending(true);
-    completeTeacherGoogleRedirect()
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setRedirectPending(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const needsTeacherPin = Boolean(user && role !== "student" && role !== "teacher");
 
   useEffect(() => {
     if (!user || role === "student") {
@@ -97,7 +80,6 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
       await signInTeacherWithGoogle();
     } catch (err: unknown) {
       if (isTeacherGoogleRedirectInProgress(err)) {
-        setRedirectPending(true);
         setError("Google 로그인 페이지로 이동합니다…");
         return;
       }
@@ -153,7 +135,7 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
     setter(value.replace(/\D/g, "").slice(0, ACCESS_PIN_LENGTH));
   };
 
-  if (user && role !== "student" && step !== "google") {
+  if (needsTeacherPin) {
     return (
       <div className="ui-panel space-y-5">
         <h2 className="ui-section-title text-2xl">{step === "setup-pin" ? "교사 암호 설정" : "교사 암호 입력"}</h2>
@@ -244,11 +226,11 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
       </p>
       <button
         type="button"
-        disabled={googleLoading || redirectPending || !consentComplete}
+        disabled={googleLoading || loading || !consentComplete}
         onClick={handleGoogleLogin}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-60"
       >
-        {redirectPending ? "Google 로그인 확인 중..." : googleLoading ? "연결 중..." : "Google로 로그인"}
+        {loading ? "Google 로그인 확인 중..." : googleLoading ? "연결 중..." : "Google로 로그인"}
       </button>
       {error && <p className="text-base text-red-600">{error}</p>}
     </div>

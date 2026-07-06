@@ -37,6 +37,11 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (isTeacherRoute(pathname) && user && role === "teacher-pending" && pathname !== "/teacher") {
+      router.replace("/teacher");
+      return;
+    }
+
     if (pathname === "/my" && !isLoggedInStudent(user, role)) {
       router.replace(role === "teacher" || role === "teacher-pending" ? "/teacher" : "/login");
       return;
@@ -52,13 +57,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (pathname.startsWith("/teacher/") && role !== "teacher") {
+    if (pathname.startsWith("/teacher/") && role !== "teacher" && role !== "teacher-pending") {
       router.replace(role === "student" ? "/" : "/teacher");
-      return;
-    }
-
-    if (role === "teacher-pending" && pathname.startsWith("/teacher/")) {
-      router.replace("/teacher");
       return;
     }
 
@@ -86,6 +86,10 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   if (!user && isTeacherRoute(pathname)) {
     return null;
+  }
+
+  if (isTeacherRoute(pathname) && user && role !== "teacher" && role !== "student") {
+    return children;
   }
 
   if (!user && !isPublicPath(pathname) && !isGuestBrowsablePath(pathname)) {

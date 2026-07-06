@@ -1,0 +1,391 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/components/AuthProvider";
+import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
+import { isFirebaseConfigured } from "@/lib/firebase";
+import {
+  createPadletBoard,
+  createPadletPost,
+  fetchPadletStatus,
+  getPadletBoardStatus,
+} from "@/lib/padlet/client";
+import type { PadletBoardSummary, PadletCreateBoardRequest } from "@/lib/padlet/types";
+
+const INPUT = "w-full rounded border border-slate-200 px-3 py-2 text-sm";
+
+type CreateMode = PadletCreateBoardRequest["mode"];
+
+function BoardCard({ board }: { board: PadletBoardSummary }) {
+  return (
+    <article className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+      <h3 className="font-semibold text-emerald-950">{board.title || "제목 없음"}</h3>
+      {board.description && <p className="mt-1 text-sm text-emerald-900/90">{board.description}</p>}
+      <dl className="mt-3 space-y-1 text-xs text-slate-600">
+        <div>
+          <dt className="inline font-semibold">ID: </dt>
+          <dd className="inline font-mono">{board.id}</dd>
+        </div>
+      </dl>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {board.webUrl && (
+          <a
+            href={board.webUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+          >
+            패들렛 열기
+          </a>
+        )}
+        {board.qrCodeUrl && (
+          <a
+            href={board.qrCodeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-emerald-300 px-3 py-2 text-sm text-emerald-800 hover:bg-emerald-100"
+          >
+            QR 코드
+          </a>
+        )}
+        {board.slideshowUrl && (
+          <a
+            href={board.slideshowUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg border border-emerald-300 px-3 py-2 text-sm text-emerald-800 hover:bg-emerald-100"
+          >
+            슬라이드쇼
+          </a>
+        )}
+      </div>
+    </article>
+  );
+}
+
+export function PadletManager() {
+  const { user, role, loading: authLoading } = useAuth();
+  const [configured, setConfigured] = useState<boolean | null>(null);
+  const [mode, setMode] = useState<CreateMode>("sandbox");
+  const [topic, setTopic] = useState("");
+  const [instructions, setInstructions] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [polling, setPolling] = useState(false);
+  const [statusKey, setStatusKey] = useState<string | null>(null);
+  const [board, setBoard] = useState<PadletBoardSummary | null>(null);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const [postBoardId, setPostBoardId] = useState("");
+  const [postSubject, setPostSubject] = useState("");
+  const [postBody, setPostBody] = useState("");
+  const [posting, setPosting] = useState(false);
+
+  const loadStatus = useCallback(async () => {
+    if (!user || role !== "teacher") return;
+    try {
+      const token = await user.getIdToken();
+      const result = await fetchPadletStatus(token);
+      setConfigured(result.configured);
+    } catch (e: unknown) {
+      setConfigured(false);
+      setError(e instanceof Error ? e.message : "Padlet 상태 확인 실패");
+    }
+  }, [user, role]);
+
+  useEffect(() => {
+    void loadStatus();
+  }, [loadStatus]);
+
+  const handleCreate = async () => {
+    if (!user || role !== "teacher") return;
+    setCreating(true);
+    setError("");
+    setMessage("");
+    setBoard(null);
+    setStatusKey(null);
+
+    try {
+      const token = await user.getIdToken();
+      const input: PadletCreateBoardRequest = { mode, wait: true };
+      if (mode === "bulletin") input.topic = topic.trim() || "자유 주제";
+      if (mode === "custom") input.instructions = instructions.trim();
+
+      setMessage("패들렛을 생성하는 중입니다. AI 생성에는 30초~2분 정도 걸릴 수 있습니다.");
+      const result = await createPadletBoard(token, input);
+      setStatusKey(result.statusKey);
+
+      if (result.board) {
+        setBoard(result.board);
+        setPostBoardId(result.board.id);
+        setMessage("패들렛이 생성되었습니다.");
+      } else if (result.status === "in_progress") {
+        setMessage("생성이 진행 중입니다. 아래에서 상태를 확인하세요.");
+      } else if (result.status === "failed") {
+        setError("패들렛 AI 생성에 실패했습니다.");
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "패들렛 생성 실패");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handlePollStatus = async () => {
+    if (!user || !statusKey) return;
+    setPolling(true);
+    setError("");
+    try {
+      const token = await user.getIdToken();
+      const result = await getPadletBoardStatus(token, statusKey);
+      if (result.board) {
+        setBoard(result.board);
+        setPostBoardId(result.board.id);
+        setMessage("패들렛 생성이 완료되었습니다.");
+      } else if (result.status === "in_progress") {
+        setMessage("아직 생성 중입니다. 잠시 후 다시 확인해 주세요.");
+      } else if (result.status === "failed") {
+        setError("패들렛 AI 생성에 실패했습니다.");
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "상태 조회 실패");
+    } finally {
+      setPolling(false);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!user || !postBoardId.trim()) {
+      setError("게시판 ID를 입력하세요.");
+      return;
+    }
+    if (!postSubject.trim() && !postBody.trim()) {
+      setError("제목 또는 본문을 입력하세요.");
+      return;
+    }
+
+    setPosting(true);
+    setError("");
+    setMessage("");
+    try {
+      const token = await user.getIdToken();
+      const post = await createPadletPost(token, postBoardId.trim(), {
+        subject: postSubject.trim() || undefined,
+        body: postBody.trim() || undefined,
+        color: "blue",
+      });
+      setMessage(`게시글을 작성했습니다. (ID: ${post.id})`);
+      setPostSubject("");
+      setPostBody("");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "게시글 작성 실패");
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  if (!isFirebaseConfigured()) {
+    return (
+      <div className="text-center py-16">
+        <h1 className="text-xl font-bold text-slate-900">Firebase 설정 필요</h1>
+        <p className="mt-3 text-sm text-slate-600">Vercel 환경 변수에 Firebase 설정을 입력하세요.</p>
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return <p className="py-16 text-center text-sm text-slate-500">로딩 중...</p>;
+  }
+
+  if (!user || role !== "teacher") {
+    return (
+      <div>
+        <Link href="/login" className="text-sm text-blue-600 hover:underline">
+          ← 로그인
+        </Link>
+        <h1 className="mt-4 text-2xl font-bold text-slate-900">교사 로그인</h1>
+        <p className="mt-2 text-sm text-slate-600">Google 계정과 6자리 암호로 로그인한 뒤 패들렛을 생성할 수 있습니다.</p>
+        <div className="mt-8">
+          <TeacherLoginPanel />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <Link href="/teacher" className="ui-link text-emerald-700">
+        ← 교사 대시보드
+      </Link>
+
+      <header className="ui-panel-soft mt-6">
+        <p className="text-base font-semibold uppercase tracking-wide text-emerald-600">교사 · Padlet</p>
+        <h1 className="ui-page-title mt-2 text-emerald-950">패들렛 생성</h1>
+        <p className="ui-page-desc text-slate-700">
+          샌드박스·게시판·맞춤 지시문으로 Padlet AI Recipe Board를 생성합니다. API 키는 Vercel 서버 환경 변수(
+          <code className="text-xs">PADLET_API_KEY</code>)에만 저장됩니다.
+        </p>
+      </header>
+
+      <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <span
+            className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+              configured
+                ? "bg-emerald-100 text-emerald-800"
+                : configured === false
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {configured === null ? "API 상태 확인 중…" : configured ? "Padlet API 연결됨" : "PADLET_API_KEY 미설정"}
+          </span>
+          {!configured && configured !== null && (
+            <p className="text-sm text-amber-800">
+              Vercel Dashboard → Settings → Environment Variables에 <strong>PADLET_API_KEY</strong>를 추가한 뒤
+              재배포하세요.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900">새 패들렛 만들기</h2>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {(
+            [
+              { id: "sandbox" as const, label: "1. 샌드박스", desc: "테스트용 간단 협업 보드" },
+              { id: "bulletin" as const, label: "2. 게시판", desc: "주제 기반 학급 게시판" },
+              { id: "custom" as const, label: "3. 맞춤 생성", desc: "직접 지시문 입력" },
+            ] as const
+          ).map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setMode(item.id)}
+              className={`rounded-xl border p-4 text-left transition ${
+                mode === item.id
+                  ? "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200"
+                  : "border-slate-200 hover:border-emerald-200 hover:bg-slate-50"
+              }`}
+            >
+              <p className="font-semibold text-slate-900">{item.label}</p>
+              <p className="mt-1 text-xs text-slate-600">{item.desc}</p>
+            </button>
+          ))}
+        </div>
+
+        {mode === "bulletin" && (
+          <label className="mt-4 block">
+            <span className="text-sm font-medium text-slate-700">게시판 주제</span>
+            <input
+              className={`${INPUT} mt-1`}
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="예: 용해와 용액 탐구 아이디어"
+            />
+          </label>
+        )}
+
+        {mode === "custom" && (
+          <label className="mt-4 block">
+            <span className="text-sm font-medium text-slate-700">생성 지시문 (영문·한글, 2000자 이내)</span>
+            <textarea
+              className={`${INPUT} mt-1 min-h-[120px]`}
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              placeholder="예: Create a wall padlet for 5th grade science about plant growth with sections for hypotheses and observations."
+            />
+          </label>
+        )}
+
+        <button
+          type="button"
+          disabled={creating || !configured}
+          onClick={() => void handleCreate()}
+          className="mt-5 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+        >
+          {creating ? "생성 중… (최대 2분)" : "패들렛 생성"}
+        </button>
+      </section>
+
+      {message && (
+        <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
+      )}
+
+      {statusKey && !board && (
+        <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-sm text-slate-600">
+            상태 키: <code className="font-mono text-xs">{statusKey}</code>
+          </p>
+          <button
+            type="button"
+            disabled={polling}
+            onClick={() => void handlePollStatus()}
+            className="mt-3 rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50 disabled:opacity-50"
+          >
+            {polling ? "조회 중…" : "생성 상태 다시 확인"}
+          </button>
+        </section>
+      )}
+
+      {board && (
+        <section className="mt-6 space-y-4">
+          <h2 className="text-lg font-bold text-slate-900">생성된 패들렛</h2>
+          <BoardCard board={board} />
+        </section>
+      )}
+
+      <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-bold text-slate-900">게시글 추가 (선택)</h2>
+        <p className="mt-1 text-sm text-slate-600">생성된 보드 ID에 교사 안내 글을 추가할 수 있습니다.</p>
+
+        <label className="mt-4 block">
+          <span className="text-sm font-medium text-slate-700">게시판 ID</span>
+          <input
+            className={`${INPUT} mt-1 font-mono text-xs`}
+            value={postBoardId}
+            onChange={(e) => setPostBoardId(e.target.value)}
+            placeholder="패들렛 생성 후 자동 입력됩니다"
+          />
+        </label>
+
+        <label className="mt-3 block">
+          <span className="text-sm font-medium text-slate-700">제목</span>
+          <input
+            className={`${INPUT} mt-1`}
+            value={postSubject}
+            onChange={(e) => setPostSubject(e.target.value)}
+            placeholder="예: 선생님 안내"
+          />
+        </label>
+
+        <label className="mt-3 block">
+          <span className="text-sm font-medium text-slate-700">본문</span>
+          <textarea
+            className={`${INPUT} mt-1 min-h-[80px]`}
+            value={postBody}
+            onChange={(e) => setPostBody(e.target.value)}
+            placeholder="학생에게 전달할 안내 문구"
+          />
+        </label>
+
+        <button
+          type="button"
+          disabled={posting || !configured}
+          onClick={() => void handleCreatePost()}
+          className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-900 hover:bg-emerald-100 disabled:opacity-50"
+        >
+          {posting ? "작성 중…" : "게시글 작성"}
+        </button>
+      </section>
+    </div>
+  );
+}
