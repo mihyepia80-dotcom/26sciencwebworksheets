@@ -13,7 +13,7 @@ import { doc, getDoc, serverTimestamp, setDoc, deleteDoc } from "firebase/firest
 import { isValidAccessPin, normalizeAccessPin } from "@/lib/auth/pin";
 import { STUDENT_EMAIL_DOMAIN } from "@/lib/constants";
 import { isFirebaseConfigured } from "./config";
-import { getClientAuth, getClientDb } from "./client";
+import { getClientAuth, getClientAuthReady, getClientDb } from "./client";
 import { clearTeacherPinVerified, isTeacherPinVerified, setTeacherPinVerified } from "./teacher-pin";
 
 const REDIRECT_IN_PROGRESS = "REDIRECT_IN_PROGRESS";
@@ -167,7 +167,7 @@ export async function saveTeacherAccessPin(user: User, pin: string): Promise<voi
 }
 
 export async function ensureTeacherProfile(user: User): Promise<void> {
-  if (!(await isGoogleSignIn(user))) return;
+  if (!(await isTeacherAccount(user))) return;
   await setDoc(
     doc(getClientDb(), "teachers", user.uid),
     {
@@ -195,11 +195,8 @@ export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
 
 async function consumeGoogleRedirectResult(): Promise<User | null> {
   try {
-    const auth = getClientAuth();
-    const result = await Promise.race([
-      getRedirectResult(auth),
-      sleep(12_000).then(() => null),
-    ]);
+    const auth = await getClientAuthReady();
+    const result = await getRedirectResult(auth);
     if (!result?.user) return null;
     await refreshUserProfile(result.user);
     await syncTeacherProfileSafely(result.user);
@@ -221,7 +218,7 @@ export async function completeTeacherGoogleRedirect(): Promise<User | null> {
 export async function signInTeacherWithGoogle(): Promise<User> {
   await ensureTeacherGoogleSignInReady();
 
-  const auth = getClientAuth();
+  const auth = await getClientAuthReady();
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
@@ -306,43 +303,61 @@ export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
   const auth = getClientAuth();
   let active = true;
   let unsubscribe: (() => void) | null = null;
+  let sawAuthEvent = false;
 
   onChange({ user: null, role: null, loading: true });
 
-  void (async () => {
-    try {
-      await Promise.race([completeTeacherGoogleRedirect(), sleep(12_000)]);
-    } catch (error) {
-      console.error("Google redirect login failed", error);
+  const emitAuthState = (user: User | null, role: AuthRole) => {
+    if (!active) return;
+    onChange({ user, role, loading: false });
+  };
+
+  const handleAuthUser = (user: User | null) => {
+    if (!active) return;
+    sawAuthEvent = true;
+
+    if (!user) {
+      emitAuthState(null, null);
+      return;
     }
 
-    if (!active) return;
+    void resolveAuthRole(user)
+      .then((role) => {
+        if (role === "teacher" || role === "teacher-pending") {
+          void prepareTeacherFirestoreAccess(user).catch((error) => {
+            console.error("teacher firestore access failed", error);
+          });
+        }
+        emitAuthState(user, role);
+      })
+      .catch(() => {
+        emitAuthState(user, null);
+      });
+  };
 
-    unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        if (active) onChange({ user: null, role: null, loading: false });
-        return;
-      }
+  void (async () => {
+    try {
+      const auth = await getClientAuthReady();
+      await Promise.race([completeTeacherGoogleRedirect(), sleep(30_000)]);
 
-      void resolveAuthRole(user)
-        .then(async (role) => {
-          if (role === "teacher" || role === "teacher-pending") {
-            try {
-              await prepareTeacherFirestoreAccess(user);
-            } catch (error) {
-              console.error("teacher firestore access failed", error);
-            }
-          }
-          if (active) onChange({ user, role, loading: false });
-        })
-        .catch(() => {
-          if (active) onChange({ user, role: null, loading: false });
-        });
-    });
+      if (!active) return;
+
+      unsubscribe = onAuthStateChanged(auth, handleAuthUser);
+    } catch (error) {
+      console.error("Google redirect login failed", error);
+      if (!active) return;
+      unsubscribe = onAuthStateChanged(getClientAuth(), handleAuthUser);
+    }
   })();
+
+  const safetyTimer = setTimeout(() => {
+    if (!active || sawAuthEvent) return;
+    handleAuthUser(auth.currentUser);
+  }, 15_000);
 
   return () => {
     active = false;
+    clearTimeout(safetyTimer);
     unsubscribe?.();
   };
 }

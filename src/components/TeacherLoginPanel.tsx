@@ -226,11 +226,15 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
       </p>
       <button
         type="button"
-        disabled={googleLoading || loading || !consentComplete}
+        disabled={googleLoading || !consentComplete}
         onClick={handleGoogleLogin}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-60"
       >
-        {loading ? "Google 로그인 확인 중..." : googleLoading ? "연결 중..." : "Google로 로그인"}
+        {loading && !user
+          ? "Google 로그인 확인 중..."
+          : googleLoading
+            ? "연결 중..."
+            : "Google로 로그인"}
       </button>
       {error && <p className="text-base text-red-600">{error}</p>}
     </div>
