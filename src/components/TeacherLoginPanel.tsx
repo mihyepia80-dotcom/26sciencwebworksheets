@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { ACCESS_PIN_HINT, ACCESS_PIN_LENGTH, isValidAccessPin, normalizeAccessPin } from "@/lib/constants";
 import {
+  completeTeacherGoogleRedirect,
   getFirebaseErrorMessage,
   getTeacherProfile,
   isTeacherGoogleRedirectInProgress,
@@ -30,6 +31,24 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
   const [submitLoading, setSubmitLoading] = useState(false);
   const [resetMode, setResetMode] = useState(false);
   const [teacherEmail, setTeacherEmail] = useState("");
+  const [redirectPending, setRedirectPending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setRedirectPending(true);
+    completeTeacherGoogleRedirect()
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(getFirebaseErrorMessage(err, "Google 로그인에 실패했습니다."));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setRedirectPending(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!user || role === "student") {
@@ -43,6 +62,8 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
       onSuccess?.();
       return;
     }
+
+    setStep("setup-pin");
 
     let cancelled = false;
     getTeacherProfile(user.uid)
@@ -76,6 +97,7 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
       await signInTeacherWithGoogle();
     } catch (err: unknown) {
       if (isTeacherGoogleRedirectInProgress(err)) {
+        setRedirectPending(true);
         setError("Google 로그인 페이지로 이동합니다…");
         return;
       }
@@ -222,11 +244,11 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
       </p>
       <button
         type="button"
-        disabled={googleLoading || !consentComplete}
+        disabled={googleLoading || redirectPending || !consentComplete}
         onClick={handleGoogleLogin}
         className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base font-medium text-slate-800 hover:bg-slate-50 disabled:opacity-60"
       >
-        {googleLoading ? "연결 중..." : "Google로 로그인"}
+        {redirectPending ? "Google 로그인 확인 중..." : googleLoading ? "연결 중..." : "Google로 로그인"}
       </button>
       {error && <p className="text-base text-red-600">{error}</p>}
     </div>

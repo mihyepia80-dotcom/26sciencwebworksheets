@@ -18,12 +18,30 @@ import { clearTeacherPinVerified, isTeacherPinVerified, setTeacherPinVerified } 
 
 const REDIRECT_IN_PROGRESS = "REDIRECT_IN_PROGRESS";
 
+let redirectResultPromise: Promise<User | null> | null = null;
+
 const POPUP_FALLBACK_CODES = new Set([
   "auth/popup-blocked",
   "auth/popup-closed-by-user",
   "auth/cancelled-popup-request",
   "auth/operation-not-supported-in-this-environment",
+  "auth/web-storage-unsupported",
 ]);
+
+function shouldPreferGoogleRedirect(): boolean {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") return false;
+  return true;
+}
+
+async function syncTeacherProfileSafely(user: User): Promise<void> {
+  try {
+    await ensureTeacherProfile(user);
+  } catch (error) {
+    console.error("teacher profile sync failed", error);
+  }
+}
 
 export interface TeacherProfile {
   email: string;
@@ -38,8 +56,10 @@ function hasGoogleProviderData(user: User): boolean {
 async function isGoogleSignIn(user: User): Promise<boolean> {
   if (hasGoogleProviderData(user)) return true;
   try {
-    const { signInProvider } = await user.getIdTokenResult();
-    return signInProvider === "google.com";
+    const token = await user.getIdTokenResult();
+    if (token.signInProvider === "google.com") return true;
+    const firebase = token.claims.firebase as { sign_in_provider?: string } | undefined;
+    return firebase?.sign_in_provider === "google.com";
   } catch {
     return false;
   }
@@ -154,12 +174,17 @@ export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
 }
 
 export async function completeTeacherGoogleRedirect(): Promise<User | null> {
-  const auth = getClientAuth();
-  const result = await getRedirectResult(auth);
-  if (!result?.user) return null;
-  await refreshUserProfile(result.user);
-  await ensureTeacherProfile(result.user);
-  return result.user;
+  if (!redirectResultPromise) {
+    redirectResultPromise = (async () => {
+      const auth = getClientAuth();
+      const result = await getRedirectResult(auth);
+      if (!result?.user) return null;
+      await refreshUserProfile(result.user);
+      await syncTeacherProfileSafely(result.user);
+      return result.user;
+    })();
+  }
+  return redirectResultPromise;
 }
 
 export async function signInTeacherWithGoogle(): Promise<User> {
@@ -169,10 +194,15 @@ export async function signInTeacherWithGoogle(): Promise<User> {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
 
+  if (shouldPreferGoogleRedirect()) {
+    await signInWithRedirect(auth, provider);
+    throw new Error(REDIRECT_IN_PROGRESS);
+  }
+
   try {
     const result = await signInWithPopup(auth, provider);
     await refreshUserProfile(result.user);
-    await ensureTeacherProfile(result.user);
+    await syncTeacherProfileSafely(result.user);
     return result.user;
   } catch (error: unknown) {
     const code = (error as { code?: string }).code;

@@ -11,6 +11,7 @@ const projectId = "scienceworksheets-3ae8e";
 const DOMAINS_TO_ENSURE = [
   "localhost",
   "127.0.0.1",
+  "sagodogu-toktok.vercel.app",
   "sagodogu-toktok-mihyepia-s-projects.vercel.app",
   "scienceworksheets-3ae8e.firebaseapp.com",
   "scienceworksheets-3ae8e.web.app",
