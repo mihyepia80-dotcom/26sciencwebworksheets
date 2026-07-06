@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
-import { FieldValue } from "firebase-admin/firestore";
 import { isValidAccessPin, normalizeAccessPin } from "@/lib/auth/pin";
 import { normalizeClassPart, normalizeStudentNo } from "@/lib/group-activity/constants";
-import { getAdminAuth, getAdminDb, isAdminConfigured } from "@/lib/firebase/admin";
+import { adminServerTimestamp, getAdminAuth, getAdminDb, isAdminConfigured } from "@/lib/firebase/admin";
 import { resolveTeacherUidByAccessPin } from "@/lib/firebase/student-login-server";
 
 export const runtime = "nodejs";
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
   const normalizedNo = normalizeStudentNo(studentNo);
 
   try {
-    const db = getAdminDb();
+    const db = await getAdminDb();
     const resolved = await resolveTeacherUidByAccessPin(db, accessPin);
     if (!resolved.ok) {
       return NextResponse.json({ error: resolved.error }, { status: resolved.status });
@@ -71,7 +70,7 @@ export async function POST(request: Request) {
 
     const teacherUid = resolved.teacherUid;
     const email = buildStudentEmail(normalizedGrade, normalizedClassNo, normalizedNo);
-    const auth = getAdminAuth();
+    const auth = await getAdminAuth();
     const firebasePassword = getStudentAuthPassword();
 
     let uid: string;
@@ -102,7 +101,7 @@ export async function POST(request: Request) {
         studentNo: normalizedNo,
         studentName,
         teacherUid,
-        updatedAt: FieldValue.serverTimestamp(),
+        updatedAt: await adminServerTimestamp(),
       },
       { merge: true },
     );
@@ -112,8 +111,11 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     console.error("student-login failed", error);
     const message = error instanceof Error ? error.message : "로그인에 실패했습니다.";
+    if (message.includes("서비스 계정") || message.includes("FIREBASE_SERVICE_ACCOUNT_JSON")) {
+      return NextResponse.json({ error: message }, { status: 503 });
+    }
     return NextResponse.json(
-      { error: message.includes("서비스 계정") ? "서버 인증 설정 오류입니다. 관리자에게 문의해 주세요." : "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요." },
+      { error: "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요." },
       { status: 500 },
     );
   }

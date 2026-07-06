@@ -62,7 +62,7 @@ export async function getAiQuotaStatus(studentUid?: string): Promise<AiQuotaStat
     return buildStatus(0, 0, globalLimit);
   }
 
-  const db = getAdminDb();
+  const db = await getAdminDb();
   const dateKey = todayKey();
   const globalSnap = await db.collection(QUOTA_COLLECTION).doc(dateKey).get();
   const globalUsed = globalSnap.exists ? Number(globalSnap.data()?.count ?? 0) : 0;
@@ -92,7 +92,7 @@ export async function consumeAiQuota(studentUid: string): Promise<AiQuotaStatus>
     return buildStatus(0, 0, globalLimit);
   }
 
-  const db = getAdminDb();
+  const db = await getAdminDb();
   const dateKey = todayKey();
   const globalRef = db.collection(QUOTA_COLLECTION).doc(dateKey);
   const studentRef = globalRef.collection("students").doc(studentUid);

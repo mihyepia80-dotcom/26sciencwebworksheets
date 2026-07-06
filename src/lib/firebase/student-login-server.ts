@@ -1,4 +1,4 @@
-import { FieldValue, type Firestore } from "firebase-admin/firestore";
+import type { Firestore } from "firebase-admin/firestore";
 
 export type ResolveTeacherPinResult =
   | { ok: true; teacherUid: string }
@@ -36,6 +36,7 @@ export async function resolveTeacherUidByAccessPin(
   }
 
   const teacherUid = teachersSnap.docs[0].id;
+  const { FieldValue } = await import("firebase-admin/firestore");
   await db.collection("studentAccessPins").doc(accessPin).set({
     teacherUid,
     updatedAt: FieldValue.serverTimestamp(),
