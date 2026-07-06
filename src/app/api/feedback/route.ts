@@ -3,6 +3,9 @@ import type { Answers, WorksheetMeta } from "@/lib/types";
 import { GeminiApiError, callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
 import { consumeAiQuota, getAiQuotaStatus } from "@/lib/ai/quota";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const MAX_FEEDBACK_CHARS = 200;
 
 type AiRating = "잘함" | "보통" | "노력요함";

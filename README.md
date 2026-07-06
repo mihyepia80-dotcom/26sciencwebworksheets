@@ -61,7 +61,7 @@ npx firebase-tools deploy --only firestore --project scienceworksheets-3ae8e
 | 변수 | 설명 |
 |------|------|
 | `NEXT_PUBLIC_FIREBASE_*` | Firebase 클라이언트 설정 (6개) |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | 서비스 계정 JSON **한 줄** |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | 서비스 계정 JSON **한 줄** (`private_key`의 `\n`은 그대로 두거나 base64 인코딩 가능) |
 | `STUDENT_AUTH_SECRET` | 학생 Auth 내부 비밀번호용 임의 문자열 |
 | `GEMINI_API_KEY` | AI 기능 사용 시 |
 

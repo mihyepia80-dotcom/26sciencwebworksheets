@@ -44,6 +44,11 @@ export async function parseApiJsonResponse<T extends Record<string, unknown>>(
   }
 
   if (looksLikeHtml(text)) {
+    if (text.includes("Internal Server Error") || text.includes("500")) {
+      throw new Error(
+        "서버 API 오류(500)입니다. Vercel 환경 변수 FIREBASE_SERVICE_ACCOUNT_JSON 설정 후 재배포했는지 확인해 주세요.",
+      );
+    }
     throw new Error(htmlFallbackMessage);
   }
 

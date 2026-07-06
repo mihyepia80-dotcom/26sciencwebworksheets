@@ -80,6 +80,15 @@ export async function signInStudent(profile: StudentProfile, accessPin: string):
     throw new Error("암호는 6자리 숫자만 입력할 수 있습니다.");
   }
 
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host.endsWith(".web.app") || host.endsWith(".firebaseapp.com")) {
+      throw new Error(
+        "Firebase Hosting 주소에서는 학생 로그인 API를 사용할 수 없습니다. Vercel 배포 URL(예: sagodogu-toktok.vercel.app)로 접속해 주세요.",
+      );
+    }
+  }
+
   const auth = getClientAuth();
   const current = auth.currentUser;
   if (current && !current.email?.endsWith(`@${STUDENT_EMAIL_DOMAIN}`)) {
