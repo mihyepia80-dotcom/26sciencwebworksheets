@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { ACCESS_PIN_HINT, ACCESS_PIN_LENGTH, isValidAccessPin, normalizeAccessPin } from "@/lib/constants";
 import {
+  consumeTeacherRedirectErrorMessage,
   getFirebaseErrorMessage,
   getTeacherProfile,
   isTeacherGoogleRedirectInProgress,
@@ -32,6 +33,11 @@ export function TeacherLoginPanel({ onSuccess, consentComplete = true, onBeforeL
   const [teacherEmail, setTeacherEmail] = useState("");
 
   const needsTeacherPin = Boolean(user && role !== "student" && role !== "teacher");
+
+  useEffect(() => {
+    const redirectError = consumeTeacherRedirectErrorMessage();
+    if (redirectError) setError(redirectError);
+  }, []);
 
   useEffect(() => {
     if (!user || role === "student") {

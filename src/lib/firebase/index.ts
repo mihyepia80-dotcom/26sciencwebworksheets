@@ -20,6 +20,7 @@ export {
 export {
   signInTeacherWithGoogle,
   completeTeacherGoogleRedirect,
+  consumeTeacherRedirectErrorMessage,
   isTeacherGoogleRedirectInProgress,
   verifyTeacherAccessPin,
   setupTeacherAccessPin,

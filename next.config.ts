@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
       { source: "/login", headers: coop },
       { source: "/teacher", headers: coop },
       { source: "/teacher/:path*", headers: coop },
+      { source: "/", headers: coop },
     ];
   },
 };

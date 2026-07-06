@@ -13,16 +13,13 @@ import { doc, getDoc, serverTimestamp, setDoc, deleteDoc } from "firebase/firest
 import { isValidAccessPin, normalizeAccessPin } from "@/lib/auth/pin";
 import { STUDENT_EMAIL_DOMAIN } from "@/lib/constants";
 import { isFirebaseConfigured } from "./config";
-import { getClientAuth, getClientAuthReady, getClientDb } from "./client";
+import { getFirebaseErrorMessage } from "./errors";
+import { getClientAuth, getClientDb } from "./client";
 import { clearTeacherPinVerified, isTeacherPinVerified, setTeacherPinVerified } from "./teacher-pin";
 
 const REDIRECT_IN_PROGRESS = "REDIRECT_IN_PROGRESS";
 
 let redirectResultPromise: Promise<User | null> | null = null;
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 const POPUP_FALLBACK_CODES = new Set([
   "auth/popup-blocked",
@@ -30,13 +27,43 @@ const POPUP_FALLBACK_CODES = new Set([
   "auth/cancelled-popup-request",
   "auth/operation-not-supported-in-this-environment",
   "auth/web-storage-unsupported",
+  "auth/credential-already-in-use",
 ]);
 
-function shouldPreferGoogleRedirect(): boolean {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  if (host === "localhost" || host === "127.0.0.1") return false;
-  return true;
+let teacherRedirectErrorMessage: string | null = null;
+
+export function consumeTeacherRedirectErrorMessage(): string | null {
+  const message = teacherRedirectErrorMessage;
+  teacherRedirectErrorMessage = null;
+  return message;
+}
+
+async function consumeGoogleRedirectResult(): Promise<User | null> {
+  try {
+    const auth = getClientAuth();
+    const result = await getRedirectResult(auth);
+    if (!result?.user) return null;
+    await refreshUserProfile(result.user);
+    await syncTeacherProfileSafely(result.user);
+    teacherRedirectErrorMessage = null;
+    return result.user;
+  } catch (error) {
+    console.error("Google redirect result failed", error);
+    redirectResultPromise = null;
+    teacherRedirectErrorMessage = getRedirectFailureMessage(error);
+    return null;
+  }
+}
+
+function getRedirectFailureMessage(error: unknown): string {
+  const message = getFirebaseErrorMessage(error, "Google 로그인에 실패했습니다.");
+  if (message.includes("missing initial state") || message.includes("로그인 세션")) {
+    return (
+      "Google 로그인 세션이 끊겼습니다. 브라우저에서 팝업·쿠키 차단을 해제한 뒤 다시 시도해 주세요. " +
+      "같은 문제가 반복되면 시크릿 창이 아닌 일반 창에서 시도해 보세요."
+    );
+  }
+  return message;
 }
 
 async function syncTeacherProfileSafely(user: User): Promise<void> {
@@ -193,21 +220,6 @@ export async function resolveAuthRole(user: User | null): Promise<AuthRole> {
   return null;
 }
 
-async function consumeGoogleRedirectResult(): Promise<User | null> {
-  try {
-    const auth = await getClientAuthReady();
-    const result = await getRedirectResult(auth);
-    if (!result?.user) return null;
-    await refreshUserProfile(result.user);
-    await syncTeacherProfileSafely(result.user);
-    return result.user;
-  } catch (error) {
-    console.error("Google redirect result failed", error);
-    redirectResultPromise = null;
-    return null;
-  }
-}
-
 export async function completeTeacherGoogleRedirect(): Promise<User | null> {
   if (!redirectResultPromise) {
     redirectResultPromise = consumeGoogleRedirectResult();
@@ -218,19 +230,15 @@ export async function completeTeacherGoogleRedirect(): Promise<User | null> {
 export async function signInTeacherWithGoogle(): Promise<User> {
   await ensureTeacherGoogleSignInReady();
 
-  const auth = await getClientAuthReady();
+  const auth = getClientAuth();
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: "select_account" });
-
-  if (shouldPreferGoogleRedirect()) {
-    await signInWithRedirect(auth, provider);
-    throw new Error(REDIRECT_IN_PROGRESS);
-  }
 
   try {
     const result = await signInWithPopup(auth, provider);
     await refreshUserProfile(result.user);
     await syncTeacherProfileSafely(result.user);
+    teacherRedirectErrorMessage = null;
     return result.user;
   } catch (error: unknown) {
     const code = (error as { code?: string }).code;
@@ -337,23 +345,20 @@ export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
 
   void (async () => {
     try {
-      const auth = await getClientAuthReady();
-      await Promise.race([completeTeacherGoogleRedirect(), sleep(30_000)]);
-
-      if (!active) return;
-
-      unsubscribe = onAuthStateChanged(auth, handleAuthUser);
+      await completeTeacherGoogleRedirect();
     } catch (error) {
       console.error("Google redirect login failed", error);
-      if (!active) return;
-      unsubscribe = onAuthStateChanged(getClientAuth(), handleAuthUser);
     }
+
+    if (!active) return;
+
+    unsubscribe = onAuthStateChanged(auth, handleAuthUser);
   })();
 
   const safetyTimer = setTimeout(() => {
     if (!active || sawAuthEvent) return;
     handleAuthUser(auth.currentUser);
-  }, 15_000);
+  }, 8_000);
 
   return () => {
     active = false;
