@@ -100,7 +100,7 @@ export async function signInStudent(profile: StudentProfile, accessPin: string):
 
   const payload = await parseApiJsonResponse<{ customToken?: string; error?: string }>(
     response,
-    "서버 연결에 문제가 있습니다. 배포 환경에 FIREBASE_SERVICE_ACCOUNT_JSON이 설정되어 있는지 확인해 주세요.",
+    "서버 연결에 문제가 있습니다. Vercel 배포 URL인지 확인하고, Deployment Protection을 끈 뒤 FIREBASE_SERVICE_ACCOUNT_JSON 환경 변수를 설정해 주세요. (firebase web.app 주소는 API를 지원하지 않습니다.)",
   );
   if (!response.ok || !payload.customToken) {
     throw new Error(payload.error || "로그인에 실패했습니다.");

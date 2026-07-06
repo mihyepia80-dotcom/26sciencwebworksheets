@@ -33,7 +33,7 @@ interface StudentLoginBody {
 export async function POST(request: Request) {
   if (!isAdminConfigured()) {
     return NextResponse.json(
-      { error: "서버 인증 설정이 필요합니다. FIREBASE_SERVICE_ACCOUNT_JSON 환경 변수를 확인해 주세요." },
+      { error: "서버 인증 설정이 필요합니다. Vercel 환경 변수 FIREBASE_SERVICE_ACCOUNT_JSON을 확인해 주세요." },
       { status: 503 },
     );
   }

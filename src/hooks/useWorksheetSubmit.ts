@@ -35,7 +35,7 @@ export function useWorksheetSubmit({ aiQuota, setAiQuota, onSuccess }: UseWorksh
   const submit = useCallback(
     async (payload: SubmitPayload, submissionId: string | null, existingFeedback: string, existingRating: AiRating | null) => {
       if (!isFirebaseConfigured()) {
-        setSubmitError("Firebase 설정이 없습니다. .env 파일을 확인하세요.");
+        setSubmitError("Firebase 설정이 없습니다. Vercel 환경 변수를 확인하세요.");
         return;
       }
 

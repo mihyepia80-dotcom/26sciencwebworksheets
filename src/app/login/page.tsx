@@ -56,7 +56,7 @@ export default function LoginPage() {
     return (
       <div className="page-main-narrow py-20 text-center">
         <h1 className="ui-page-title">Firebase 설정 필요</h1>
-        <p className="ui-page-desc">`.env` 파일에 Firebase 환경 변수를 입력하세요.</p>
+        <p className="ui-page-desc">Vercel 환경 변수에 Firebase 설정(NEXT_PUBLIC_FIREBASE_*)을 입력하세요.</p>
       </div>
     );
   }

@@ -13,7 +13,7 @@ export function isFirebaseConfigured(): boolean {
 
 export function getFirebaseConfig() {
   if (!isFirebaseConfigured()) {
-    throw new Error("Firebase 환경 변수가 설정되지 않았습니다. .env 파일을 확인하세요.");
+    throw new Error("Firebase 환경 변수가 설정되지 않았습니다. Vercel 환경 변수(NEXT_PUBLIC_FIREBASE_*)를 확인하세요.");
   }
   return firebaseConfig as Record<string, string>;
 }

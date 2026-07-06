@@ -13,6 +13,7 @@
     "firebase:login": "npx firebase-tools login",
     "deploy:firestore": "node scripts/deploy-firestore.mjs",
     "deploy:firestore:rules": "node scripts/deploy-firestore.mjs firestore:rules",
+    "print:service-account-env": "node scripts/print-service-account-env.mjs",
     "firebase:add-auth-domains": "node scripts/add-auth-domain.mjs"
   },
   "dependencies": {

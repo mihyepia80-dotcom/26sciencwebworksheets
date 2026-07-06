@@ -113,7 +113,7 @@ export function TeacherDashboard() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="text-xl font-bold text-slate-900">Firebase 설정 필요</h1>
-        <p className="mt-3 text-sm text-slate-600">`.env` 파일에 Firebase 환경 변수를 입력하세요.</p>
+        <p className="mt-3 text-sm text-slate-600">Vercel 환경 변수에 Firebase 설정(NEXT_PUBLIC_FIREBASE_*)을 입력하세요.</p>
       </div>
     );
   }

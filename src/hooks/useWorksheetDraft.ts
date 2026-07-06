@@ -32,7 +32,7 @@ export function useWorksheetDraft({ onSuccess }: UseWorksheetDraftOptions) {
   const saveDraft = useCallback(
     async (payload: DraftPayload, submissionId: string | null, isSubmitted: boolean) => {
       if (!isFirebaseConfigured()) {
-        setDraftError("Firebase 설정이 없습니다. .env 파일을 확인하세요.");
+        setDraftError("Firebase 설정이 없습니다. Vercel 환경 변수를 확인하세요.");
         return;
       }
       if (isSubmitted) return;
