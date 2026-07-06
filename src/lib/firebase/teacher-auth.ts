@@ -274,37 +274,44 @@ export function subscribeAppAuth(onChange: (state: AppAuthState) => void) {
 
   const auth = getClientAuth();
   let active = true;
+  let unsubscribe: (() => void) | null = null;
 
   onChange({ user: null, role: null, loading: true });
 
-  void completeTeacherGoogleRedirect().catch(() => {
-    /* ignore */
-  });
-
-  const unsubscribe = onAuthStateChanged(auth, (user) => {
-    if (!user) {
-      if (active) onChange({ user: null, role: null, loading: false });
-      return;
+  void (async () => {
+    try {
+      await completeTeacherGoogleRedirect();
+    } catch (error) {
+      console.error("Google redirect login failed", error);
     }
 
-    void resolveAuthRole(user)
-      .then(async (role) => {
-        if (role === "teacher" || role === "teacher-pending") {
-          try {
-            await prepareTeacherFirestoreAccess(user);
-          } catch {
-            /* ignore */
+    if (!active) return;
+
+    unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        if (active) onChange({ user: null, role: null, loading: false });
+        return;
+      }
+
+      void resolveAuthRole(user)
+        .then(async (role) => {
+          if (role === "teacher" || role === "teacher-pending") {
+            try {
+              await prepareTeacherFirestoreAccess(user);
+            } catch (error) {
+              console.error("teacher firestore access failed", error);
+            }
           }
-        }
-        if (active) onChange({ user, role, loading: false });
-      })
-      .catch(() => {
-        if (active) onChange({ user, role: null, loading: false });
-      });
-  });
+          if (active) onChange({ user, role, loading: false });
+        })
+        .catch(() => {
+          if (active) onChange({ user, role: null, loading: false });
+        });
+    });
+  })();
 
   return () => {
     active = false;
-    unsubscribe();
+    unsubscribe?.();
   };
 }

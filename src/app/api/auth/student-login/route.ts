@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isValidAccessPin, normalizeAccessPin } from "@/lib/auth/pin";
 import { normalizeClassPart, normalizeStudentNo } from "@/lib/group-activity/constants";
-import { adminServerTimestamp, getAdminAuth, getAdminDb, isAdminConfigured } from "@/lib/firebase/admin";
+import { adminServerTimestamp, getAdminAuth, getAdminDb, isAdminConfigured, verifyAdminConnection } from "@/lib/firebase/admin";
 import { resolveTeacherUidByAccessPin } from "@/lib/firebase/student-login-server";
 
 export const runtime = "nodejs";
@@ -27,6 +27,14 @@ interface StudentLoginBody {
   studentNo?: string;
   studentName?: string;
   accessPin?: string;
+}
+
+export async function GET() {
+  const status = await verifyAdminConnection();
+  if (!status.ok) {
+    return NextResponse.json({ ok: false, error: status.error }, { status: 503 });
+  }
+  return NextResponse.json({ ok: true });
 }
 
 export async function POST(request: Request) {
@@ -110,9 +118,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ customToken });
   } catch (error: unknown) {
     console.error("student-login failed", error);
+    const code =
+      typeof error === "object" && error && "code" in error ? String((error as { code: string }).code) : "";
     const message = error instanceof Error ? error.message : "로그인에 실패했습니다.";
-    if (message.includes("서비스 계정") || message.includes("FIREBASE_SERVICE_ACCOUNT_JSON")) {
-      return NextResponse.json({ error: message }, { status: 503 });
+    if (
+      message.includes("서비스 계정") ||
+      message.includes("FIREBASE_SERVICE_ACCOUNT_JSON") ||
+      code.startsWith("app/invalid-credential")
+    ) {
+      return NextResponse.json(
+        { error: "서버 인증 설정 오류입니다. Vercel FIREBASE_SERVICE_ACCOUNT_JSON을 다시 확인해 주세요." },
+        { status: 503 },
+      );
     }
     return NextResponse.json(
       { error: "로그인에 실패했습니다. 잠시 후 다시 시도해 주세요." },
