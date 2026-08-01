@@ -21,7 +21,7 @@ export function questionBankFieldKeys(): string[] {
 
 /** 템플릿 id → 검증 대상 value 필드 키 (단일 소스) */
 export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
-  "see-think-wonder": ["see", "think", "wonder"],
+  "see-think-wonder": ["see", "think", "wonder", "experiment", "learned321", "curious321", "bridge321"],
   "three-two-one-reflection": [
     "learned1",
     "learned2",
@@ -49,7 +49,7 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
   "claim-support-question": ["claim", "support", "question"],
   "five-why": ["mainTopic", ...range(5).flatMap((i) => [`q${i + 1}`, `a${i + 1}`]), "conclusion"],
   "hot-spots": ["case1", "case2"],
-  headline: ["headline", "headlineReason"],
+  headline: ["investigation", "headline", "headlineReason"],
   "zoom-in": ["step1", "step2", "step3", "writingSituation"],
   "chalk-talk": ["writingContext", "activityExample", "activityTip"],
   gsce: ["elaborateA", "elaborateB", "elaborateC", "checkTerms", "checkVariable", "checkCausal", "gsceBoard"],
@@ -64,12 +64,12 @@ export const TEMPLATE_FIELD_KEYS: Record<string, string[]> = {
   "stop-light": ["draft", "greenLights", "yellowLights", "redLights", "revisionPlan"],
   "y-chart": ["looks", "sounds", "feels", "notes"],
   "t-chart": ["know", "want"],
-  "four-cs": ["connections", "challenge", "concepts", "changes"],
+  "four-cs": ["connections", "challenge", "concepts", "changes", "experiment"],
   "give-3-feedback": ["feedback1", "feedback2", "feedback3"],
   "ladder-of-feedback": ["clarify", "value", "concerns", "suggest", "thank"],
   "step-inside": ["see", "know", "care", "wonder"],
   "peel-the-fruit": ["outside", "under", "building", "connection", "viewpoints", "heart"],
-  "i-used-to-think": ["usedToThink", "nowThink"],
+  "i-used-to-think": ["usedToThink", "nowThink", "experiment"],
   mandalart: mandalartFieldKeys(),
   brainstorming: ["idea1", "idea2", "summary"],
   "brainwriting-635": ["issue", ...unders("cell", 18), "connect", "cluster", "evaluate"],

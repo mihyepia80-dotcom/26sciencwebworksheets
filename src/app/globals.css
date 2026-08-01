@@ -210,6 +210,55 @@
   .ui-status-warn {
     @apply inline-flex items-center rounded-lg px-2.5 py-1 text-sm font-medium bg-amber-50 text-amber-800;
   }
+
+  /* ── 학습지 디자인 시스템 ── */
+  .worksheet-print-area {
+    @apply space-y-5;
+  }
+
+  .worksheet-body {
+    @apply space-y-5;
+  }
+
+  .worksheet-body .ui-label {
+    @apply mb-1.5 text-sm font-semibold text-slate-700;
+  }
+
+  .ws-section {
+    @apply transition-shadow hover:shadow-md;
+  }
+
+  .ws-callout {
+    @apply shadow-sm;
+  }
+
+  .ws-routine-panel {
+    @apply transition-shadow hover:shadow-md;
+  }
+
+  .ws-field-block {
+    @apply transition-shadow hover:shadow-md;
+  }
+
+  .worksheet-closing {
+    @apply overflow-hidden border-indigo-100/80 bg-gradient-to-br from-white to-indigo-50/20;
+  }
+
+  .worksheet-closing h3 {
+    @apply flex items-center gap-2 text-base font-bold text-slate-900;
+  }
+
+  .worksheet-meta-header {
+    @apply overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-md shadow-slate-200/25;
+  }
+
+  .worksheet-meta-header .meta-label {
+    @apply flex items-center bg-slate-50/90 px-4 py-3 text-xs font-bold tracking-wide text-slate-500 uppercase;
+  }
+
+  .worksheet-meta-header .meta-value {
+    @apply px-4 py-3 text-base text-slate-800;
+  }
 }
 
 .hex-cell {

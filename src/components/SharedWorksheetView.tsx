@@ -28,6 +28,7 @@ export function SharedWorksheetView({ share }: { share: ShareRecord }) {
           />
           <TemplateRenderer
             templateId={share.templateId}
+            period={share.meta.period}
             values={share.values}
             onChange={() => {}}
             readOnly

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>8차시 — 4C (단원 종합) 학습지</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; line-height: 1.65; }
+    @page { size: A4; margin: 14mm; }
+    @media print {
+      html, body { background: #fff !important; font-size: 11pt; padding: 0 !important; }
+      .no-print { display: none !important; }
+      .print-card { border: 1px solid #cbd5e1 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+      textarea, input { border: 1px solid #cbd5e1 !important; background: #fff !important; resize: none !important; }
+      section { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="px-4 py-8 sm:px-6 lg:px-8">
+  <div class="print-card mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+    <header class="mb-6 border-b border-slate-200 pb-6 text-center">
+      <p class="text-xs font-medium text-slate-500">과학 5학년 2학기 / 3. 용해와 용액 (8차시)</p>
+      <h1 class="mt-1 text-2xl font-bold text-slate-800">4C — Connections · Challenges · Concepts · Changes</h1>
+      <p class="mt-1 text-xs font-medium text-indigo-600">단원 종합</p>
+      <p class="mt-2 text-sm text-slate-600">용액을 연구하고 탐구하는 다양한 분야 살펴보기</p>
+    </header>
+
+    <section class="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-4">
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">학년</label><input type="number" id="grade" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="5"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">반</label><input type="number" id="classNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="1"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">번호</label><input type="number" id="studentNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="1"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">이름</label><input type="text" id="studentName" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="이름"></div>
+    </section>
+
+    <section class="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-emerald-900">구조 이해</h2>
+      <p class="text-xs leading-relaxed text-emerald-900/90">4C는 배운 내용을 연결하고, 탐구 과정에서의 도전과 핵심 개념, 변화된 생각을 정리하는 사고 도구이다. 학생들은 용액이 미래 사회의 어떤 문제 해결과 진로 분야에 연결될 수 있는지 탐색하며, 단원 전체의 배움을 종합한다. 이를 통해 용액의 과학적 가치와 사회적 의미를 성찰할 수 있다.</p>
+    </section>
+
+    <section class="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-blue-900">핵심 질문</h2>
+      <p class="text-sm text-blue-900/90">용액은 미래 사회의 어떤 문제 해결과 진로 분야에 연결될 수 있을까?</p>
+      <p class="mt-3 text-xs leading-relaxed text-slate-600">용액 연구·탐구 직업과 미래 사회 문제를 연결하고, 이번 단원을 통해 바뀐 나의 생각을 4C로 정리해 보세요. 1~7차시에서 배운 내용을 Connection·Change에 반영하세요.</p>
+    </section>
+
+    <div class="space-y-5">
+      <section class="rounded-xl border border-slate-200 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-blue-600 px-2 py-0.5 text-xs font-bold text-white">C</span>
+          <h2 class="text-base font-bold text-slate-800">Connections (연결)</h2>
+        </div>
+        <p class="mb-2 text-xs text-slate-500">의약·환경·식품·화학 등 진로 분야와 용액 개념을 연결하세요.</p>
+        <textarea id="connections" rows="4" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Connection: 용액은 어떤 분야와 연결되는가?"></textarea>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-rose-600 px-2 py-0.5 text-xs font-bold text-white">C</span>
+          <h2 class="text-base font-bold text-slate-800">Challenges (도전 · 문제 해결)</h2>
+        </div>
+        <textarea id="challenge" rows="4" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Challenge: 어떤 문제를 해결하는 데 도움이 되는가?"></textarea>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-emerald-600 px-2 py-0.5 text-xs font-bold text-white">C</span>
+          <h2 class="text-base font-bold text-slate-800">Concepts (핵심 개념)</h2>
+        </div>
+        <textarea id="concepts" rows="3" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Concept: 이때 핵심 개념은 무엇인가?"></textarea>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-amber-600 px-2 py-0.5 text-xs font-bold text-white">C</span>
+          <h2 class="text-base font-bold text-slate-800">Changes (변화된 생각)</h2>
+        </div>
+        <textarea id="changes" rows="4" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Change: 내 생각은 어떻게 달라졌는가?"></textarea>
+      </section>
+    </div>
+
+    <section class="mt-8 border-t border-slate-200 pt-6">
+      <h2 class="mb-3 text-sm font-bold text-slate-800">셀프 체크</h2>
+      <div class="space-y-2 text-sm text-slate-600">
+        <label class="flex gap-2"><input type="checkbox" id="check1" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>Connection · Challenge · Concept · Change로 단원 전체 배움을 종합했나요?</span></label>
+        <label class="flex gap-2"><input type="checkbox" id="check2" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>의약·환경·식품·화학 등 진로 분야와 용액을 연결했나요?</span></label>
+        <label class="flex gap-2"><input type="checkbox" id="check3" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>1~7차시에서 배운 내용을 Connection·Change에 반영했나요?</span></label>
+      </div>
+      <div class="no-print mt-6 flex justify-end gap-3">
+        <button type="button" onclick="saveData()" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">임시 저장</button>
+        <button type="button" onclick="window.print()" class="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700">작성 완료 및 인쇄(PDF)</button>
+      </div>
+    </section>
+  </div>
+  <script>
+    var KEY = 'lesson-08-4c';
+    var fields = ['grade','classNo','studentNo','studentName','connections','challenge','concepts','changes','check1','check2','check3'];
+    window.onload = function() {
+      fields.forEach(function(f) {
+        var val = localStorage.getItem(KEY + '_' + f);
+        if (val === null) return;
+        var el = document.getElementById(f);
+        if (el.type === 'checkbox') el.checked = val === 'true'; else el.value = val;
+      });
+    };
+    function saveData() {
+      fields.forEach(function(f) {
+        var el = document.getElementById(f);
+        localStorage.setItem(KEY + '_' + f, el.type === 'checkbox' ? el.checked : el.value);
+      });
+      alert('학습지가 임시 저장되었습니다.');
+    }
+  </script>
+</body>
+</html>

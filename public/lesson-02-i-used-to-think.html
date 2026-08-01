@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2차시 — I Used to Think... Now I Think... 학습지</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; line-height: 1.65; }
+    @page { size: A4; margin: 14mm; }
+    @media print {
+      html, body { background: #fff !important; font-size: 11pt; padding: 0 !important; }
+      .no-print { display: none !important; }
+      .print-card { border: 1px solid #cbd5e1 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+      textarea, input { border: 1px solid #cbd5e1 !important; background: #fff !important; resize: none !important; }
+      section { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="px-4 py-8 sm:px-6 lg:px-8">
+  <div class="print-card mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+    <header class="mb-6 border-b border-slate-200 pb-6 text-center">
+      <p class="text-xs font-medium text-slate-500">과학 5학년 2학기 / 3. 용해와 용액 (2차시)</p>
+      <h1 class="mt-1 text-2xl font-bold text-slate-800">I Used to Think... Now I Think...</h1>
+      <p class="mt-2 text-sm text-slate-600">물질이 물에 녹거나 가라앉는 성질과 용해 전후 무게 변화 이해하기</p>
+    </header>
+
+    <section class="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-4">
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">학년</label><input type="number" id="grade" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="5"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">반</label><input type="number" id="classNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="1"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">번호</label><input type="number" id="studentNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="1"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">이름</label><input type="text" id="studentName" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="이름"></div>
+    </section>
+
+    <section class="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-emerald-900">구조 이해</h2>
+      <p class="text-xs leading-relaxed text-emerald-900/90">I Used to Think... Now I Think...는 이전에 생각했던 내용과 새롭게 알게 된 내용을 비교하며 사고의 변화를 정리하는 사고 도구이다. 학생들은 물질이 물에 녹거나 가라앉는 현상과 용해 전후의 무게 변화를 관찰한 뒤, 자신이 기존에 생각하던 내용과 새롭게 생각하게 된 내용을 나란히 정리한다. 이를 통해 용해 현상에 대한 오개념을 수정하고, 무게 변화에 대한 과학적 이해를 확장할 수 있다.</p>
+    </section>
+
+    <section class="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-blue-900">핵심 질문</h2>
+      <p class="text-sm text-blue-900/90">물질이 물에 녹을 때 무게는 왜 달라지지 않는 것처럼 보일까?</p>
+      <p class="mt-3 text-xs leading-relaxed text-slate-600">탐구 전 「예전 생각」과 탐구 후 「지금 생각」을 나란히 적고, 실험·관찰 근거로 왜 생각이 바뀌었는지 설명해 보세요.</p>
+    </section>
+
+    <div class="space-y-6">
+      <section class="rounded-xl border border-slate-200 bg-slate-50/80 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-slate-500 px-2 py-0.5 text-xs font-bold text-white">Before</span>
+          <h2 class="text-base font-bold text-slate-800">I used to think... (예전에는)</h2>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">탐구·실험을 하기 전, 이 주제에 대해 어떻게 생각했는지 적어 보세요.</p>
+        <textarea id="usedToThink" rows="5" class="field w-full rounded-lg border border-slate-200 bg-white p-3 text-sm" placeholder="예전에는: 나는 물질이 녹으면 무게가 줄어든다고 생각했다."></textarea>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-indigo-50/40 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-indigo-600 px-2 py-0.5 text-xs font-bold text-white">After</span>
+          <h2 class="text-base font-bold text-slate-800">Now I think... (지금은 · 왜냐하면)</h2>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">탐구·실험 후, 생각이 어떻게 바뀌었는지와 그 이유를 적어 보세요.</p>
+        <textarea id="nowThink" rows="6" class="field w-full rounded-lg border border-slate-200 bg-white p-3 text-sm" placeholder="지금은: 나는 용해 전후 무게가 같게 나타난다고 생각한다. 왜냐하면 ___이기 때문이다."></textarea>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 p-4">
+        <h2 class="mb-2 text-sm font-bold text-slate-800">실험 기록 (용해 전후 무게 측정)</h2>
+        <p class="mb-2 text-xs text-slate-500">용해 전후 무게 측정 결과를 실험 기록란에 적어 두세요.</p>
+        <textarea id="experiment" rows="4" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="용해 전 무게: ___ g / 용해 후 무게: ___ g / 관찰한 변화"></textarea>
+      </section>
+    </div>
+
+    <section class="mt-8 border-t border-slate-200 pt-6">
+      <h2 class="mb-3 text-sm font-bold text-slate-800">셀프 체크</h2>
+      <div class="space-y-2 text-sm text-slate-600">
+        <label class="flex gap-2"><input type="checkbox" id="check1" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>예전 생각과 지금 생각을 명확히 구분하여 적었나요?</span></label>
+        <label class="flex gap-2"><input type="checkbox" id="check2" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>「왜냐하면」 뒤에 실험·관찰 근거를 제시했나요?</span></label>
+        <label class="flex gap-2"><input type="checkbox" id="check3" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>무게가 같게 나타나는 이유를 물질 보존과 연결해 보았나요?</span></label>
+      </div>
+      <div class="no-print mt-6 flex justify-end gap-3">
+        <button type="button" onclick="saveData()" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">임시 저장</button>
+        <button type="button" onclick="window.print()" class="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700">작성 완료 및 인쇄(PDF)</button>
+      </div>
+    </section>
+  </div>
+  <script>
+    var KEY = 'lesson-02-i-used-to-think';
+    var fields = ['grade','classNo','studentNo','studentName','usedToThink','nowThink','experiment','check1','check2','check3'];
+    window.onload = function() {
+      fields.forEach(function(f) {
+        var val = localStorage.getItem(KEY + '_' + f);
+        if (val === null) return;
+        var el = document.getElementById(f);
+        if (el.type === 'checkbox') el.checked = val === 'true'; else el.value = val;
+      });
+    };
+    function saveData() {
+      fields.forEach(function(f) {
+        var el = document.getElementById(f);
+        localStorage.setItem(KEY + '_' + f, el.type === 'checkbox' ? el.checked : el.value);
+      });
+      alert('학습지가 임시 저장되었습니다.');
+    }
+  </script>
+</body>
+</html>

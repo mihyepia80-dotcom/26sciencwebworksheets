@@ -2,6 +2,9 @@
 
 import type { TemplateProps } from "@/lib/types";
 import { GuideChips, SectionBox, TextAreaField, GridInput } from "@/components/common/Fields";
+import { FieldBlock, RoutinePanel } from "@/components/common/WorksheetUi";
+import { DissolutionLessonExtras } from "@/components/worksheet/DissolutionLessonExtras";
+import { useDissolutionLessonForm, useLessonWorksheetContent } from "@/hooks/useDissolutionLessonForm";
 import { fieldValue as v } from "@/components/templates/utils";
 import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 
@@ -53,49 +56,69 @@ const STW_SECTIONS = {
   },
 } as const;
 
-export function SeeThinkWonderTemplate({ values, onChange, readOnly }: TemplateProps) {
+export function SeeThinkWonderTemplate({ values, onChange, readOnly, period }: TemplateProps) {
+  const lessonForm = useDissolutionLessonForm(period, "see-think-wonder");
+  const { get } = useLessonWorksheetContent("see-think-wonder", period);
+  const panelMeta = {
+    see: { badge: "See", badgeClass: "bg-sky-600", accent: "border-sky-200" },
+    think: { badge: "Think", badgeClass: "bg-amber-500", accent: "border-amber-200" },
+    wonder: { badge: "Wonder", badgeClass: "bg-violet-600", accent: "border-violet-200" },
+  } as const;
+
   return (
-    <SectionBox title="보기·생각하기·궁금해하기" color="blue">
-      <div className="grid gap-4 lg:grid-cols-3">
-        {(Object.keys(STW_SECTIONS) as Array<keyof typeof STW_SECTIONS>).map((key) => {
-          const section = STW_SECTIONS[key];
-          return (
-            <div key={key} className="rounded-lg border border-slate-200 bg-white p-3">
-              <div className="mb-3 flex items-center gap-2">
-                <span className="text-xl">{section.icon}</span>
-                <div>
-                  <h3 className="text-base font-bold text-slate-800">{section.title}</h3>
-                  <p className="text-sm text-slate-600">{section.subtitle}</p>
-                </div>
-              </div>
-              {!readOnly && (
-                <ol className="mb-3 space-y-1.5 text-sm text-slate-600">
-                  {section.guides.map((g, i) => (
-                    <li key={i} className="flex gap-1">
-                      <span className="shrink-0 text-slate-400">{i + 1}.</span>
-                      <button
-                        type="button"
-                        className="text-left hover:text-blue-600"
-                        onClick={() => onChange(key, v(values, key) ? `${v(values, key)}\n${g}` : g)}
-                      >
-                        {g}
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              )}
-              <TextAreaField
-                value={v(values, key)}
-                onChange={(val) => onChange(key, val)}
-                placeholder={section.placeholder}
-                rows={6}
-                readOnly={readOnly}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </SectionBox>
+    <div className="space-y-5">
+      <SectionBox
+        title="See · Think · Wonder"
+        subtitle={lessonForm?.subtitle ?? "관찰한 사실 → 나의 생각 → 탐구 질문 순으로 정리합니다"}
+        badge="STW"
+        color="blue"
+      >
+        <div className="grid gap-4 lg:grid-cols-3">
+          {(Object.keys(STW_SECTIONS) as Array<keyof typeof STW_SECTIONS>).map((key) => {
+            const section = STW_SECTIONS[key];
+            const meta = panelMeta[key];
+            const hint = get(`hint_${key}`);
+            return (
+              <RoutinePanel
+                key={key}
+                icon={section.icon}
+                badge={meta.badge}
+                badgeClass={meta.badgeClass}
+                title={section.title}
+                subtitle={section.subtitle}
+                accent={meta.accent}
+              >
+                {!readOnly && (
+                  <ol className="mb-3 space-y-1 text-sm text-slate-600">
+                    {section.guides.map((g, i) => (
+                      <li key={i} className="flex gap-1.5">
+                        <span className="shrink-0 font-medium text-slate-400">{i + 1}.</span>
+                        <button
+                          type="button"
+                          className="text-left hover:text-indigo-600"
+                          onClick={() => onChange(key, v(values, key) ? `${v(values, key)}\n${g}` : g)}
+                        >
+                          {g}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <TextAreaField
+                  value={v(values, key)}
+                  onChange={(val) => onChange(key, val)}
+                  placeholder={hint || section.placeholder}
+                  rows={6}
+                  readOnly={readOnly}
+                />
+              </RoutinePanel>
+            );
+          })}
+        </div>
+      </SectionBox>
+
+      {lessonForm && <DissolutionLessonExtras form={lessonForm} values={values} onChange={onChange} readOnly={readOnly} />}
+    </div>
   );
 }
 
@@ -127,18 +150,71 @@ export function ThinkPuzzleExploreTemplate({ values, onChange, readOnly }: Templ
 }
 
 /* ── 4Cs ── */
-export function FourCsTemplate({ values, onChange, readOnly }: TemplateProps) {
+export function FourCsTemplate({ values, onChange, readOnly, period }: TemplateProps) {
+  const lessonForm = useDissolutionLessonForm(period, "four-cs");
+  const { get } = useLessonWorksheetContent("four-cs", period);
+
+  if (lessonForm?.fourCsFields) {
+    const fields = [
+      { key: "connections" as const, badge: "C", badgeClass: "bg-blue-600" },
+      { key: "challenge" as const, badge: "C", badgeClass: "bg-rose-600" },
+      { key: "concepts" as const, badge: "C", badgeClass: "bg-emerald-600" },
+      { key: "changes" as const, badge: "C", badgeClass: "bg-amber-600" },
+    ];
+    return (
+      <div className="space-y-5">
+        <SectionBox
+          title="4C — Connections · Challenges · Concepts · Changes"
+          subtitle={lessonForm.subtitle ?? "연결 · 도전 · 개념 · 변화 — 학습 내용을 네 관점에서 성찰합니다"}
+          badge="4C"
+          color="indigo"
+        >
+          <div className="space-y-4">
+            {fields.map(({ key, badge, badgeClass }) => {
+              const meta = lessonForm.fourCsFields![key];
+              return (
+                <FieldBlock
+                  key={key}
+                  badge={badge}
+                  badgeClass={badgeClass}
+                  title={meta?.title ?? key}
+                  guide={meta?.guide}
+                >
+                  <TextAreaField
+                    value={v(values, key)}
+                    onChange={(val) => onChange(key, val)}
+                    placeholder={meta?.placeholder || get(`hint_${key}`)}
+                    rows={key === "concepts" ? 3 : 4}
+                    readOnly={readOnly}
+                  />
+                </FieldBlock>
+              );
+            })}
+          </div>
+        </SectionBox>
+        <DissolutionLessonExtras form={lessonForm} values={values} onChange={onChange} readOnly={readOnly} />
+      </div>
+    );
+  }
+
   const items = [
-    { key: "connections", label: "연결", ph: "텍스트와 내 삶·학습의 연결점은?" },
-    { key: "challenge", label: "도전", ph: "의문이나 반박하고 싶은 점은?" },
-    { key: "concepts", label: "개념", ph: "기억할 핵심 개념은?" },
-    { key: "changes", label: "변화", ph: "태도·사고·행동의 변화는?" },
+    { key: "connections", badge: "C1", badgeClass: "bg-blue-600", accent: "border-blue-200", label: "연결", ph: "텍스트와 내 삶·학습의 연결점은?" },
+    { key: "challenge", badge: "C2", badgeClass: "bg-rose-600", accent: "border-rose-200", label: "도전", ph: "의문이나 반박하고 싶은 점은?" },
+    { key: "concepts", badge: "C3", badgeClass: "bg-emerald-600", accent: "border-emerald-200", label: "개념", ph: "기억할 핵심 개념은?" },
+    { key: "changes", badge: "C4", badgeClass: "bg-violet-600", accent: "border-violet-200", label: "변화", ph: "태도·사고·행동의 변화는?" },
   ];
   return (
-    <SectionBox title="4가지 C (연결·도전·개념·변화)" color="blue">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {items.map(({ key, label, ph }) => (
-          <TextAreaField key={key} label={label} value={v(values, key)} onChange={(val) => onChange(key, val)} placeholder={ph} rows={4} readOnly={readOnly} />
+    <SectionBox
+      title="4가지 C"
+      subtitle="연결 · 도전 · 개념 · 변화 — 학습 내용을 네 관점에서 성찰합니다"
+      badge="4C"
+      color="indigo"
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
+        {items.map(({ key, badge, badgeClass, accent, label, ph }) => (
+          <RoutinePanel key={key} badge={badge} badgeClass={badgeClass} title={label} accent={accent}>
+            <TextAreaField value={v(values, key)} onChange={(val) => onChange(key, val)} placeholder={ph} rows={5} readOnly={readOnly} />
+          </RoutinePanel>
         ))}
       </div>
     </SectionBox>
@@ -182,12 +258,41 @@ export function StepInsideTemplate({ values, onChange, readOnly }: TemplateProps
 }
 
 /* ── I Used to Think ── */
-export function IUsedToThinkTemplate({ values, onChange, readOnly }: TemplateProps) {
+export function IUsedToThinkTemplate({ values, onChange, readOnly, period }: TemplateProps) {
+  const lessonForm = useDissolutionLessonForm(period, "i-used-to-think");
+  const { get } = useLessonWorksheetContent("i-used-to-think", period);
+
   return (
-    <SectionBox title="예전에는… 지금은…" color="yellow">
-      <TextAreaField label="예전에는 이렇게 생각했다" value={v(values, "usedToThink")} onChange={(val) => onChange("usedToThink", val)} rows={5} readOnly={readOnly} className="mb-4" />
-      <TextAreaField label="지금은 이렇게 생각한다" value={v(values, "nowThink")} onChange={(val) => onChange("nowThink", val)} rows={5} readOnly={readOnly} />
-    </SectionBox>
+    <div className="space-y-5">
+      <SectionBox
+        title="I Used to Think... Now I Think..."
+        subtitle="학습 전후의 생각 변화를 비교하며 사고를 정리합니다"
+        badge="IUTT"
+        color="amber"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <RoutinePanel badge="Before" badgeClass="bg-slate-500" title="I used to think... (예전에는)" accent="border-slate-200">
+            <TextAreaField
+              value={v(values, "usedToThink")}
+              onChange={(val) => onChange("usedToThink", val)}
+              rows={6}
+              readOnly={readOnly}
+              placeholder={get("hint_usedToThink") || "수업 전, 또는 관찰 전에 생각했던 내용"}
+            />
+          </RoutinePanel>
+          <RoutinePanel badge="After" badgeClass="bg-indigo-600" title="Now I think... (지금은 · 왜냐하면)" accent="border-indigo-200">
+            <TextAreaField
+              value={v(values, "nowThink")}
+              onChange={(val) => onChange("nowThink", val)}
+              rows={6}
+              readOnly={readOnly}
+              placeholder={get("hint_nowThink") || "탐구·관찰 후 새롭게 알게 된 내용"}
+            />
+          </RoutinePanel>
+        </div>
+      </SectionBox>
+      {lessonForm && <DissolutionLessonExtras form={lessonForm} values={values} onChange={onChange} readOnly={readOnly} />}
+    </div>
   );
 }
 
@@ -578,13 +683,30 @@ export function WhatMakesYouSayThatTemplate({ values, onChange, readOnly }: Temp
   );
 }
 
-export function E3Template({ values, onChange, readOnly }: TemplateProps) {
+export function E3Template({ values, onChange, readOnly, period }: TemplateProps) {
+  const lessonForm = useDissolutionLessonForm(period, "e3");
+  const { get } = useLessonWorksheetContent("e3", period);
+  const steps = [
+    { key: "estimate" as const, badge: "E", badgeClass: "bg-sky-600", accent: "border-sky-200", label: "Estimate (예측)", ph: get("hint_estimate") || "실험·탐구 전, 어떤 결과가 나올 것이라 예측하나요?", rows: 3 },
+    { key: "exploreData" as const, badge: "E", badgeClass: "bg-amber-600", accent: "border-amber-200", label: "Explore (탐구)", ph: get("hint_exploreData") || "관찰·측정한 데이터를 객관적으로 기록하세요.", rows: 4 },
+    { key: "gapAnalysis" as const, badge: "↔", badgeClass: "bg-slate-500", accent: "border-slate-200", label: "예측과 결과의 차이", ph: "예측과 실제 결과는 어떻게 다른가요?", rows: 3 },
+    { key: "explain" as const, badge: "E", badgeClass: "bg-violet-600", accent: "border-violet-200", label: "Explain (설명)", ph: get("hint_explain") || "데이터를 바탕으로 과학적으로 설명해 보세요.", rows: 5 },
+  ];
+
   return (
-    <SectionBox title="예측·탐구·설명" color="green">
-      <TextAreaField label="1. 예측" value={v(values, "estimate")} onChange={(val) => onChange("estimate", val)} rows={4} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="2. 탐구 — 실험 데이터" value={v(values, "exploreData")} onChange={(val) => onChange("exploreData", val)} rows={5} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="예측과 결과의 차이" value={v(values, "gapAnalysis")} onChange={(val) => onChange("gapAnalysis", val)} rows={3} readOnly={readOnly} className="mb-3" />
-      <TextAreaField label="3. 설명 — 과학적 설명" value={v(values, "explain")} onChange={(val) => onChange("explain", val)} rows={5} readOnly={readOnly} />
+    <SectionBox
+      title="E3 — 예측 · 탐구 · 설명"
+      subtitle={lessonForm ? "예측 → 탐구(측정) → 설명 순서로 물질 보존 원리를 연결합니다" : "예측 → 실험 → 차이 분석 → 과학적 설명 순으로 정리합니다"}
+      badge="E3"
+      color="green"
+    >
+      <div className="space-y-4">
+        {steps.map(({ key, badge, badgeClass, accent, label, ph, rows }) => (
+          <RoutinePanel key={key} badge={badge} badgeClass={badgeClass} title={label} accent={accent}>
+            <TextAreaField value={v(values, key)} onChange={(val) => onChange(key, val)} placeholder={ph} rows={rows} readOnly={readOnly} />
+          </RoutinePanel>
+        ))}
+      </div>
     </SectionBox>
   );
 }

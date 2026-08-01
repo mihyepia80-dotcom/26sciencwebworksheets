@@ -13,6 +13,7 @@ import {
   LESSON_UNITS,
   parseTeachingDesignContext,
 } from "@/lib/curriculum/design-flow";
+import { getPeriodPreset } from "@/lib/lesson-plan/unit-curriculum";
 import { getTemplateById } from "@/lib/templates/registry";
 
 const INPUT = "w-full rounded-lg border border-slate-200 px-3 py-2 text-sm";
@@ -121,7 +122,7 @@ export function ThinkingWorksheetDesign() {
                 setPeriod(e.target.value);
                 syncUrl(e.target.value, learningTopic);
               }}
-              placeholder="1/12"
+              placeholder="1/8"
             />
           </label>
           <label className="block sm:col-span-2">
@@ -153,7 +154,7 @@ export function ThinkingWorksheetDesign() {
                       : "border border-violet-300 bg-white text-violet-900 hover:bg-violet-50"
                   }`}
                 >
-                  {p.period}
+              {p.lessonLabel ?? p.period}
                   {p.thinkingTool ? ` · ${p.thinkingTool.split("(")[0].trim()}` : ""}
                 </button>
               ))}
@@ -172,19 +173,40 @@ export function ThinkingWorksheetDesign() {
             </p>
             {ctx.inquiryQuestion && (
               <p>
-                <span className="font-semibold text-slate-500">탐구 질문:</span> {ctx.inquiryQuestion}
+                <span className="font-semibold text-slate-500">핵심 질문:</span> {ctx.inquiryQuestion}
+              </p>
+            )}
+            {getPeriodPreset(unitId, period)?.structureUnderstanding && (
+              <p className="text-xs leading-relaxed text-slate-600">
+                <span className="font-semibold text-slate-500">구조 이해:</span>{" "}
+                {getPeriodPreset(unitId, period)?.structureUnderstanding}
+              </p>
+            )}
+            {getPeriodPreset(unitId, period)?.templatePrompt && (
+              <p className="text-xs leading-relaxed text-slate-600">
+                <span className="font-semibold text-slate-500">템플릿 프롬프트:</span>{" "}
+                {getPeriodPreset(unitId, period)?.templatePrompt}
               </p>
             )}
             <div className="mt-4 flex flex-wrap gap-2">
+              {getPeriodPreset(unitId, period)?.htmlPath && (
+                <Link
+                  href={getPeriodPreset(unitId, period)!.htmlPath!}
+                  className="rounded-lg border border-violet-300 bg-violet-50 px-4 py-2 text-sm text-violet-900 hover:bg-violet-100"
+                  target="_blank"
+                >
+                  Standalone HTML 학습지
+                </Link>
+              )}
               <Link
-                href={`/templates/${ctx.templateId}`}
+                href={`/templates/${ctx.templateId}?period=${encodeURIComponent(period)}`}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50"
                 target="_blank"
               >
                 활동지 미리보기
               </Link>
               <Link
-                href={`/workspace?template=${ctx.templateId}`}
+                href={`/workspace?template=${ctx.templateId}&period=${encodeURIComponent(period)}`}
                 className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-50"
                 target="_blank"
               >

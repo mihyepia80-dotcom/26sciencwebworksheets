@@ -90,7 +90,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
   const [aiLoading, setAiLoading] = useState(false);
   const [selectedUnitId, setSelectedUnitId] = useState(DEFAULT_LESSON_UNIT_ID);
   const [customUnitLabel, setCustomUnitLabel] = useState("");
-  const [aiPeriod, setAiPeriod] = useState("1/12");
+  const [aiPeriod, setAiPeriod] = useState("1/8");
   const [aiTopic, setAiTopic] = useState("");
   const [aiInstruction, setAiInstruction] = useState("");
 
@@ -521,7 +521,7 @@ export function LessonPlanManager({ initialPlanId }: { initialPlanId?: string | 
                 patch("period", v);
                 syncDesignUrl(undefined, { period: v });
               }}
-              placeholder="1/12"
+              placeholder="1/8"
             />
           </label>
           <label className="block sm:col-span-2">

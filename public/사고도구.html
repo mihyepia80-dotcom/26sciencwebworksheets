@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사고도구 톡톡 — 전체 웹앱 구조·학습지 포털</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+    body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(180deg, #f0f4ff 0%, #f8fafc 40%); }
+    .nav-link.active { background: #4338ca; color: #fff; }
+    .card-hover { transition: box-shadow .2s, transform .15s; }
+    .card-hover:hover { box-shadow: 0 8px 24px rgba(67,56,202,.12); transform: translateY(-1px); }
+    details summary { cursor: pointer; list-style: none; }
+    details summary::-webkit-details-marker { display: none; }
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body class="text-slate-800">
+
+  <!-- 상단 헤더 -->
+  <header class="sticky top-0 z-50 border-b border-indigo-100 bg-white/90 backdrop-blur no-print">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+      <div>
+        <p class="text-xs font-medium text-indigo-600">Sagodogu Toktok · Visible Thinking</p>
+        <h1 class="text-lg font-bold text-slate-900 sm:text-xl">사고도구 톡톡 — 전체 웹앱 포털</h1>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <input id="globalSearch" type="search" placeholder="사고도구·차시·기능 검색…"
+          class="w-44 rounded-lg border border-slate-200 px-3 py-1.5 text-sm sm:w-56">
+        <a id="linkHome" href="/" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700">웹앱 홈</a>
+        <a id="linkLogin" href="/login" class="rounded-lg border border-slate-200 px-3 py-1.5 text-sm hover:bg-slate-50">로그인</a>
+      </div>
+    </div>
+    <nav class="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-2 text-xs">
+      <a href="#overview" class="nav-link rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100">개요</a>
+      <a href="#architecture" class="nav-link rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100">구조</a>
+      <a href="#students" class="nav-link rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100">학생</a>
+      <a href="#teachers" class="nav-link rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100">교사</a>
+      <a href="#lessons" class="nav-link rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100">1~8차시</a>
+      <a href="#templates" class="nav-link rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100">44종 템플릿</a>
+      <a href="#standalone" class="nav-link rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100">HTML 학습지</a>
+      <a href="#api" class="nav-link rounded-full px-3 py-1 text-slate-600 hover:bg-slate-100">API</a>
+    </nav>
+  </header>
+
+  <main class="mx-auto max-w-6xl space-y-10 px-4 py-8">
+
+    <!-- 개요 -->
+    <section id="overview" class="rounded-2xl border border-indigo-100 bg-white p-6 shadow-sm sm:p-8">
+      <h2 class="text-2xl font-bold text-indigo-950">사고도구 톡톡 (Sagodogu Toktok)</h2>
+      <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600">
+        Harvard Project Zero <strong>Visible Thinking</strong> 44종과 초등 과학 <strong>개념기반 탐구</strong> 수업을 지원하는
+        Next.js + Firebase 웹 플랫폼입니다. 본 HTML 파일은 현재 구현된 <strong>전체 웹앱 구조·학습지·기능</strong>을
+        한곳에서 탐색할 수 있는 정적 포털입니다. (기존 파일은 그대로 유지됩니다.)
+      </p>
+      <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-xl bg-indigo-50 p-4"><p class="text-2xl font-bold text-indigo-700">44</p><p class="text-xs text-indigo-900/80">사고도구 React 템플릿</p></div>
+        <div class="rounded-xl bg-violet-50 p-4"><p class="text-2xl font-bold text-violet-700">8</p><p class="text-xs text-violet-900/80">용해와 용액 차시 HTML</p></div>
+        <div class="rounded-xl bg-teal-50 p-4"><p class="text-2xl font-bold text-teal-700">7</p><p class="text-xs text-teal-900/80">탐구 범주</p></div>
+        <div class="rounded-xl bg-amber-50 p-4"><p class="text-2xl font-bold text-amber-700">12+</p><p class="text-xs text-amber-900/80">API·주요 화면</p></div>
+      </div>
+      <p class="mt-4 text-xs text-slate-500">배포: <a id="linkDeploy" href="https://sagodogu-toktok.vercel.app" class="text-indigo-600 underline" target="_blank" rel="noopener">sagodogu-toktok.vercel.app</a> · PRD: docs/PRD.md v2.0</p>
+    </section>
+
+    <!-- 아키텍처 -->
+    <section id="architecture" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold">시스템 아키텍처</h2>
+      <pre class="mt-4 overflow-x-auto rounded-xl bg-slate-900 p-4 text-xs leading-relaxed text-emerald-100">[Browser — React 19]
+   ├── Next.js 15 App Router  (/, /templates/*, /teacher/*, /workspace …)
+   ├── Firebase Client        (Auth, Firestore)
+   └── public/*.html          (Standalone 학습지 — 본 파일 포함)
+
+[Server — Vercel]
+   ├── Firebase Admin SDK     (학생 로그인 custom token)
+   ├── Google Gemini API      (AI 피드백·지도안·유도질문)
+   └── Padlet API             (교사 협업 보드 생성)</pre>
+      <div class="mt-4 grid gap-3 sm:grid-cols-3">
+        <div class="rounded-lg border border-slate-100 p-3 text-sm"><strong class="text-indigo-700">학생</strong><br>학년·반·번호·이름 + 교사 6자리 PIN</div>
+        <div class="rounded-lg border border-slate-100 p-3 text-sm"><strong class="text-indigo-700">교사</strong><br>Google OAuth + 6자리 PIN</div>
+        <div class="rounded-lg border border-slate-100 p-3 text-sm"><strong class="text-indigo-700">데이터</strong><br>Firestore (submissions, lessonPlans …)</div>
+      </div>
+    </section>
+
+    <!-- 학생 기능 -->
+    <section id="students" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold">학생 기능 · 화면</h2>
+      <div id="studentRoutes" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+
+    <!-- 교사 기능 -->
+    <section id="teachers" class="rounded-2xl border border-violet-100 bg-violet-50/30 p-6 shadow-sm">
+      <h2 class="text-xl font-bold text-violet-950">교사 기능 · 화면</h2>
+      <p class="mt-1 text-sm text-violet-900/70">수업 설계 3단계: ① 사고 활동지 → ② 수업지도안 → ③ 학습지 텍스트 배포</p>
+      <div id="teacherRoutes" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+    </section>
+
+    <!-- 1~8차시 -->
+    <section id="lessons" class="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold text-emerald-950">용해와 용액 — 1~8차시 맞춤형 웹학습지</h2>
+      <p class="mt-1 text-sm text-slate-600">단일 소스: <code class="rounded bg-slate-100 px-1 text-xs">src/lib/worksheet-content/dissolution-lessons.ts</code></p>
+      <div id="lessonCards" class="mt-5 space-y-3"></div>
+    </section>
+
+    <!-- 44종 템플릿 -->
+    <section id="templates" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold">사고도구 웹학습지 — 44종 React 템플릿</h2>
+      <p class="mt-1 text-sm text-slate-500">7개 탐구 범주 · 공통 헤더: 단원 → 주제 → 글쓰기 상황 · legacy 9종 별도 표기</p>
+      <div id="categoryGroups" class="mt-5 space-y-6"></div>
+      <div id="legacyTemplates" class="mt-6 rounded-xl border border-dashed border-slate-300 p-4"></div>
+    </section>
+
+    <!-- Standalone HTML -->
+    <section id="standalone" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold">Standalone HTML 학습지 (public/)</h2>
+      <p class="mt-1 text-sm text-slate-500">인터넷 없이도 열 수 있는 정적 HTML · localStorage 임시 저장 · PDF 인쇄</p>
+      <div id="standaloneHtml" class="mt-4 grid gap-3 sm:grid-cols-2"></div>
+    </section>
+
+    <!-- API -->
+    <section id="api" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h2 class="text-xl font-bold">API 라우트</h2>
+      <div id="apiRoutes" class="mt-4 overflow-x-auto"></div>
+    </section>
+
+    <!-- 법적 고지 -->
+    <section class="rounded-2xl border border-slate-100 bg-slate-50 p-6">
+      <h2 class="text-lg font-bold">법적·윤리 고지</h2>
+      <div class="mt-3 flex flex-wrap gap-2 text-sm" id="legalLinks"></div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-500 no-print">
+    <p>사고도구 톡톡 · 전체 웹앱 구조 포털 (사고도구.html) · 2026</p>
+    <p class="mt-1">본 파일은 탐색·안내용입니다. 실제 제출·AI·교사 기능은 Next.js 웹앱에서 이용하세요.</p>
+  </footer>
+
+  <script>
+  (function () {
+    /* ── 앱 베이스 URL (file:// 또는 정적 호스팅 대응) ── */
+    var APP_BASE = (function () {
+      if (location.protocol === 'file:') return 'https://sagodogu-toktok.vercel.app';
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') return location.origin;
+      return location.origin;
+    })();
+
+    function app(path) { return APP_BASE + path; }
+    function localHtml(path) {
+      if (location.protocol === 'file:') return path.replace(/^\//, '');
+      return path;
+    }
+
+    document.getElementById('linkHome').href = app('/');
+    document.getElementById('linkLogin').href = app('/login');
+    document.getElementById('linkDeploy').href = APP_BASE;
+
+    /* ── 라우트 데이터 ── */
+    var STUDENT_ROUTES = [
+      { path: '/login', label: '로그인', desc: '학생·교사 로그인, 서비스 이용 동의' },
+      { path: '/templates/[id]', label: '학습지 작성', desc: '44종 사고도구 활동지 · 임시저장·제출' },
+      { path: '/my', label: '마이페이지', desc: '내 제출·배지·학습 기록' },
+      { path: '/workspace', label: '통합 작업공간', desc: '활동지 + 탐구보고서 2분할 편집' },
+      { path: '/inquiry-report', label: '탐구보고서', desc: '5단계 탐구 과정·시각화' },
+      { path: '/join/[token]', label: '교사 초대', desc: '초대 링크 딥링크' },
+      { path: '/share/[token]', label: '공유 보기', desc: '제출물 읽기 전용' },
+    ];
+
+    var TEACHER_ROUTES = [
+      { path: '/teacher', label: '교사 대시보드', desc: '전체 제출 조회·삭제·배지·초대' },
+      { path: '/teacher/thinking-worksheets', label: '① 사고 활동지', desc: '단원·차시·사고도구 선택' },
+      { path: '/teacher/lesson-plans', label: '② 수업지도안', desc: '지도안 CRUD + AI 생성' },
+      { path: '/teacher/worksheet-content', label: '③ 학습지 텍스트', desc: '안내 문구 편집·학생 배포' },
+      { path: '/teacher/guided-questions', label: '유도 질문', desc: 'AI 생성 → 학생 활동지 pin' },
+      { path: '/teacher/groups', label: '모둠 활동', desc: '명렬·편성·역할·칭찬' },
+      { path: '/teacher/badges', label: '칭찬 배지', desc: '배지 정의·수여·회수' },
+      { path: '/teacher/padlet', label: 'Padlet 생성', desc: '샌드박스·컬럼형 게시판' },
+    ];
+
+    var API_ROUTES = [
+      ['POST /api/auth/student-login', '학생 custom token 발급'],
+      ['GET /api/auth/student-login', 'Admin 연결 헬스체크'],
+      ['POST /api/feedback', 'AI 제출 피드백 (Gemini)'],
+      ['GET /api/ai-status', 'AI 쿼터 조회'],
+      ['POST /api/guided-questions', '유도 질문 AI (교사)'],
+      ['POST /api/lesson-plans/generate', '지도안 AI (교사)'],
+      ['POST /api/worksheet-content', '학습지 텍스트 AI (교사)'],
+      ['GET /api/padlet/status', 'Padlet API 키 상태'],
+      ['POST /api/padlet/boards', 'Padlet 보드 생성'],
+      ['GET /api/padlet/boards/status/[key]', 'Padlet AI 생성 진행'],
+      ['GET /api/padlet/boards/[id]', 'Padlet 보드 조회'],
+      ['POST /api/padlet/boards/[id]/posts', 'Padlet 게시글 추가'],
+    ];
+
+    var LEGAL = [
+      { path: '/privacy', label: '개인정보처리방침' },
+      { path: '/terms', label: '이용약관' },
+      { path: '/ai-ethics', label: 'AI 윤리' },
+    ];
+
+    /* ── 8차시 (dissolution-lessons.ts) ── */
+    var LESSONS = [
+      { n:1, period:'1/8', label:'1차시', topic:'물질이 물에 녹으면 어떻게 되는지 관찰하기', tool:'STW, 3-2-1 Bridge', tid:'see-think-wonder', html:'/lesson-01-stw.html',
+        keyQ:'물질이 물에 녹을 때 눈에 보이는 변화와 보이지 않는 변화는 무엇이며, 우리는 무엇을 관찰해야 할까?',
+        prompt:'See: 내가 본 것은? / Think: 무엇을 생각했는가? / Wonder: 무엇이 궁금한가?',
+        structure:'STW와 3-2-1 Bridge는 관찰한 사실을 바탕으로 생각과 궁금증을 구조화합니다.' },
+      { n:2, period:'2/8', label:'2차시', topic:'물질이 물에 녹거나 가라앉는 성질과 용해 전후 무게 변화', tool:'I Used to Think... Now I Think...', tid:'i-used-to-think', html:'/lesson-02-i-used-to-think.html',
+        keyQ:'물질이 물에 녹을 때 무게는 왜 달라지지 않는 것처럼 보일까?',
+        prompt:'예전에는: ___ / 지금은: ___ / 왜냐하면: ___',
+        structure:'예전 생각과 새 생각을 비교하며 오개념을 수정합니다.' },
+      { n:3, period:'3/8', label:'3차시', topic:'용해 전후 무게 변화와 물질 보존성 설명하기', tool:'E3 (예측-탐구-설명)', tid:'e3', html:'/lesson-03-e3.html',
+        keyQ:'용해 전후 무게가 같게 나타나는 현상은 물질 보존과 어떤 관련이 있을까?',
+        prompt:'예측 → 탐구(측정) → 설명',
+        structure:'E3는 예측·탐구·설명으로 과학적 원리를 확장합니다.' },
+      { n:4, period:'4/8', label:'4차시', topic:'물에 녹는 용질의 양에 영향을 미치는 요인 탐구', tool:'4C', tid:'four-cs', html:'/lesson-04-4c.html',
+        keyQ:'어떤 조건이 용질의 용해량을 달라지게 하며, 그 이유는?',
+        prompt:'Connection · Challenge · Concept · Change',
+        structure:'4C로 연결·도전·개념·변화를 정리합니다.' },
+      { n:5, period:'5/8', label:'5차시', topic:'용액의 진하기 비교 방법 탐구하기', tool:'CSQ', tid:'claim-support-question', html:'/lesson-05-csq.html',
+        keyQ:'우리는 어떤 기준으로 용액의 진하기를 비교할 수 있을까?',
+        prompt:'주장 → 근거(데이터) → 질문',
+        structure:'Claim·Support·Question으로 데이터 기반 글쓰기.' },
+      { n:6, period:'6/8', label:'6차시', topic:'일상생활에서 용액을 이용하는 사례 조사', tool:'Headlines', tid:'headline', html:'/lesson-06-headlines.html',
+        keyQ:'우리 생활 속에서 용액은 어떤 방식으로 활용되며, 왜 필요한가?',
+        prompt:'헤드라인(한 줄) + 이유',
+        structure:'Headlines로 생활 속 과학 가치를 압축 표현.' },
+      { n:7, period:'7/8', label:'7차시', topic:'용액의 필요성을 알리는 디지털 자료 만들기', tool:'CSI', tid:'color-symbol-image', html:'/lesson-07-csi.html',
+        keyQ:'용액의 가치를 효과적으로 알리기 위한 색·기호·이미지는?',
+        prompt:'Color · Symbol · Image + 이유',
+        structure:'CSI로 시각적·창의적 과학 성찰.' },
+      { n:8, period:'8/8', label:'8차시', topic:'용액을 연구·탐구하는 다양한 분야', tool:'4C (종합)', tid:'four-cs', html:'/lesson-08-4c.html',
+        keyQ:'용액은 미래 사회의 어떤 문제 해결·진로 분야와 연결될까?',
+        prompt:'Connection · Challenge · Concept · Change (단원 종합)',
+        structure:'4C로 단원 전체 배움과 진로·사회적 의미 성찰.' },
+    ];
+
+    /* ── 44종 템플릿 ── */
+    var CATEGORIES = [
+      { id:'concept-exploration', label:'개념 소개 및 탐색', color:'sky',
+        templates:[
+          {id:'see-think-wonder',name:'See, Think, Wonder',ko:'보기·생각·궁금'},
+          {id:'zoom-in',name:'Zoom In',ko:'줌인'},
+          {id:'chalk-talk',name:'Chalk Talk',ko:'분필 토론'},
+          {id:'think-puzzle-explore',name:'Think, Puzzle, Explore',ko:'생각·퍼즐·탐색'},
+          {id:'starbursting',name:'Starbursting',ko:'스타버스팅'},
+          {id:'mandalart',name:'만다라트',ko:'만다라트'},
+        ]},
+      { id:'concept-formation', label:'개념 형성', color:'lime', templates:[] },
+      { id:'concept-synthesis', label:'개념 종합 및 정리', color:'indigo',
+        templates:[
+          {id:'frayer-model',name:'프레이어 모델',ko:'프레이어'},
+          {id:'claim-support-question',name:'Claim, Support, Question',ko:'CSQ'},
+          {id:'gsce',name:'G-S-C-E',ko:'생성·분류·연결·정교화'},
+          {id:'fishbone',name:'Fishbone',ko:'어골형'},
+          {id:'headline',name:'Headline',ko:'헤드라인'},
+          {id:'color-symbol-image',name:'Color, Symbol, Image',ko:'CSI'},
+          {id:'four-cs',name:'4C',ko:'연결·도전·개념·변화'},
+          {id:'inquiry-classroom-rules',name:'정확한 탐구교실 규칙',ko:'탐구교실 규칙'},
+          {id:'hexagon-keywords',name:'육각형 핵심 단어',ko:'육각형'},
+          {id:'double-bubble-map',name:'더블 버블 맵',ko:'더블 버블'},
+        ]},
+      { id:'concept-deepening', label:'개념 심화', color:'orange',
+        templates:[
+          {id:'what-makes-you-say-that',name:'What Makes You Say That?',ko:'설명 게임'},
+          {id:'e3',name:'Estimate, Explore, Explain',ko:'E3'},
+          {id:'five-why',name:'5번 왜',ko:'5 Whys'},
+          {id:'circle-of-viewpoints',name:'Circle of Viewpoints',ko:'관점의 원'},
+          {id:'step-inside',name:'Step Inside',ko:'안으로 들어가기'},
+          {id:'brainstorming',name:'브레인스토밍',ko:'브레인스토밍'},
+          {id:'brainwriting-635',name:'Brainwriting',ko:'브레인라이팅'},
+          {id:'stop-light',name:'Red/Yellow/Green Light',ko:'신호등'},
+          {id:'scamper',name:'SCAMPER',ko:'스캠퍼'},
+          {id:'six-thinking-hats',name:'육색사고모',ko:'6 Thinking Hats'},
+          {id:'compass-points',name:'나침반 초점',ko:'Compass Points'},
+          {id:'peel-the-fruit',name:'Peel the Fruit',ko:'과일 껍질'},
+          {id:'honeycomb-questions',name:'질문 시작어',ko:'Honeycomb'},
+          {id:'window-map',name:'윈도우맵',ko:'Window Map'},
+          {id:'spectrum',name:'줄다리기',ko:'Spectrum'},
+        ]},
+      { id:'feedback-support', label:'피드백 지원', color:'rose',
+        templates:[
+          {id:'ladder-of-feedback',name:'Ladder of Feedback',ko:'피드백 사다리'},
+          {id:'give-3-feedback',name:'Give 3 Feedback',ko:'세 가지 피드백'},
+          {id:'question-bank',name:'말하기·묻기·아이디어',ko:'질문 뱅크'},
+        ]},
+      { id:'self-reflection', label:'자기성찰', color:'amber', templates:[] },
+      { id:'student-exchange', label:'학생교류', color:'violet',
+        templates:[
+          {id:'i-used-to-think',name:'I Used to Think...',ko:'예전·지금 생각'},
+          {id:'three-two-one-reflection',name:'3-2-1 Bridge',ko:'3-2-1 연결'},
+          {id:'traffic-light-reflection',name:'Traffic Light',ko:'신호등 성찰'},
+          {id:'show-of-thumbs-reflection',name:'Show of Thumbs',ko:'엄지 성찰'},
+          {id:'four-cs-reflection',name:'4C 반성',ko:'4C 반성'},
+          {id:'give-one-get-one',name:'Give One, Get One',ko:'하나 주고 하나 받기'},
+          {id:'plus-one',name:'+1 Routine',ko:'플러스 원'},
+          {id:'think-talk-open-exchange',name:'Think Talk Open Exchange',ko:'생각·대화·교환'},
+          {id:'leaderless-discussion',name:'리더 없는 토론',ko:'리더리스'},
+          {id:'making-meaning',name:'Making Meaning',ko:'의미 만들기'},
+        ]},
+    ];
+
+    /* legacy — getTemplateById fallback */
+    var LEGACY_TEMPLATES = [
+      {id:'hot-spots',name:'Hot Spots',ko:'핫스팟'},
+      {id:'circle-tree-map',name:'Circle Tree Map',ko:'원·나무 맵'},
+      {id:'multi-flow-map',name:'Multi Flow Map',ko:'다중 흐름'},
+      {id:'bridge-map',name:'Bridge Map',ko:'브릿지 맵'},
+      {id:'swot',name:'SWOT',ko:'SWOT'},
+      {id:'t-chart',name:'T-Chart',ko:'T 차트'},
+      {id:'y-chart',name:'Y-Chart',ko:'Y 차트'},
+      {id:'question-types',name:'Question Types',ko:'질문 유형'},
+      {id:'exaggeration',name:'Exaggeration',ko:'과장법'},
+    ];
+
+    var STANDALONE = [
+      { file:'lesson-01-stw.html', label:'1차시 STW', desc:'See·Think·Wonder + Bridge' },
+      { file:'lesson-02-i-used-to-think.html', label:'2차시 I Used to Think', desc:'예전·지금 생각' },
+      { file:'lesson-03-e3.html', label:'3차시 E3', desc:'예측·탐구·설명' },
+      { file:'lesson-04-4c.html', label:'4차시 4C', desc:'연결·도전·개념·변화' },
+      { file:'lesson-05-csq.html', label:'5차시 CSQ', desc:'주장·근거·질문' },
+      { file:'lesson-06-headlines.html', label:'6차시 Headlines', desc:'헤드라인 글쓰기' },
+      { file:'lesson-07-csi.html', label:'7차시 CSI', desc:'색·기호·이미지' },
+      { file:'lesson-08-4c.html', label:'8차시 4C 종합', desc:'단원·진로 성찰' },
+      { file:'gsce-worksheet.html', label:'GSCE', desc:'생성·분류·연결·정교화' },
+      { file:'csq-solution-concentration.html', label:'CSQ (용액 진하기)', desc:'용액 진하기 비교' },
+      { file:'headlines-daily-solutions.html', label:'Headlines (일상 용액)', desc:'일상 속 용액' },
+      { file:'csi-solution-daily.html', label:'CSI (용액 일상)', desc:'창의 과학 성찰' },
+      { file:'사고도구.html', label:'본 포털 (사고도구.html)', desc:'전체 구조·링크 허브' },
+    ];
+
+    var COLOR_MAP = {
+      sky:'border-sky-200 bg-sky-50', lime:'border-lime-200 bg-lime-50',
+      indigo:'border-indigo-200 bg-indigo-50', orange:'border-orange-200 bg-orange-50',
+      rose:'border-rose-200 bg-rose-50', amber:'border-amber-200 bg-amber-50',
+      violet:'border-violet-200 bg-violet-50',
+    };
+
+    /* ── 렌더: 학생 라우트 ── */
+    document.getElementById('studentRoutes').innerHTML = STUDENT_ROUTES.map(function (r) {
+      var href = r.path.indexOf('[') >= 0 ? app('/') + ' #' + r.path : app(r.path);
+      return '<a href="' + href + '" class="card-hover block rounded-xl border border-slate-100 p-4 hover:border-indigo-200">' +
+        '<p class="font-semibold text-indigo-800">' + r.label + '</p>' +
+        '<p class="mt-1 text-xs text-slate-500">' + r.path + '</p>' +
+        '<p class="mt-2 text-sm text-slate-600">' + r.desc + '</p></a>';
+    }).join('');
+
+    /* ── 렌더: 교사 라우트 ── */
+    document.getElementById('teacherRoutes').innerHTML = TEACHER_ROUTES.map(function (r) {
+      return '<a href="' + app(r.path) + '" class="card-hover block rounded-xl border border-violet-100 bg-white p-4 hover:border-violet-300">' +
+        '<p class="font-semibold text-violet-900">' + r.label + '</p>' +
+        '<p class="mt-1 text-xs text-violet-600/70">' + r.path + '</p>' +
+        '<p class="mt-2 text-sm text-slate-600">' + r.desc + '</p></a>';
+    }).join('');
+
+    /* ── 렌더: 8차시 ── */
+    document.getElementById('lessonCards').innerHTML = LESSONS.map(function (l) {
+      return '<details class="search-item rounded-xl border border-emerald-100 bg-emerald-50/20 p-4" data-search="' +
+        [l.label,l.topic,l.tool,l.tid,l.keyQ].join(' ') + '">' +
+        '<summary class="flex flex-wrap items-center gap-2 font-semibold text-emerald-950">' +
+        '<span class="rounded bg-emerald-600 px-2 py-0.5 text-xs text-white">' + l.label + '</span>' +
+        '<span>' + l.topic + '</span>' +
+        '<span class="text-xs font-normal text-emerald-700">· ' + l.tool + '</span></summary>' +
+        '<div class="mt-3 space-y-2 text-sm text-slate-700">' +
+        '<p><strong>핵심 질문:</strong> ' + l.keyQ + '</p>' +
+        '<p><strong>구조 이해:</strong> ' + l.structure + '</p>' +
+        '<p><strong>템플릿 프롬프트:</strong> <code class="text-xs">' + l.prompt + '</code></p>' +
+        '<div class="flex flex-wrap gap-2 pt-2">' +
+        '<a href="' + localHtml(l.html) + '" class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700">HTML 학습지</a>' +
+        '<a href="' + app('/templates/' + l.tid) + '" class="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs hover:bg-emerald-50" target="_blank">React 템플릿</a>' +
+        '<a href="' + app('/teacher/thinking-worksheets?unit=dissolution-solution&period=' + encodeURIComponent(l.period) + '&template=' + l.tid) + '" class="rounded-lg border border-violet-200 px-3 py-1.5 text-xs text-violet-800 hover:bg-violet-50" target="_blank">교사 ① 설계</a>' +
+        '</div></div></details>';
+    }).join('');
+
+    /* ── 렌더: 44종 템플릿 ── */
+    document.getElementById('categoryGroups').innerHTML = CATEGORIES.filter(function (c) { return c.templates.length; }).map(function (cat) {
+      var cards = cat.templates.map(function (t) {
+        var lesson = LESSONS.find(function (l) { return l.tid === t.id; });
+        var lessonBadge = lesson ? '<span class="ml-1 rounded bg-emerald-100 px-1.5 text-[10px] text-emerald-800">' + lesson.label + '</span>' : '';
+        return '<a href="' + app('/templates/' + t.id) + '" target="_blank" class="search-item card-hover block rounded-lg border border-slate-100 bg-white p-3 hover:border-indigo-200" data-search="' +
+          [t.id,t.name,t.ko,cat.label].join(' ') + '">' +
+          '<p class="text-sm font-semibold text-slate-800">' + t.name + lessonBadge + '</p>' +
+          '<p class="text-xs text-slate-500">' + t.ko + ' · ' + t.id + '</p></a>';
+      }).join('');
+      return '<div class="search-group"><h3 class="rounded-lg ' + (COLOR_MAP[cat.color]||'bg-slate-50') + ' px-3 py-2 text-sm font-bold">' +
+        cat.label + ' <span class="font-normal text-slate-500">(' + cat.templates.length + ')</span></h3>' +
+        '<div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">' + cards + '</div></div>';
+    }).join('');
+
+    document.getElementById('legacyTemplates').innerHTML =
+      '<h3 class="text-sm font-bold text-slate-600">Legacy 템플릿 (9종 · registry fallback)</h3>' +
+      '<div class="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">' +
+      LEGACY_TEMPLATES.map(function (t) {
+        return '<a href="' + app('/templates/' + t.id) + '" target="_blank" class="search-item card-hover block rounded-lg border border-slate-100 bg-slate-50 p-3 text-sm" data-search="' + t.id + ' ' + t.name + '">' +
+          '<span class="font-semibold">' + t.name + '</span> <span class="text-xs text-slate-500">' + t.ko + '</span></a>';
+      }).join('') + '</div>';
+
+    /* ── 렌더: Standalone ── */
+    document.getElementById('standaloneHtml').innerHTML = STANDALONE.map(function (s) {
+      return '<a href="' + localHtml('/' + s.file) + '" class="search-item card-hover block rounded-xl border border-slate-200 p-4 hover:border-teal-300" data-search="' + s.file + ' ' + s.label + '">' +
+        '<p class="font-semibold text-teal-900">' + s.label + '</p>' +
+        '<p class="text-xs text-slate-500">' + s.file + '</p>' +
+        '<p class="mt-1 text-sm text-slate-600">' + s.desc + '</p></a>';
+    }).join('');
+
+    /* ── 렌더: API ── */
+    document.getElementById('apiRoutes').innerHTML = '<table class="w-full min-w-[480px] text-left text-sm">' +
+      '<thead><tr class="border-b border-slate-200 text-xs text-slate-500"><th class="py-2 pr-4">경로</th><th class="py-2">설명</th></tr></thead><tbody>' +
+      API_ROUTES.map(function (row) {
+        return '<tr class="search-item border-b border-slate-50" data-search="' + row[0] + ' ' + row[1] + '">' +
+          '<td class="py-2 pr-4 font-mono text-xs text-indigo-700">' + row[0] + '</td>' +
+          '<td class="py-2 text-slate-600">' + row[1] + '</td></tr>';
+      }).join('') + '</tbody></table>';
+
+    /* ── 법적 링크 ── */
+    document.getElementById('legalLinks').innerHTML = LEGAL.map(function (l) {
+      return '<a href="' + app(l.path) + '" class="rounded-lg border border-slate-200 px-3 py-1.5 hover:bg-white">' + l.label + '</a>';
+    }).join('');
+
+    /* ── 전역 검색 ── */
+    var searchInput = document.getElementById('globalSearch');
+    searchInput.addEventListener('input', function () {
+      var q = this.value.trim().toLowerCase();
+      document.querySelectorAll('.search-item').forEach(function (el) {
+        var text = (el.getAttribute('data-search') || el.textContent || '').toLowerCase();
+        el.style.display = !q || text.indexOf(q) >= 0 ? '' : 'none';
+      });
+      document.querySelectorAll('.search-group').forEach(function (g) {
+        var visible = g.querySelectorAll('.search-item:not([style*="none"])').length;
+        g.style.display = visible ? '' : 'none';
+      });
+    });
+
+    /* ── 스크롤 네비 active ── */
+    var navLinks = document.querySelectorAll('.nav-link');
+    window.addEventListener('scroll', function () {
+      var scrollY = window.scrollY + 120;
+      navLinks.forEach(function (a) { a.classList.remove('active'); });
+      ['overview','architecture','students','teachers','lessons','templates','standalone','api'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el && el.offsetTop <= scrollY) {
+          var link = document.querySelector('.nav-link[href="#' + id + '"]');
+          if (link) link.classList.add('active');
+        }
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

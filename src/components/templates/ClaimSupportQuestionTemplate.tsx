@@ -1,42 +1,42 @@
 "use client";
 
 import type { TemplateProps } from "@/lib/types";
+import { FieldBlock, WorksheetCallout } from "@/components/common/WorksheetUi";
 import { fieldValue as v } from "@/components/templates/utils";
 import { CSQ_SECTIONS } from "@/lib/templates/csq";
-import { useWorksheetContent } from "@/hooks/useWorksheetContent";
+import { useLessonWorksheetContent } from "@/hooks/useDissolutionLessonForm";
 
-export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: TemplateProps) {
-  const { get } = useWorksheetContent("claim-support-question");
+const CSQ_BADGES: Record<string, { badge: string; badgeClass: string }> = {
+  claim: { badge: "C", badgeClass: "bg-blue-600" },
+  support: { badge: "S", badgeClass: "bg-emerald-600" },
+  question: { badge: "Q", badgeClass: "bg-amber-600" },
+};
+
+export function ClaimSupportQuestionTemplate({ values, onChange, readOnly, period }: TemplateProps) {
+  const { get } = useLessonWorksheetContent("claim-support-question", period);
   const memos = [get("memo1"), get("memo2")].filter(Boolean);
 
   return (
-    <div className="csq-worksheet mx-auto max-w-3xl">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 print:shadow-none">
-        <div className="mb-6 border-b border-slate-200 pb-6 text-center">
-          <h2 className="text-xl font-bold tracking-tight text-slate-800 sm:text-2xl">과학과 성장 포트폴리오</h2>
-          <p className="mt-1 text-base text-slate-600">주장·근거·질문 기반 과학 성찰 글쓰기</p>
-        </div>
-
-        <div className="mb-8 rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-          <h3 className="mb-2 text-sm font-bold text-indigo-900">나의 탐구 데이터 핵심 메모</h3>
-          <ul className="list-disc space-y-1 pl-4 text-base text-indigo-800">
+    <div className="csq-worksheet space-y-5">
+      {memos.length > 0 && (
+        <WorksheetCallout variant="reminder" title="나의 탐구 데이터 핵심 메모">
+          <ul className="list-disc space-y-1 pl-4">
             {memos.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
-        </div>
+        </WorksheetCallout>
+      )}
 
-        <div className="space-y-6">
-          {CSQ_SECTIONS.map(({ key, badge, badgeClass, title, guide, placeholder, rows, focusClass }) => {
-            const guideText = get(`guide_${key}`) || guide;
-            const placeholderText = get(`hint_${key}`) || placeholder;
-            return (
-            <div key={key} className="rounded-xl border border-slate-200 p-5 shadow-sm print:shadow-none">
-              <div className="mb-2 flex items-center gap-2">
-                <span className={`rounded-sm px-2 py-0.5 text-xs font-bold text-white ${badgeClass}`}>{badge}</span>
-                <span className="text-base font-bold text-slate-800">{title}</span>
-              </div>
-              <p className="mb-3 text-base text-slate-600">{guideText}</p>
+      <div className="space-y-4">
+        {CSQ_SECTIONS.map(({ key, guide, placeholder, rows, focusClass }) => {
+          const badgeMeta = CSQ_BADGES[key] ?? { badge: key[0].toUpperCase(), badgeClass: "bg-indigo-600" };
+          const guideText = get(`guide_${key}`) || guide;
+          const placeholderText = get(`hint_${key}`) || placeholder;
+          const displayTitle =
+            key === "claim" ? "Claim (주장)" : key === "support" ? "Support (근거)" : "Question (질문)";
+          return (
+            <FieldBlock key={key} badge={badgeMeta.badge} badgeClass={badgeMeta.badgeClass} title={displayTitle} guide={guideText}>
               <textarea
                 className={`ui-textarea ${focusClass}`}
                 rows={rows}
@@ -45,10 +45,9 @@ export function ClaimSupportQuestionTemplate({ values, onChange, readOnly }: Tem
                 placeholder={placeholderText}
                 onChange={(e) => onChange(key, e.target.value)}
               />
-            </div>
-            );
-          })}
-        </div>
+            </FieldBlock>
+          );
+        })}
       </div>
     </div>
   );

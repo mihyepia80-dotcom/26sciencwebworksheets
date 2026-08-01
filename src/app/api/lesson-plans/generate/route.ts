@@ -28,7 +28,7 @@ function resolveGenerationContext(body: GenerateRequest) {
   const unitId = body.unitId?.trim() || DEFAULT_LESSON_UNIT_ID;
   const unitDef = getLessonUnit(unitId);
   const unit = body.unit?.trim() || resolveUnitLabel(unitId, body.unit);
-  const period = body.period?.trim() || "1/12";
+  const period = body.period?.trim() || "1/8";
   const preset = getPeriodPreset(unitId, period);
 
   const learningTopic =

@@ -280,7 +280,28 @@ Vercel **Settings → Deployment Protection**에서 Production 보호(Vercel Aut
 
 대표: See-Think-Wonder, Think-Puzzle-Explore, Claim-Support-Question, Color-Symbol-Image, Headline, G-S-C-E 등
 
-### Standalone HTML (4종)
+### Standalone HTML — 용해와 용액 1~8차시 (맞춤형)
+
+| 차시 | 학습 주제 | 사고 도구 | HTML |
+|------|-----------|-----------|------|
+| 1차시 | 물질이 물에 녹으면 어떻게 되는지 관찰하기 | STW, 3-2-1 Bridge | `public/lesson-01-stw.html` |
+| 2차시 | 물질이 물에 녹거나 가라앉는 성질·용해 전후 무게 | I Used to Think... | `public/lesson-02-i-used-to-think.html` |
+| 3차시 | 용해 전후 무게·물질 보존성 | E3 | `public/lesson-03-e3.html` |
+| 4차시 | 용질의 양에 영향을 미치는 요인 | 4C | `public/lesson-04-4c.html` |
+| 5차시 | 용액의 진하기 비교 방법 | CSQ | `public/lesson-05-csq.html` |
+| 6차시 | 일상생활 용액 사례 조사 | Headlines | `public/lesson-06-headlines.html` |
+| 7차시 | 용액 필요성 디지털 자료 | CSI | `public/lesson-07-csi.html` |
+| 8차시 | 용액 연구·탐구 분야 | 4C (종합) | `public/lesson-08-4c.html` |
+
+프롬프트·구조 이해·핵심 질문 단일 소스: `src/lib/worksheet-content/dissolution-lessons.ts`
+
+### 전체 웹앱 포털 (사고도구.html)
+
+| 파일 | 설명 |
+|------|------|
+| `public/사고도구.html` | **전체 웹앱 구조·44종 템플릿·8차시·API·링크 허브** (정적 포털) |
+
+### Standalone HTML (기타)
 
 | 파일 | 루틴 |
 |------|------|

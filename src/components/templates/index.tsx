@@ -119,7 +119,7 @@ export const TEMPLATE_COMPONENTS: Record<string, ComponentType<TemplateProps>> =
   "making-meaning": MakingMeaningTemplate,
 };
 
-export function TemplateRenderer({ templateId, ...props }: TemplateProps & { templateId: string }) {
+export function TemplateRenderer({ templateId, period, ...props }: TemplateProps & { templateId: string }) {
   const Component = TEMPLATE_COMPONENTS[templateId];
   if (!Component) {
     return (
@@ -131,10 +131,10 @@ export function TemplateRenderer({ templateId, ...props }: TemplateProps & { tem
   return (
     <div className="worksheet-body">
       {!TEMPLATES_WITH_BUILTIN_CONTENT.has(templateId) && (
-        <WorksheetContentBanner templateId={templateId} />
+        <WorksheetContentBanner templateId={templateId} period={period} />
       )}
-      <Component {...props} />
-      <WorksheetClosingSection templateId={templateId} {...props} />
+      <Component {...props} period={period} />
+      <WorksheetClosingSection templateId={templateId} period={period} {...props} />
     </div>
   );
 }

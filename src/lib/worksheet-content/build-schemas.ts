@@ -14,40 +14,59 @@ import {
   HEADLINE_UNIT,
 } from "@/lib/templates/headlines";
 import { CSQ_INQUIRY_MEMO, CSQ_SECTIONS } from "@/lib/templates/csq";
+import { DISSOLUTION_LESSONS, getDissolutionLesson } from "@/lib/worksheet-content/dissolution-lessons";
 import { getDissolutionPresetByTemplate } from "@/lib/worksheet-content/dissolution-unit";
 import type { WorksheetContentFieldDef, WorksheetContentSchema } from "./registry";
 
 const FIELD_HINT_PREFIX = "hint_";
 
+const DISSOLUTION_LESSON_FIELD_OVERRIDES = Object.fromEntries(
+  DISSOLUTION_LESSONS.map((lesson) => [lesson.period, lesson.fields]),
+);
+
+export function getDissolutionWorksheetDefaults(period: string): Record<string, string> {
+  const lesson = getDissolutionLesson(period.trim());
+  if (!lesson) return DISSOLUTION_LESSON_FIELD_OVERRIDES[period.trim()] ?? {};
+  return {
+    ...lesson.fields,
+    structureUnderstanding: lesson.structureUnderstanding,
+    templatePrompt: lesson.templatePrompt,
+    inquiryQuestion: lesson.keyQuestion,
+    periodLabel: lesson.periodLabel,
+    lessonNumber: String(lesson.lessonNumber),
+  };
+}
+
 /** 템플릿별 기본값 오버라이드 (코드에 정의된 전용 문구) */
 const TEMPLATE_DEFAULT_OVERRIDES: Record<string, Record<string, string>> = {
   "color-symbol-image": {
+    ...(DISSOLUTION_LESSONS.find((l) => l.templateId === "color-symbol-image")?.fields ?? {}),
     unit: CSI_UNIT,
-    topic: CSI_TOPIC,
+    topic: DISSOLUTION_LESSONS.find((l) => l.lessonNumber === 7)?.fields.topic ?? CSI_TOPIC,
     reminder1: CSI_REMINDERS[0],
     reminder2: CSI_REMINDERS[1],
-    writingGuide: CSI_WRITING_GUIDE,
+    writingGuide:
+      DISSOLUTION_LESSONS.find((l) => l.lessonNumber === 7)?.fields.writingGuide ?? CSI_WRITING_GUIDE,
   },
   headline: {
-    ...(getDissolutionPresetByTemplate("headline")?.fields ?? {}),
-    unit: getDissolutionPresetByTemplate("headline")?.fields.unit ?? HEADLINE_UNIT,
-    topic: getDissolutionPresetByTemplate("headline")?.fields.topic ?? HEADLINE_TOPIC,
+    ...(DISSOLUTION_LESSONS.find((l) => l.templateId === "headline")?.fields ?? {}),
+    unit: HEADLINE_UNIT,
+    topic: DISSOLUTION_LESSONS.find((l) => l.lessonNumber === 6)?.fields.topic ?? HEADLINE_TOPIC,
     reminder1: HEADLINE_REMINDERS[0],
     reminder2: HEADLINE_REMINDERS[1],
-    writingGuide: getDissolutionPresetByTemplate("headline")?.fields.writingGuide ?? HEADLINE_GUIDE,
+    writingGuide:
+      DISSOLUTION_LESSONS.find((l) => l.lessonNumber === 6)?.fields.writingGuide ?? HEADLINE_GUIDE,
   },
   "claim-support-question": {
-    ...(getDissolutionPresetByTemplate("claim-support-question")?.fields ?? {}),
+    ...(DISSOLUTION_LESSONS.find((l) => l.templateId === "claim-support-question")?.fields ?? {}),
     memo1: CSQ_INQUIRY_MEMO[0],
     memo2: CSQ_INQUIRY_MEMO[1],
-    ...Object.fromEntries(
-      CSQ_SECTIONS.map((s) => [`guide_${s.key}`, s.guide]),
-    ),
+    ...Object.fromEntries(CSQ_SECTIONS.map((s) => [`guide_${s.key}`, s.guide])),
   },
   ...Object.fromEntries(
-    ["see-think-wonder", "gsce", "i-used-to-think", "what-makes-you-say-that"].map((id) => {
-      const preset = getDissolutionPresetByTemplate(id);
-      return preset ? [id, preset.fields] : [id, {}];
+    ["see-think-wonder", "i-used-to-think", "e3", "four-cs"].map((id) => {
+      const lesson = DISSOLUTION_LESSONS.find((l) => l.templateId === id);
+      return lesson ? [id, lesson.fields] : [id, {}];
     }),
   ),
 };
@@ -71,13 +90,8 @@ const TEMPLATE_EXTRA_FIELDS: Record<string, WorksheetContentFieldDef[]> = {
   ],
 };
 
-/** 학습지 본문에 내장된 고정 UI — 공통 배너 생략 */
-export const TEMPLATES_WITH_BUILTIN_CONTENT = new Set([
-  "color-symbol-image",
-  "headline",
-  "claim-support-question",
-  "gsce",
-]);
+/** 학습지 본문에 내장된 고정 UI — 공통 배너 생략 (GSCE 등 자체 안내가 있는 템플릿만) */
+export const TEMPLATES_WITH_BUILTIN_CONTENT = new Set(["gsce"]);
 
 function standardFields(
   templateId: string,
@@ -116,6 +130,18 @@ function standardFields(
       key: "usageTips",
       label: "활용 팁",
       defaultValue: overrides.usageTips ?? "",
+      multiline: true,
+    },
+    {
+      key: "structureUnderstanding",
+      label: "구조 이해",
+      defaultValue: overrides.structureUnderstanding ?? "",
+      multiline: true,
+    },
+    {
+      key: "templatePrompt",
+      label: "사고도구 템플릿 프롬프트",
+      defaultValue: overrides.templatePrompt ?? "",
       multiline: true,
     },
   ];

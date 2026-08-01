@@ -44,7 +44,7 @@ export function parseTeachingDesignContext(
 
   const unitId = get("unit") || DEFAULT_LESSON_UNIT_ID;
   const customUnitLabel = get("unitLabel");
-  const period = get("period") || "1/12";
+  const period = get("period") || "1/8";
   const unitLabel = resolveUnitLabel(unitId, customUnitLabel || get("unitName"));
   const lessonPreset = getPeriodPreset(unitId, period);
   const worksheetPreset = DISSOLUTION_UNIT_PRESETS.find((p) => p.period === period);

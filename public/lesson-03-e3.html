@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3차시 — E3 (예측·탐구·설명) 학습지</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; line-height: 1.65; }
+    @page { size: A4; margin: 14mm; }
+    @media print {
+      html, body { background: #fff !important; font-size: 11pt; padding: 0 !important; }
+      .no-print { display: none !important; }
+      .print-card { border: 1px solid #cbd5e1 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+      textarea, input { border: 1px solid #cbd5e1 !important; background: #fff !important; resize: none !important; }
+      section { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="px-4 py-8 sm:px-6 lg:px-8">
+  <div class="print-card mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+    <header class="mb-6 border-b border-slate-200 pb-6 text-center">
+      <p class="text-xs font-medium text-slate-500">과학 5학년 2학기 / 3. 용해와 용액 (3차시)</p>
+      <h1 class="mt-1 text-2xl font-bold text-slate-800">E3 — 예측 · 탐구 · 설명</h1>
+      <p class="mt-2 text-sm text-slate-600">용해 전후 무게 변화와 물질 보존성 설명하기</p>
+    </header>
+
+    <section class="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-4">
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">학년</label><input type="number" id="grade" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="5"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">반</label><input type="number" id="classNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="1"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">번호</label><input type="number" id="studentNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="1"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">이름</label><input type="text" id="studentName" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="이름"></div>
+    </section>
+
+    <section class="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-emerald-900">구조 이해</h2>
+      <p class="text-xs leading-relaxed text-emerald-900/90">E3는 현상을 예측하고, 탐구를 통해 확인한 뒤, 그 결과를 과학적으로 설명하는 사고 도구이다. 학생들은 용해 전후 무게 변화를 예측하고 직접 탐구한 결과를 바탕으로 물질 보존의 원리를 설명한다. 이를 통해 용해 현상을 단순한 관찰에서 과학적 원리의 설명으로 확장할 수 있다.</p>
+    </section>
+
+    <section class="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-blue-900">핵심 질문</h2>
+      <p class="text-sm text-blue-900/90">용해 전후 무게가 같게 나타나는 현상은 물질 보존과 어떤 관련이 있을까?</p>
+      <p class="mt-3 text-xs leading-relaxed text-slate-600">용해 전후 무게 변화를 예측하고, 측정 데이터를 기록한 뒤, 물질 보존 원리로 과학적으로 설명해 보세요.</p>
+    </section>
+
+    <div class="space-y-5">
+      <section class="rounded-xl border border-slate-200 bg-sky-50/40 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-sky-600 px-2 py-0.5 text-xs font-bold text-white">E</span>
+          <h2 class="text-base font-bold text-slate-800">Estimate (예측)</h2>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">탐구 전, 용해 전후 무게가 어떻게 변할지 예측해 보세요.</p>
+        <textarea id="estimate" rows="3" class="field w-full rounded-lg border border-slate-200 bg-white p-3 text-sm" placeholder="예측: 나는 용해 전후 무게가 ___할 것이라고 예측한다."></textarea>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-amber-50/40 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-amber-600 px-2 py-0.5 text-xs font-bold text-white">E</span>
+          <h2 class="text-base font-bold text-slate-800">Explore (탐구)</h2>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">예측과 실제 결과의 차이를 반드시 비교하세요. 측정값(그램)을 구체적으로 적으세요.</p>
+        <textarea id="exploreData" rows="4" class="field w-full rounded-lg border border-slate-200 bg-white p-3 text-sm" placeholder="탐구: 실제로 측정해 보니 ___였다."></textarea>
+      </section>
+
+      <section class="rounded-xl border border-slate-200 bg-violet-50/40 p-5">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-violet-600 px-2 py-0.5 text-xs font-bold text-white">E</span>
+          <h2 class="text-base font-bold text-slate-800">Explain (설명)</h2>
+        </div>
+        <p class="mb-3 text-xs text-slate-500">탐구 결과를 물질 보존 원리와 연결하여 과학적으로 설명해 보세요.</p>
+        <textarea id="explain" rows="5" class="field w-full rounded-lg border border-slate-200 bg-white p-3 text-sm" placeholder="설명: 이것은 ___ 때문이라고 설명할 수 있다."></textarea>
+      </section>
+    </div>
+
+    <section class="mt-8 border-t border-slate-200 pt-6">
+      <h2 class="mb-3 text-sm font-bold text-slate-800">셀프 체크</h2>
+      <div class="space-y-2 text-sm text-slate-600">
+        <label class="flex gap-2"><input type="checkbox" id="check1" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>예측 → 탐구(측정) → 설명 순서로 작성했나요?</span></label>
+        <label class="flex gap-2"><input type="checkbox" id="check2" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>예측과 실제 결과의 차이를 비교했나요?</span></label>
+        <label class="flex gap-2"><input type="checkbox" id="check3" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>물질 보존 원리를 설명에 포함했나요?</span></label>
+      </div>
+      <div class="no-print mt-6 flex justify-end gap-3">
+        <button type="button" onclick="saveData()" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">임시 저장</button>
+        <button type="button" onclick="window.print()" class="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700">작성 완료 및 인쇄(PDF)</button>
+      </div>
+    </section>
+  </div>
+  <script>
+    var KEY = 'lesson-03-e3';
+    var fields = ['grade','classNo','studentNo','studentName','estimate','exploreData','explain','check1','check2','check3'];
+    window.onload = function() {
+      fields.forEach(function(f) {
+        var val = localStorage.getItem(KEY + '_' + f);
+        if (val === null) return;
+        var el = document.getElementById(f);
+        if (el.type === 'checkbox') el.checked = val === 'true'; else el.value = val;
+      });
+    };
+    function saveData() {
+      fields.forEach(function(f) {
+        var el = document.getElementById(f);
+        localStorage.setItem(KEY + '_' + f, el.type === 'checkbox' ? el.checked : el.value);
+      });
+      alert('학습지가 임시 저장되었습니다.');
+    }
+  </script>
+</body>
+</html>

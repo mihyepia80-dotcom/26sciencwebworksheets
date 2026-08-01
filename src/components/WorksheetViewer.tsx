@@ -29,6 +29,8 @@ import { useWorksheetState } from "@/lib/useWorksheetState";
 import { getMinFieldChars } from "@/lib/worksheet-validation";
 import { canPersistStudentWork, isGuest, isLoggedInStudent, isWorksheetEditorMode } from "@/lib/auth/access";
 import { GuestNotice } from "@/components/common/GuestNotice";
+import { getDissolutionWorksheetDefaults } from "@/lib/worksheet-content/build-schemas";
+import { getDissolutionLesson } from "@/lib/worksheet-content/dissolution-lessons";
 
 interface WorksheetViewerProps {
   templateId: string;
@@ -50,6 +52,7 @@ export function WorksheetViewer({
   const searchParams = useSearchParams();
   const editSubmissionId = editSubmissionIdProp ?? searchParams.get("submission");
   const linkedReportId = linkedReportIdProp;
+  const urlPeriod = searchParams.get("period")?.trim() || "";
 
   const { user, role, studentProfile } = useAuth();
   const template = getTemplateById(templateId);
@@ -125,6 +128,23 @@ export function WorksheetViewer({
     enabled: worksheetEditorMode && Boolean(user?.uid),
     onLoaded: handleLoaded,
   });
+
+  const activePeriod = meta.period?.trim() || urlPeriod || undefined;
+
+  useEffect(() => {
+    if (editSubmissionId || !urlPeriod) return;
+    const lesson = getDissolutionLesson(urlPeriod);
+    if (!lesson || lesson.templateId !== templateId) return;
+    const defaults = getDissolutionWorksheetDefaults(urlPeriod);
+    setMeta((prev) => ({
+      ...prev,
+      period: urlPeriod,
+      unit: prev.unit?.trim() ? prev.unit : defaults.unit ?? "",
+      topic: prev.topic?.trim() ? prev.topic : defaults.topic ?? "",
+      inquiryQuestion: prev.inquiryQuestion?.trim() ? prev.inquiryQuestion : defaults.inquiryQuestion ?? "",
+      writingContext: prev.writingContext?.trim() ? prev.writingContext : defaults.writingGuide ?? "",
+    }));
+  }, [editSubmissionId, urlPeriod, templateId]);
 
   const buildSavePayload = useCallback(() => {
     if (!user || !template) return null;
@@ -359,11 +379,11 @@ export function WorksheetViewer({
 
         {worksheetEditorMode ? (
           embedded || guestMode ? (
-            <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+            <TemplateRenderer templateId={templateId} period={activePeriod} values={values} onChange={onChange} readOnly={submitted} />
           ) : (
             <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_340px]">
               <div className="min-w-0">
-                <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+                <TemplateRenderer templateId={templateId} period={activePeriod} values={values} onChange={onChange} readOnly={submitted} />
               </div>
               {guided.visible && (
                 <div className="lg:sticky lg:top-4 lg:self-start print:hidden">
@@ -379,7 +399,7 @@ export function WorksheetViewer({
             </div>
           )
         ) : (
-          <TemplateRenderer templateId={templateId} values={values} onChange={onChange} readOnly={submitted} />
+          <TemplateRenderer templateId={templateId} period={activePeriod} values={values} onChange={onChange} readOnly={submitted} />
         )}
 
         <WorksheetPrintBar

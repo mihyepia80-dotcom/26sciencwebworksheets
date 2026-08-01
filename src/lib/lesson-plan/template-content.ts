@@ -26,7 +26,7 @@ export const EXPERIMENT_LESSON_SAMPLE: LessonPlanForm = {
   ...EMPTY_LESSON_PLAN,
   planTitle: "[실험반] 용해와 용액 1차시 — 물질이 물에 녹는 현상 관찰",
   unit: "3. 용해와 용액",
-  period: "1/12",
+  period: "1/8",
   teachingModel: "개념기반 탐구학습",
   coreIdea:
     "물질은 여러 가지 상태로 존재하며, 구성 입자의 운동에 따라 물질의 상태와 물리적 성질이 변한다.",

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>1차시 — See·Think·Wonder (STW) 학습지</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8fafc; line-height: 1.65; }
+    @page { size: A4; margin: 14mm; }
+    @media print {
+      html, body { background: #fff !important; font-size: 11pt; padding: 0 !important; }
+      .no-print { display: none !important; }
+      .print-card { border: 1px solid #cbd5e1 !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+      textarea, input { border: 1px solid #cbd5e1 !important; background: #fff !important; resize: none !important; }
+      section { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body class="px-4 py-8 sm:px-6 lg:px-8">
+  <div class="print-card mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+    <header class="mb-6 border-b border-slate-200 pb-6 text-center">
+      <p class="text-xs font-medium text-slate-500">과학 5학년 2학기 / 3. 용해와 용액 (1차시)</p>
+      <h1 class="mt-1 text-2xl font-bold text-slate-800">See · Think · Wonder</h1>
+      <p class="mt-1 text-xs font-medium text-indigo-600">STW + 3-2-1 Bridge</p>
+      <p class="mt-2 text-sm text-slate-600">물질이 물에 녹으면 어떻게 되는지 관찰하기</p>
+    </header>
+
+    <section class="mb-6 grid grid-cols-2 gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-4">
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">학년</label><input type="number" id="grade" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="5"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">반</label><input type="number" id="classNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="1"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">번호</label><input type="number" id="studentNo" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="1"></div>
+      <div><label class="mb-1 block text-xs font-medium text-slate-500">이름</label><input type="text" id="studentName" class="field w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm" placeholder="이름"></div>
+    </section>
+
+    <section class="mb-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-emerald-900">구조 이해</h2>
+      <p class="text-xs leading-relaxed text-emerald-900/90">STW와 3-2-1 Bridge는 관찰한 사실을 바탕으로 생각과 궁금증을 구조화하도록 돕는 사고 도구이다. 학생들은 물질이 물에 녹는 모습을 보며 보이는 변화와 보이지 않는 변화를 구분하고, 자신이 본 것과 생각한 것, 궁금한 점을 차례로 정리한다. 이를 통해 용해 현상을 단순히 보는 데서 그치지 않고, 관찰을 토대로 과학적 질문을 생성하는 경험을 할 수 있다.</p>
+    </section>
+
+    <section class="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+      <h2 class="mb-2 text-sm font-bold text-blue-900">핵심 질문</h2>
+      <p class="text-sm text-blue-900/90">물질이 물에 녹을 때 눈에 보이는 변화와 보이지 않는 변화는 무엇이며, 우리는 무엇을 관찰해야 할까?</p>
+      <p class="mt-3 text-xs leading-relaxed text-slate-600">여러 가지 물질이 물에 녹는 모습을 자세히 살펴보세요. 보이는 변화와 보이지 않는 변화를 구분하며 See·Think·Wonder 순서로 정리하고, 수업 후 3-2-1 Bridge로 생각의 연결을 이어 가 보세요.</p>
+    </section>
+
+    <div class="grid gap-4 lg:grid-cols-3">
+      <section class="rounded-xl border border-slate-200 bg-sky-50/40 p-4">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-sky-600 px-2 py-0.5 text-xs font-bold text-white">See</span>
+          <h2 class="text-sm font-bold text-slate-800">보기</h2>
+        </div>
+        <p class="mb-2 text-xs text-slate-500">See: 색·모양·변화 등 관찰 사실만 객관적으로 적으세요.</p>
+        <textarea id="see" rows="7" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="See: 내가 본 것은 무엇인가?"></textarea>
+      </section>
+      <section class="rounded-xl border border-slate-200 bg-amber-50/40 p-4">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-amber-600 px-2 py-0.5 text-xs font-bold text-white">Think</span>
+          <h2 class="text-sm font-bold text-slate-800">생각하기</h2>
+        </div>
+        <p class="mb-2 text-xs text-slate-500">Think와 Wonder: 관찰을 바탕으로 생각과 탐구 질문을 만드세요.</p>
+        <textarea id="think" rows="7" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Think: 그것을 보고 무엇을 생각했는가?"></textarea>
+      </section>
+      <section class="rounded-xl border border-slate-200 bg-violet-50/40 p-4">
+        <div class="mb-2 flex items-center gap-2">
+          <span class="rounded-sm bg-violet-600 px-2 py-0.5 text-xs font-bold text-white">Wonder</span>
+          <h2 class="text-sm font-bold text-slate-800">궁금해하기</h2>
+        </div>
+        <p class="mb-2 text-xs text-slate-500">탐구하고 싶은 질문을 적어 보세요.</p>
+        <textarea id="wonder" rows="7" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Wonder: 무엇이 더 궁금한가?"></textarea>
+      </section>
+    </div>
+
+    <section class="mt-6 rounded-xl border border-slate-200 p-4">
+      <h2 class="mb-2 text-sm font-bold text-slate-800">실험 과정·결과 기록</h2>
+      <p class="mb-2 text-xs text-slate-500">실험 과정·결과는 이 란에 함께 적으세요.</p>
+      <textarea id="experiment" rows="3" class="field w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="관찰한 물질, 실험 방법, 눈에 보이는 변화 등을 기록하세요."></textarea>
+    </section>
+
+    <section class="mt-6 rounded-xl border border-dashed border-yellow-300 bg-yellow-50/40 p-4">
+      <h2 class="mb-1 text-sm font-bold text-yellow-900">3-2-1 Bridge (수업 후 간단 정리)</h2>
+      <p class="mb-3 text-xs text-slate-600">수업 후 배운 것 3가지, 흥미로웠던 점 2가지, 아직 궁금한 점 1가지를 적고, 수업 전·후 생각을 연결해 보세요.</p>
+      <div class="grid gap-3 sm:grid-cols-3">
+        <div>
+          <label class="mb-1 block text-xs font-medium text-sky-800">배운 것 3</label>
+          <textarea id="learned321" rows="4" class="field w-full rounded-lg border border-slate-200 bg-white p-2 text-sm" placeholder="1. / 2. / 3."></textarea>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-rose-800">흥미로웠던 점 2</label>
+          <textarea id="curious321" rows="4" class="field w-full rounded-lg border border-slate-200 bg-white p-2 text-sm" placeholder="1. / 2."></textarea>
+        </div>
+        <div>
+          <label class="mb-1 block text-xs font-medium text-amber-800">궁금한 점 1 · Bridge</label>
+          <textarea id="bridge321" rows="4" class="field w-full rounded-lg border border-slate-200 bg-white p-2 text-sm" placeholder="아직 궁금한 점과, 수업 전·후 생각이 어떻게 연결되는지 적어 보세요."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-8 border-t border-slate-200 pt-6">
+      <h2 class="mb-3 text-sm font-bold text-slate-800">셀프 체크</h2>
+      <div class="space-y-2 text-sm text-slate-600">
+        <label class="flex gap-2"><input type="checkbox" id="check1" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>See에는 관찰 사실만, Think에는 나의 생각을 구분하여 적었나요?</span></label>
+        <label class="flex gap-2"><input type="checkbox" id="check2" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>Wonder 질문이 오늘 관찰과 연결되어 있나요?</span></label>
+        <label class="flex gap-2"><input type="checkbox" id="check3" class="check mt-1 rounded border-slate-300 text-indigo-600"><span>3-2-1 Bridge에서 수업 전·후 생각의 연결을 적었나요?</span></label>
+      </div>
+      <div class="no-print mt-6 flex justify-end gap-3">
+        <button type="button" onclick="saveData()" class="rounded-xl bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-200">임시 저장</button>
+        <button type="button" onclick="window.print()" class="rounded-xl bg-indigo-600 px-5 py-2 text-sm font-medium text-white hover:bg-indigo-700">작성 완료 및 인쇄(PDF)</button>
+      </div>
+    </section>
+  </div>
+  <script>
+    var KEY = 'lesson-01-stw';
+    var fields = ['grade','classNo','studentNo','studentName','see','think','wonder','experiment','learned321','curious321','bridge321','check1','check2','check3'];
+    window.onload = function() {
+      fields.forEach(function(f) {
+        var val = localStorage.getItem(KEY + '_' + f);
+        if (val === null) return;
+        var el = document.getElementById(f);
+        if (el.type === 'checkbox') el.checked = val === 'true'; else el.value = val;
+      });
+    };
+    function saveData() {
+      fields.forEach(function(f) {
+        var el = document.getElementById(f);
+        localStorage.setItem(KEY + '_' + f, el.type === 'checkbox' ? el.checked : el.value);
+      });
+      alert('학습지가 임시 저장되었습니다.');
+    }
+  </script>
+</body>
+</html>

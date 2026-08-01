@@ -60,6 +60,8 @@ export interface TemplateProps {
   values: Answers;
   onChange: (key: string, value: string) => void;
   readOnly?: boolean;
+  /** 용해와 용액 등 단원 차시 (예: 1/8) — 차시별 학습지 형태 반영 */
+  period?: string;
 }
 
 export const DEFAULT_META: WorksheetMeta = {

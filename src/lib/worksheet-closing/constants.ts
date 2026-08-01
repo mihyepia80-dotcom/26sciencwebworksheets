@@ -1,4 +1,7 @@
 /** 모든 학습지 공통 마무리 입력 필드 키 */
+
+import { getDissolutionExtraFieldKeys } from "@/lib/worksheet-content/dissolution-lesson-forms";
+
 export const CLOSING_HEADLINE_KEY = "closingHeadline";
 
 export const CLOSING_CHECKLIST = [
@@ -33,15 +36,19 @@ export function appendClosingFieldKeys(templateId: string, fieldKeys: string[]):
   for (const key of closing) {
     if (!merged.includes(key)) merged.push(key);
   }
+  for (const key of getDissolutionExtraFieldKeys(undefined, templateId)) {
+    if (!merged.includes(key)) merged.push(key);
+  }
   return merged;
 }
 
 export const CLOSING_HEADLINE_MIN_CHARS = 40;
 
-/** 글자수·한글 검증에서 제외할 필드 (마무리·유도 질문 등) */
+/** 글자수·한글 검증에서 제외할 필드 (마무리·유도 질문·차시 셀프체크 등) */
 export function isExcludedFromCharCountValidation(key: string): boolean {
   if (key.startsWith("guided_q_")) return true;
   if (key.startsWith("closing")) return true;
+  if (key.startsWith("lessonCheck")) return true;
   if (key === CLOSING_HEADLINE_KEY) return true;
   return CLOSING_CHECKLIST.some((item) => item.key === key);
 }

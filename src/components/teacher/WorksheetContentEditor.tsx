@@ -295,7 +295,7 @@ export function WorksheetContentEditor() {
                 setPeriod(e.target.value);
                 syncDesignUrl({ period: e.target.value });
               }}
-              placeholder="1/12"
+              placeholder="1/8"
             />
           </label>
         </div>
@@ -315,7 +315,7 @@ export function WorksheetContentEditor() {
                       : "border border-indigo-200 bg-white text-indigo-800 hover:bg-indigo-50"
                   }`}
                 >
-                  {p.period} · {ws.templateLabel}
+                  {p.lessonLabel ?? p.period} · {ws.templateLabel}
                 </button>
               );
             })}
