@@ -5,6 +5,11 @@ import type { PadletBulletinColumnMode } from "@/lib/padlet/presets";
 import { resolveBoardInstructions } from "@/lib/padlet/presets";
 import type { PadletCreateBoardRequest } from "@/lib/padlet/types";
 import {
+  buildAndValidateColumnMap,
+  savePadletBoard,
+} from "@/lib/padlet/board-registry";
+import { DEFAULT_UNIT_ID } from "@/lib/padlet/padlet-fields";
+import {
   createAiRecipeBoard,
   getAiRecipeBoardStatus,
   isPadletConfigured,
@@ -67,12 +72,49 @@ export async function POST(request: Request) {
         columnLabels = seeded.columnLabels;
       }
 
+      let boardDocId: string | undefined;
+      let columnMapSize: number | undefined;
+
+      const shouldRegister =
+        body.registerBoard !== false &&
+        body.mode === "bulletin" &&
+        body.scope?.grade &&
+        body.scope?.classNo;
+
+      if (shouldRegister && body.scope) {
+        try {
+          const columnMap = await buildAndValidateColumnMap(board.id, columnMode);
+          boardDocId = await savePadletBoard({
+            teacherUid: teacher.uid,
+            boardId: board.id,
+            boardUrl: board.webUrl,
+            title: body.scope.title?.trim() || board.title || body.topic || "나눔 게시판",
+            columnMode,
+            scope: {
+              grade: Number(body.scope.grade),
+              classNo: Number(body.scope.classNo),
+              unitId: body.scope.unitId?.trim() || DEFAULT_UNIT_ID,
+              periods: Array.isArray(body.scope.periods)
+                ? body.scope.periods.map(Number).filter((n) => n > 0)
+                : [1, 2, 3, 4, 5, 6, 7, 8],
+            },
+            columnMap,
+          });
+          columnMapSize = Object.keys(columnMap).length;
+        } catch (regErr) {
+          const msg = regErr instanceof Error ? regErr.message : "보드 레지스트리 저장 실패";
+          return NextResponse.json({ error: msg }, { status: 502 });
+        }
+      }
+
       return NextResponse.json({
         statusKey: created.statusKey,
         status: "success" as const,
         board,
         columnsApplied,
         columnLabels,
+        boardDocId,
+        columnMapSize,
       });
     }
 

@@ -180,6 +180,8 @@
 | F-23 | 법적 고지 (개인정보·약관·AI 윤리) | 필수 | ✅ | 전체 |
 | F-24 | **탐구질문 챗봇** (학생 슬롯 조립 + AI 폴백) | 높음 | ✅ | 학생 |
 | F-24b | **탐구질문 챗봇 설정·로그** | 높음 | ✅ | 교사 |
+| F-25 | **패들렛 차시별 글쓰기 게시** (학생) | 높음 | ✅ | 학생 |
+| F-25b | **패들렛 보드 매핑·게시 현황** | 높음 | ✅ | 교사 |
 
 ---
 
@@ -433,9 +435,41 @@
 | POST | `/api/padlet/boards` | 보드 생성 (+ 컬럼 시드) |
 | GET | `/api/padlet/boards/status/[statusKey]` | AI 생성 진행 상태 |
 | GET | `/api/padlet/boards/[boardId]` | 보드 조회 |
-| POST | `/api/padlet/boards/[boardId]/posts` | 게시글 추가 |
+| POST | `/api/padlet/boards/[boardId]/posts` | 게시글 추가 (교사) |
+| POST | `/api/padlet/publish` | **F-25** 학생·교사 게시 (서버 대리) |
+| GET | `/api/padlet/boards/mine` | 학급 활성 보드·내 게시 현황 |
+| PATCH | `/api/padlet/boards/[boardDocId]/publish-state` | 게시 개방·마감 |
+| GET | `/api/padlet/boards/[boardDocId]/matrix` | 번호×차시 게시 매트릭스 |
+
+**F-25 연동 (v2.2)**: `numbers` 모드 보드 생성 시 `padletBoards`에 `columnMap` 저장 → 학생 제출 후 `PadletPublishPanel`에서 게시.
 
 **외부 API**: `https://api.padlet.dev/v1` — `X-Api-Key` 헤더
+
+---
+
+### 6.15a F-25 패들렛 차시별 글쓰기 게시 (학생)
+
+**목적**: 학습지 제출과 패들렛 게시를 하나의 흐름으로 연결 — 번호 컬럼에 차시별 카드 누적.
+
+**보드 구조**: 단원 1보드 · 컬럼=학생 번호 · 카드=차시 1개.
+
+**흐름**: `submitted` → `PadletPublishPanel` → `POST /api/padlet/publish` → 서버가 `students/{uid}.studentNo`로 컬럼 결정 → Padlet API 대리 게시.
+
+**본문 조립** (`post-composer.ts`): 한 줄 결론 + 핵심 필드 2~3개(600자) + F-13 공유 링크. **실명 미전송**.
+
+**중복 방지**: `padletPosts/{boardId_studentNo_period}` + `bodyHash` — 동일 내용은 `duplicate`(외부 호출 0).
+
+**Firestore**: `submissions.padletPost`, `padletPosts`, `padletBoards`.
+
+**쿼터**: 1인 1차시 1게시물(재게시는 갱신).
+
+---
+
+### 6.15b F-25b 패들렛 보드 매핑·게시 현황 (교사)
+
+- **보드 연결**: `/teacher/padlet` — `TeacherPadletBoardLink` (학년·반·단원·차시)
+- **현황**: `TeacherPadletPublishMatrix` — 번호×차시, 게시 개방·마감
+- **환경 변수**: `PADLET_PUBLISH_ENABLED`, `PADLET_PUBLISH_MAX_RETRY`, `PADLET_PUBLISH_CONCURRENCY`
 
 ---
 

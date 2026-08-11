@@ -181,6 +181,19 @@ export default function MyWorksheetsPage() {
                           {submission.status === "submitted" ? "보기" : "이어서 작성"}
                         </Link>
                       </div>
+                      {submission.padletPost?.postUrl && (
+                        <p className="mt-4 text-sm text-emerald-700">
+                          패들렛 게시됨 ·{" "}
+                          <a
+                            href={submission.padletPost.postUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-medium underline"
+                          >
+                            올린 글 보기
+                          </a>
+                        </p>
+                      )}
                       <dl className="grid gap-4 sm:grid-cols-2">
                         {Object.entries(submission.meta)
                           .filter(([, v]) => v && String(v).trim())

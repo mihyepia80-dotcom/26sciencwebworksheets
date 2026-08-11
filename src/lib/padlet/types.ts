@@ -32,6 +32,15 @@ export interface PadletCreateBoardRequest {
   workspaceId?: string;
   wait?: boolean;
   seedColumns?: boolean;
+  /** F-25: 보드 레지스트리 저장 */
+  registerBoard?: boolean;
+  scope?: {
+    grade: number;
+    classNo: number;
+    unitId: string;
+    periods: number[];
+    title?: string;
+  };
 }
 
 export interface PadletCreateBoardResponse {
@@ -40,6 +49,8 @@ export interface PadletCreateBoardResponse {
   board?: PadletBoardSummary;
   columnsApplied?: number;
   columnLabels?: string[];
+  boardDocId?: string;
+  columnMapSize?: number;
 }
 
 export interface PadletPostInput {

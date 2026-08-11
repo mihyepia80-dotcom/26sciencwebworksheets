@@ -226,14 +226,6 @@ export async function seedBulletinColumnPosts(
   return { columnsApplied: applied, columnLabels: labels };
 }
 
-export async function getBoardById(boardId: string): Promise<PadletBoardSummary> {
-  const payload = await padletRequest<BoardResponse>(`/boards/${encodeURIComponent(boardId)}`);
-  if (!payload.data) {
-    throw new PadletApiError("패들렛 게시판을 찾을 수 없습니다.", 404);
-  }
-  return mapBoard(payload.data);
-}
-
 export async function createBoardPost(boardId: string, input: PadletPostInput): Promise<PadletPostSummary> {
   const subject = String(input.subject ?? "").trim();
   const postBody = String(input.body ?? "").trim();
@@ -289,4 +281,69 @@ export async function createBoardPost(boardId: string, input: PadletPostInput): 
     subject: String(postContent.subject ?? ""),
     body: String(postContent.body ?? ""),
   };
+}
+
+export async function getBoardById(boardId: string): Promise<PadletBoardSummary> {
+  const payload = await padletRequest<BoardResponse>(`/boards/${encodeURIComponent(boardId)}`);
+  if (!payload.data) {
+    throw new PadletApiError("패들렛 게시판을 찾을 수 없습니다.", 404);
+  }
+  return mapBoard(payload.data);
+}
+
+export async function updateBoardPost(
+  boardId: string,
+  postId: string,
+  input: PadletPostInput,
+): Promise<PadletPostSummary> {
+  const subject = String(input.subject ?? "").trim();
+  const postBody = String(input.body ?? "").trim();
+  const content: Record<string, unknown> = {};
+  if (subject) content.subject = subject;
+  if (postBody) content.body = postBody;
+
+  const attributes: Record<string, unknown> = { content };
+  if (input.color) attributes.color = input.color;
+
+  const payload = await padletRequest<PostResponse>(
+    `/boards/${encodeURIComponent(boardId)}/posts/${encodeURIComponent(postId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        data: { type: "post", id: postId, attributes },
+      }),
+    },
+  );
+
+  if (!payload.data) {
+    throw new PadletApiError("게시글 수정 응답을 처리할 수 없습니다.", 502);
+  }
+
+  const postAttributes = (payload.data.attributes ?? {}) as Record<string, unknown>;
+  const postContent = (postAttributes.content ?? {}) as Record<string, unknown>;
+  return {
+    id: String(payload.data.id ?? postId),
+    subject: String(postContent.subject ?? subject),
+    body: String(postContent.body ?? postBody),
+  };
+}
+
+export function buildColumnMapFromSections(
+  sections: Array<{ id: string; title: string }>,
+  columnMode: "numbers" | "groups",
+): Record<string, string> {
+  const count = columnMode === "numbers" ? 25 : 6;
+  const map: Record<string, string> = {};
+  for (let i = 1; i <= count; i++) {
+    const label = columnMode === "numbers" ? `${i}번` : `${i}모둠`;
+    const matched =
+      sections.find(
+        (section) =>
+          section.title.includes(label) ||
+          section.title === String(i) ||
+          section.title.startsWith(`${i} `),
+      ) ?? sections[i - 1];
+    if (matched?.id) map[String(i)] = matched.id;
+  }
+  return map;
 }

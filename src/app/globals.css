@@ -341,6 +341,10 @@ body {
     display: none !important;
   }
 
+  .padlet-publish-panel {
+    display: none !important;
+  }
+
   .gsce-worksheet button,
   .gsce-worksheet .no-print {
     display: none !important;

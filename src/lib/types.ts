@@ -54,6 +54,10 @@ export interface TemplateDefinition {
   headerFields?: ("unit" | "period" | "inquiryQuestion" | "writingContext" | "description")[];
   /** F-24 탐구질문 챗봇 노출 */
   questionBot?: boolean;
+  /** F-25 패들렛 게시 요약 필드 */
+  padletFields?: string[];
+  /** F-25 기본 차시 번호 */
+  defaultPeriod?: number;
 }
 
 export type Answers = Record<string, string>;

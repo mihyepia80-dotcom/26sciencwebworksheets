@@ -30,6 +30,8 @@ import { getMinFieldChars } from "@/lib/worksheet-validation";
 import { canPersistStudentWork, isGuest, isLoggedInStudent, isWorksheetEditorMode } from "@/lib/auth/access";
 import { GuestNotice } from "@/components/common/GuestNotice";
 import { InquiryQuestionBotPanel } from "@/components/worksheet/InquiryQuestionBotPanel";
+import { PadletPublishPanel } from "@/components/worksheet/PadletPublishPanel";
+import type { SubmissionPadletPost } from "@/lib/padlet/publish-types";
 import { getDissolutionWorksheetDefaults } from "@/lib/worksheet-content/build-schemas";
 import { getDissolutionLesson } from "@/lib/worksheet-content/dissolution-lessons";
 
@@ -76,6 +78,7 @@ export function WorksheetViewer({
   const [aiFeedback, setAiFeedback] = useState("");
   const [aiRating, setAiRating] = useState<AiRating | null>(null);
   const [linkedInstanceNo, setLinkedInstanceNo] = useState<number | undefined>();
+  const [padletPost, setPadletPost] = useState<SubmissionPadletPost | undefined>();
 
   const { aiQuota, setAiQuota } = useAiQuota(user?.uid, isStudent);
   const { getProgress, loading: progressLoading } = useStudentTemplateProgress(isStudent);
@@ -107,6 +110,7 @@ export function WorksheetViewer({
       status: "draft" | "submitted";
       linkedReportId?: string;
       instanceNo?: number;
+      padletPost?: SubmissionPadletPost;
     }) => {
       setSubmissionId(data.submissionId);
       setMeta(data.meta);
@@ -117,6 +121,7 @@ export function WorksheetViewer({
       setSubmitted(isSubmitted);
       setIsDraft(!isSubmitted);
       setLinkedInstanceNo(data.instanceNo);
+      setPadletPost(data.padletPost);
     },
     [setAll],
   );
@@ -429,6 +434,22 @@ export function WorksheetViewer({
       {submitted && aiRating && aiFeedback && (
         <div className="print:hidden">
           <AiFeedbackCard rating={aiRating} feedback={aiFeedback} />
+        </div>
+      )}
+
+      {submitted && submissionId && user && isStudent && (
+        <div className="print:hidden">
+          <PadletPublishPanel
+            submissionId={submissionId}
+            submitted={submitted}
+            templateId={templateId}
+            templateName={template.name}
+            meta={meta}
+            values={values}
+            padletPost={padletPost}
+            isGuest={guestMode || !canPersist}
+            onPadletPostChange={setPadletPost}
+          />
         </div>
       )}
 

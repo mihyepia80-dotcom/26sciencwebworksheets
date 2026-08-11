@@ -7,6 +7,7 @@ import {
   findStudentDraftForTemplate,
   getSubmission,
 } from "@/lib/firebase";
+import type { SubmissionPadletPost } from "@/lib/padlet/publish-types";
 import type { WorksheetSubmissionStatus } from "@/lib/firebase/submissions";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 
@@ -19,6 +20,7 @@ interface LoadedSubmission {
   status: WorksheetSubmissionStatus;
   linkedReportId?: string;
   instanceNo?: number;
+  padletPost?: SubmissionPadletPost;
 }
 
 interface UseWorksheetLoaderOptions {
@@ -88,6 +90,7 @@ export function useWorksheetLoader({
           status: submission.status,
           linkedReportId: submission.linkedReportId,
           instanceNo: submission.instanceNo,
+          padletPost: submission.padletPost,
         });
       } catch {
         if (!cancelled) setLoadError("활동지를 불러오지 못했습니다.");

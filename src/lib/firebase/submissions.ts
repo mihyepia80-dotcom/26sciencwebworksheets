@@ -21,6 +21,8 @@ import { getClientDb } from "./client";
 import { deleteSharesForSubmission } from "./shares";
 import { listStudentsForTeacher } from "./student-auth";
 
+import type { SubmissionPadletPost } from "@/lib/padlet/publish-types";
+
 export type WorksheetSubmissionStatus = "draft" | "submitted";
 
 export interface WorksheetSubmission {
@@ -37,6 +39,7 @@ export interface WorksheetSubmission {
   instanceNo?: number;
   aiFeedback?: string;
   aiRating?: AiRating;
+  padletPost?: SubmissionPadletPost;
 }
 
 export interface SaveSubmissionInput {
@@ -76,6 +79,7 @@ function mapSubmissionDoc(id: string, data: Record<string, unknown>): WorksheetS
     aiRating: validRating,
     linkedReportId: data.linkedReportId ? String(data.linkedReportId) : undefined,
     instanceNo: typeof data.instanceNo === "number" ? data.instanceNo : undefined,
+    padletPost: data.padletPost as SubmissionPadletPost | undefined,
   };
 }
 

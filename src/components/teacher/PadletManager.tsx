@@ -17,6 +17,8 @@ import {
   type PadletBulletinColumnMode,
   type PadletSandboxType,
 } from "@/lib/padlet/presets";
+import { TeacherPadletBoardLink } from "@/components/teacher/TeacherPadletBoardLink";
+import { TeacherPadletPublishMatrix } from "@/components/teacher/TeacherPadletPublishMatrix";
 import type { PadletBoardSummary, PadletCreateBoardRequest } from "@/lib/padlet/types";
 
 const INPUT = "w-full rounded border border-slate-200 px-3 py-2 text-sm";
@@ -101,6 +103,15 @@ export function PadletManager() {
   const [postSubject, setPostSubject] = useState("");
   const [postBody, setPostBody] = useState("");
   const [posting, setPosting] = useState(false);
+  const [boardScope, setBoardScope] = useState({
+    grade: 5,
+    classNo: 3,
+    unitId: "dissolution-solution",
+    periods: [1, 2, 3, 4, 5, 6, 7, 8],
+    title: "용해와 용액 · 5학년 3반",
+  });
+  const [boardDocId, setBoardDocId] = useState<string | null>(null);
+  const [matrixToken, setMatrixToken] = useState<string | null>(null);
 
   const previewColumns = useMemo(() => buildColumnLabels(columnMode), [columnMode]);
 
@@ -139,6 +150,14 @@ export function PadletManager() {
       if (mode === "bulletin") {
         input.topic = topic.trim() || "자유 주제";
         input.columnMode = columnMode;
+        input.registerBoard = columnMode === "numbers";
+        input.scope = {
+          grade: boardScope.grade,
+          classNo: boardScope.classNo,
+          unitId: boardScope.unitId,
+          periods: boardScope.periods,
+          title: boardScope.title,
+        };
       }
       if (mode === "custom") {
         input.instructions = instructions.trim();
@@ -161,11 +180,18 @@ export function PadletManager() {
         setBoard(result.board);
         setPostBoardId(result.board.id);
         if (result.columnLabels?.length) setColumnLabels(result.columnLabels);
+        if (result.boardDocId) {
+          setBoardDocId(result.boardDocId);
+          setMatrixToken(token);
+        }
         const colMsg =
           result.columnsApplied != null && result.columnsApplied > 0
             ? ` 컬럼 ${result.columnsApplied}개에 안내 카드를 반영했습니다.`
             : "";
-        setMessage(`패들렛이 생성되었습니다.${colMsg}`);
+        const regMsg = result.boardDocId
+          ? ` Firestore 레지스트리 저장됨 (columnMap ${result.columnMapSize ?? 0}건).`
+          : "";
+        setMessage(`패들렛이 생성되었습니다.${colMsg}${regMsg}`);
       } else if (result.status === "in_progress") {
         setMessage("생성이 진행 중입니다. 아래에서 상태를 확인하세요.");
       } else if (result.status === "failed") {
@@ -393,6 +419,17 @@ export function PadletManager() {
                 생성 후 각 컬럼에 안내 카드가 자동으로 추가됩니다.
               </p>
             </div>
+
+            {columnMode === "numbers" && (
+              <TeacherPadletBoardLink
+                grade={boardScope.grade}
+                classNo={boardScope.classNo}
+                unitId={boardScope.unitId}
+                periods={boardScope.periods}
+                title={boardScope.title}
+                onChange={(patch) => setBoardScope((prev) => ({ ...prev, ...patch }))}
+              />
+            )}
           </div>
         )}
 
@@ -441,6 +478,15 @@ export function PadletManager() {
           <h2 className="text-lg font-bold text-slate-900">생성된 패들렛</h2>
           <div className="mt-3">
             <BoardCard board={board} columnLabels={columnLabels.length ? columnLabels : undefined} />
+          </div>
+        </section>
+      )}
+
+      {boardDocId && matrixToken && (
+        <section className="mt-8 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-bold text-slate-900">2. 게시 현황 (번호×차시)</h2>
+          <div className="mt-4">
+            <TeacherPadletPublishMatrix boardDocId={boardDocId} idToken={matrixToken} />
           </div>
         </section>
       )}

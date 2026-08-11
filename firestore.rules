@@ -461,5 +461,16 @@ service cloud.firestore {
     match /questionBotCache/{hash} {
       allow read, write: if false;
     }
+
+    match /padletBoards/{boardId} {
+      allow read: if request.auth != null;
+      allow write: if isTeacher();
+    }
+
+    match /padletPosts/{postId} {
+      allow read: if request.auth != null
+                    && (resource.data.studentUid == request.auth.uid || isTeacher());
+      allow write: if false;
+    }
   }
 }
