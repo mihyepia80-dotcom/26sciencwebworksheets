@@ -1,9 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { WorksheetMeta } from "@/lib/types";
-import { WorksheetCallout } from "@/components/common/WorksheetUi";
-import { QuestionSlotFields, slotsFromValues } from "@/components/worksheet/QuestionSlotFields";
+import {
+  getActiveChatStep,
+  QB_CHAT_STEPS,
+  QB_VALUE_KEYS,
+  slotsFromValues,
+  type QbChatStepKey,
+} from "@/components/worksheet/QuestionSlotFields";
 import { fetchQuestionBotStatus, requestQuestionBot } from "@/lib/inquiry-question-bot/client";
 import {
   assembleQuestion,
@@ -13,10 +18,15 @@ import {
   parseQuestionToSlots,
   slotsAreComplete,
 } from "@/lib/inquiry-question-bot/slot-rules";
-import { QB_VALUE_KEYS } from "@/lib/inquiry-question-bot/types";
 import type { QbChecklist } from "@/lib/inquiry-question-bot/types";
 
 const DEFAULT_UNIT_ID = "dissolution-solution";
+
+interface ChatLine {
+  id: string;
+  role: "bot" | "user" | "system";
+  text: string;
+}
 
 interface InquiryQuestionBotPanelProps {
   templateId: string;
@@ -28,6 +38,23 @@ interface InquiryQuestionBotPanelProps {
   studentUid?: string;
   period?: string;
   isGuest?: boolean;
+  onConfirmedChange?: (confirmed: boolean) => void;
+}
+
+function stepConfig(step: QbChatStepKey) {
+  if (step === "review" || step === "done") return null;
+  return QB_CHAT_STEPS.find((s) => s.key === step) ?? null;
+}
+
+function BotAvatar() {
+  return (
+    <div
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-sm font-bold text-white shadow-sm"
+      aria-hidden
+    >
+      톡
+    </div>
+  );
 }
 
 export function InquiryQuestionBotPanel({
@@ -40,6 +67,7 @@ export function InquiryQuestionBotPanel({
   studentUid,
   period,
   isGuest = false,
+  onConfirmedChange,
 }: InquiryQuestionBotPanelProps) {
   const slots = useMemo(() => slotsFromValues(values), [values]);
   const [draft, setDraft] = useState("");
@@ -51,20 +79,28 @@ export function InquiryQuestionBotPanel({
   const [turnsLeftToday, setTurnsLeftToday] = useState(5);
   const [loading, setLoading] = useState(false);
   const [confirmed, setConfirmed] = useState(() => Boolean(meta.inquiryQuestion?.trim()));
+  const [input, setInput] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const activePeriod = period || meta.period || "1/8";
   const unitId = DEFAULT_UNIT_ID;
+  const activeStep = getActiveChatStep(slots, confirmed);
+  const currentField = stepConfig(activeStep);
 
   useEffect(() => {
     const cl = evaluateChecklist(slots);
     setChecklist(cl);
     setQuality(computeQuality(cl));
-    if (slotsAreComplete(slots)) {
-      setDraft(assembleQuestion(slots));
-    } else {
-      setDraft("");
-    }
+    setDraft(slotsAreComplete(slots) ? assembleQuestion(slots) : "");
   }, [slots]);
+
+  useEffect(() => {
+    onConfirmedChange?.(confirmed);
+  }, [confirmed, onConfirmedChange]);
+
+  useEffect(() => {
+    if (meta.inquiryQuestion?.trim()) setConfirmed(true);
+  }, [meta.inquiryQuestion]);
 
   useEffect(() => {
     if (!studentUid || isGuest) return;
@@ -76,13 +112,70 @@ export function InquiryQuestionBotPanel({
     });
   }, [studentUid, isGuest, unitId, activePeriod]);
 
+  const chatLines = useMemo((): ChatLine[] => {
+    const lines: ChatLine[] = [
+      {
+        id: "intro",
+        role: "bot",
+        text: "안녕! 나는 탐구질문 도우미 톡톡이야. 세 가지 질문에 답하면 네 탐구 질문을 함께 만들 수 있어. 정답을 알려주지는 않아 — 네 말로 질문을 완성하는 거야!",
+      },
+    ];
+
+    for (let i = 0; i < QB_CHAT_STEPS.length; i++) {
+      const step = QB_CHAT_STEPS[i];
+      const prevOk = i === 0 || slots[QB_CHAT_STEPS[i - 1].key].trim();
+      if (!prevOk) break;
+      lines.push({ id: `ask-${step.key}`, role: "bot", text: step.prompt });
+      const answer = slots[step.key].trim();
+      if (answer) {
+        lines.push({ id: `ans-${step.key}`, role: "user", text: answer });
+      } else {
+        break;
+      }
+    }
+
+    if (slotsAreComplete(slots) && !confirmed) {
+      lines.push({
+        id: "draft",
+        role: "bot",
+        text: `이렇게 질문을 만들었어: 「${assembleQuestion(slots)}」\n마음에 들면 「이 질문으로」를 눌러 줘.`,
+      });
+    }
+
+    if (probe) {
+      lines.push({ id: "probe", role: "bot", text: probe });
+    }
+
+    if (confirmed && meta.inquiryQuestion?.trim()) {
+      lines.push({
+        id: "confirmed",
+        role: "system",
+        text: `✓ 탐구 질문 확정: 「${meta.inquiryQuestion.trim()}」\n이제 아래 사고 활동지를 작성해 보자!`,
+      });
+    }
+
+    return lines;
+  }, [slots, confirmed, meta.inquiryQuestion, probe]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [chatLines.length, candidates.length, loading]);
+
   const handleSlotChange = useCallback(
-    (key: keyof typeof slots, value: string) => {
+    (key: "observed" | "change" | "measure", value: string) => {
       const map = { observed: QB_VALUE_KEYS.observed, change: QB_VALUE_KEYS.change, measure: QB_VALUE_KEYS.measure };
       onChange(map[key], value);
     },
     [onChange],
   );
+
+  const sendCurrentStep = useCallback(() => {
+    if (readOnly || !currentField) return;
+    const text = input.trim();
+    if (!text) return;
+    handleSlotChange(currentField.key, text.slice(0, currentField.limit));
+    setInput("");
+  }, [readOnly, currentField, input, handleSlotChange]);
 
   const handleConfirm = useCallback(async () => {
     const question = (meta.inquiryQuestion?.trim() || draft).trim();
@@ -102,7 +195,7 @@ export function InquiryQuestionBotPanel({
         studentUid,
       });
     }
-  }, [meta.inquiryQuestion, draft, onMetaChange, onChange, studentUid, isGuest, unitId, activePeriod, templateId, quality]);
+  }, [meta.inquiryQuestion, draft, onMetaChange, onChange, studentUid, isGuest, unitId, activePeriod, templateId, slots]);
 
   const handleStuck = useCallback(async () => {
     if (readOnly || isGuest || !studentUid) return;
@@ -116,7 +209,7 @@ export function InquiryQuestionBotPanel({
         unitId,
         period: activePeriod,
         slots,
-        freeText: values[QB_VALUE_KEYS.freeText] ?? "",
+        freeText: values[QB_VALUE_KEYS.freeText] ?? input.trim(),
         studentUid,
       });
       setDraft(res.draft || assembleQuestion(slots));
@@ -128,85 +221,96 @@ export function InquiryQuestionBotPanel({
       setCandidates(res.candidates ?? []);
       if (res.message) setProbe(res.message);
     } catch {
-      setProbe("잠시 후 다시 시도해 보세요. 슬롯을 채워 직접 질문을 만들 수도 있어요.");
+      setProbe("잠시 후 다시 시도해 보세요. 위 질문에 차례대로 답해 보면 질문을 만들 수 있어요.");
     } finally {
       setLoading(false);
     }
-  }, [readOnly, isGuest, studentUid, templateId, unitId, activePeriod, slots, values]);
+  }, [readOnly, isGuest, studentUid, templateId, unitId, activePeriod, slots, values, input]);
 
   const pickCandidate = (text: string) => {
     const parsed = parseQuestionToSlots(text);
+    if (parsed.observed) onChange(QB_VALUE_KEYS.observed, parsed.observed);
     if (parsed.change) onChange(QB_VALUE_KEYS.change, parsed.change);
     if (parsed.measure) onChange(QB_VALUE_KEYS.measure, parsed.measure);
     onMetaChange("inquiryQuestion", text);
     onChange(QB_VALUE_KEYS.confirmed, text);
     setDraft(text);
     setConfirmed(false);
+    setInput("");
   };
 
   const stuckEligible = isStuckEligible(slots, checklist);
   const displayDraft = meta.inquiryQuestion?.trim() || draft;
+  const showComposer = !readOnly && !confirmed && currentField;
 
   return (
-    <section className="inquiry-question-bot ui-card overflow-hidden print:border-slate-300">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50 px-5 py-4">
-        <div>
-          <h2 className="text-base font-bold text-slate-900">탐구 질문 만들기</h2>
-          <p className="text-xs text-slate-600">관찰 → 바꿀 것 → 볼 것 순으로 적으면 질문이 만들어져요.</p>
+    <section className="inquiry-question-bot ui-card flex flex-col overflow-hidden print:border-slate-300">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-violet-100 bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-3 text-white">
+        <div className="flex items-center gap-3">
+          <BotAvatar />
+          <div>
+            <h2 className="text-base font-bold">탐구질문 톡톡</h2>
+            <p className="text-xs text-violet-100">1단계 · 탐구 질문 만들기</p>
+          </div>
         </div>
         {!isGuest && studentUid && (
-          <p className="no-print text-xs font-medium text-violet-700">
-            남은 도움 {turnsLeft}회 · 오늘 {turnsLeftToday}회
+          <p className="no-print text-xs font-medium text-violet-100">
+            도움 {turnsLeft}회 · 오늘 {turnsLeftToday}회
           </p>
         )}
       </div>
 
-      <div className="space-y-5 p-5">
-        <QuestionSlotFields slots={slots} onChange={handleSlotChange} readOnly={readOnly} />
+      <div
+        ref={scrollRef}
+        className="flex max-h-[min(420px,55vh)] min-h-[240px] flex-1 flex-col gap-3 overflow-y-auto bg-slate-50/80 px-4 py-4"
+        role="log"
+        aria-live="polite"
+        aria-label="탐구질문 챗봇 대화"
+      >
+        {chatLines.map((line) => (
+          <div
+            key={line.id}
+            className={`flex gap-2 ${line.role === "user" ? "flex-row-reverse" : ""} ${line.role === "system" ? "justify-center" : ""}`}
+          >
+            {line.role === "bot" && <BotAvatar />}
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-line ${
+                line.role === "user"
+                  ? "rounded-tr-sm bg-violet-600 text-white"
+                  : line.role === "system"
+                    ? "rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-900 text-center"
+                    : "rounded-tl-sm border border-slate-200 bg-white text-slate-800 shadow-sm"
+              }`}
+            >
+              {line.text}
+            </div>
+          </div>
+        ))}
 
-        {displayDraft && (
-          <WorksheetCallout variant="inquiry" title="내 탐구 질문 (자동 조립)">
-            <p className="text-base font-medium text-slate-900">&ldquo;{displayDraft}&rdquo;</p>
+        {activeStep === "review" && displayDraft && !confirmed && (
+          <div className="mx-auto w-full max-w-md rounded-xl border border-violet-200 bg-white p-4 shadow-sm">
+            <p className="text-xs font-semibold text-violet-700">질문 점검 · {quality}/3</p>
+            <ul className="mt-2 space-y-1 text-xs text-slate-700">
+              <li>{checklist.hasVariable ? "☑" : "☐"} 바꿀 조건과 볼 것</li>
+              <li>{checklist.isTestable ? "☑" : "☐"} 교실에서 확인 가능</li>
+              <li>{checklist.isMeasurable ? "☑" : "☐"} 측정·관찰 가능</li>
+            </ul>
             {!readOnly && (
-              <button
-                type="button"
-                className="no-print ui-btn-primary ui-btn-sm mt-3"
-                onClick={handleConfirm}
-              >
+              <button type="button" className="no-print ui-btn-primary ui-btn-sm mt-3 w-full" onClick={handleConfirm}>
                 이 질문으로
               </button>
             )}
-            {confirmed && (
-              <p className="mt-2 text-xs text-emerald-700">✓ 탐구 질문이 확정되었습니다.</p>
-            )}
-          </WorksheetCallout>
-        )}
-
-        <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-sm">
-          <p className="mb-2 font-semibold text-slate-800">질문 점검</p>
-          <ul className="space-y-1 text-slate-700">
-            <li>{checklist.hasVariable ? "☑" : "☐"} 바꿀 조건과 볼 것이 있다</li>
-            <li>{checklist.isTestable ? "☑" : "☐"} 교실에서 확인할 수 있다</li>
-            <li>{checklist.isMeasurable ? "☑" : "☐"} 볼 것을 측정·관찰할 수 있다</li>
-          </ul>
-          <p className="mt-2 text-xs text-slate-500">질 점수: {quality}/3</p>
-        </div>
-
-        {probe && (
-          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-            {probe}
-          </p>
+          </div>
         )}
 
         {candidates.length > 0 && (
-          <div className="no-print space-y-2">
-            <p className="text-sm font-semibold text-slate-700">탐구 질문 후보</p>
+          <div className="no-print space-y-2 pl-11">
+            <p className="text-xs font-semibold text-slate-600">탐구 질문 후보 — 골라 보세요</p>
             {candidates.map((c) => (
               <button
                 key={c}
                 type="button"
-                className="ui-chip w-full border border-violet-200 bg-white text-left text-sm hover:bg-violet-50"
-                aria-label={`후보 질문: ${c}`}
+                className="block w-full rounded-xl border border-violet-200 bg-white px-3 py-2 text-left text-sm hover:bg-violet-50"
                 onClick={() => pickCandidate(c)}
               >
                 {c}
@@ -215,21 +319,67 @@ export function InquiryQuestionBotPanel({
           </div>
         )}
 
-        {!readOnly && (
-          <div className="no-print flex flex-wrap gap-3">
+        {loading && (
+          <div className="flex gap-2 pl-11">
+            <span className="rounded-2xl rounded-tl-sm border border-slate-200 bg-white px-4 py-2 text-sm text-slate-500">
+              생각하는 중…
+            </span>
+          </div>
+        )}
+      </div>
+
+      {showComposer && (
+        <div className="no-print shrink-0 border-t border-slate-200 bg-white p-3">
+          {currentField && (
+            <p className="mb-2 text-xs font-medium text-violet-700">
+              {currentField.label} · {input.length}/{currentField.limit}자
+            </p>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="ui-input-compact min-w-0 flex-1"
+              value={input}
+              maxLength={currentField?.limit ?? 120}
+              placeholder={currentField?.placeholder ?? "답변을 입력하세요"}
+              disabled={loading}
+              onChange={(e) => setInput(e.target.value.slice(0, currentField?.limit ?? 120))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  sendCurrentStep();
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="ui-btn-primary shrink-0 px-4"
+              disabled={!input.trim() || loading}
+              onClick={sendCurrentStep}
+            >
+              보내기
+            </button>
+          </div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
               type="button"
               className="ui-btn-secondary ui-btn-sm"
               disabled={!stuckEligible || loading || isGuest || !studentUid || turnsLeft <= 0}
               onClick={handleStuck}
             >
-              {loading ? "도움 요청 중…" : "막혔어요, 도움받기"}
+              막혔어요
             </button>
-            {isGuest && (
-              <p className="text-xs text-slate-500">체험 모드에서는 규칙 조립만 사용할 수 있어요.</p>
-            )}
+            {isGuest && <span className="text-xs text-slate-500">체험 모드: AI 도움 없음</span>}
           </div>
-        )}
+        </div>
+      )}
+
+      <div className="hidden print:block border-t border-slate-200 p-4 text-sm">
+        <p className="font-semibold">탐구 질문</p>
+        {slots.observed && <p>관찰: {slots.observed}</p>}
+        {slots.change && <p>바꿀 것: {slots.change}</p>}
+        {slots.measure && <p>볼 것: {slots.measure}</p>}
+        {displayDraft && <p className="mt-2 font-medium">확정: {displayDraft}</p>}
       </div>
     </section>
   );

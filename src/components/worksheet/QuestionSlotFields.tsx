@@ -4,32 +4,31 @@ import { QB_SLOT_LIMITS } from "@/lib/inquiry-question-bot/config";
 import { QB_VALUE_KEYS } from "@/lib/inquiry-question-bot/types";
 import type { QbSlots } from "@/lib/inquiry-question-bot/types";
 
-interface QuestionSlotFieldsProps {
-  slots: QbSlots;
-  onChange: (key: keyof QbSlots, value: string) => void;
-  readOnly?: boolean;
-}
-
-const FIELDS: { key: keyof QbSlots; label: string; limit: number; placeholder: string }[] = [
+export const QB_CHAT_STEPS = [
   {
-    key: "observed",
-    label: "① 무엇을 보았나요?",
+    key: "observed" as const,
+    prompt: "무엇을 보았나요? 관찰한 사실을 적어 주세요.",
+    label: "① 관찰",
     limit: QB_SLOT_LIMITS.observed,
-    placeholder: "관찰한 사실을 적어 보세요",
+    placeholder: "예: 설탕이 물에 녹았다",
   },
   {
-    key: "change",
-    label: "② 무엇을 바꿔 볼까요?",
+    key: "change" as const,
+    prompt: "무엇을 바꿔 볼까요? 실험에서 바꿀 조건을 적어 주세요.",
+    label: "② 바꿀 것",
     limit: QB_SLOT_LIMITS.change,
-    placeholder: "바꿔 볼 조건",
+    placeholder: "예: 물의 온도",
   },
   {
-    key: "measure",
-    label: "③ 무엇이 달라지는지 볼까요?",
+    key: "measure" as const,
+    prompt: "무엇이 달라지는지 볼까요? 관찰·측정할 것을 적어 주세요.",
+    label: "③ 볼 것",
     limit: QB_SLOT_LIMITS.measure,
-    placeholder: "관찰·측정할 것",
+    placeholder: "예: 녹는 빠르기",
   },
-];
+] as const;
+
+export type QbChatStepKey = (typeof QB_CHAT_STEPS)[number]["key"] | "review" | "done";
 
 export function slotsFromValues(values: Record<string, string>): QbSlots {
   return {
@@ -39,31 +38,12 @@ export function slotsFromValues(values: Record<string, string>): QbSlots {
   };
 }
 
-export function QuestionSlotFields({ slots, onChange, readOnly }: QuestionSlotFieldsProps) {
-  return (
-    <div className="grid gap-4 md:grid-cols-2">
-      {FIELDS.map(({ key, label, limit, placeholder }) => (
-        <div key={key} className={key === "observed" ? "md:col-span-2" : ""}>
-          <label className="ui-label" htmlFor={`qb-${key}`}>
-            {label}
-          </label>
-          <input
-            id={`qb-${key}`}
-            type="text"
-            className="ui-input-compact w-full"
-            value={slots[key]}
-            maxLength={limit}
-            disabled={readOnly}
-            placeholder={placeholder}
-            onChange={(e) => onChange(key, e.target.value.slice(0, limit))}
-          />
-          <p className="mt-1 text-right text-xs text-slate-400">
-            {slots[key].length}/{limit}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
+export function getActiveChatStep(slots: QbSlots, confirmed: boolean): QbChatStepKey {
+  if (confirmed) return "done";
+  if (!slots.observed.trim()) return "observed";
+  if (!slots.change.trim()) return "change";
+  if (!slots.measure.trim()) return "measure";
+  return "review";
 }
 
 export { QB_VALUE_KEYS };

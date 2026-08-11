@@ -187,15 +187,17 @@
 
 ### 6.2 F-03 학습지 작성 (`WorksheetViewer`)
 
-**화면 구성**
+**화면 구성** (`questionBot: true` 학습지 — **모든 사고도구 학습지는 1단계 탐구질문 생성에서 시작**)
 
 1. **WorksheetHeader**: 단원·주제·글쓰기 상황 (전 템플릿 공통)
-2. **GuidedQuestionsPanel**: 교사 고정 유도 질문 (학생 직접 작성·수정 가능, **AI 자동 생성 UI 없음**)
-3. **InquiryQuestionBotPanel** (`questionBot: true`, F-24): 탐구 질문 슬롯 3칸·규칙 조립·AI 도움받기
-4. **TemplateRenderer**: 루틴별 React 컴포넌트
+2. **InquiryQuestionBotPanel** (F-24, **1단계**): 탐구질문 톡톡 **챗봇 대화창** — 봇/학생 말풍선, 하단 입력·보내기. 구조화 3문항(관찰→바꿀 것→볼 것)을 **순차 대화**로 유도 → 「이 질문으로」 확정
+3. **2단계 배너** 또는 **잠금 안내**: 질문 미확정 시 사고 활동지 숨김
+4. **GuidedQuestionsPanel** / **TemplateRenderer** 등 (**2단계**, `inquiryReady` 이후): 루틴별 React 컴포넌트·교사 유도 질문
 5. **WorksheetClosingSection**: 한 줄 결론 + 셀프 체크 3항
 6. **PeerFeedbackSection**: 조건부 동료 피드백
 7. **액션**: 임시 저장, 제출, PDF
+
+**게이트**: `inquiryReady = !questionBot || meta.inquiryQuestion || submitted` — 확정 전에는 2단계(활동지 본문) 잠금.
 
 **교사 설정 반영**
 
@@ -267,15 +269,17 @@
 
 **적용 범위**: `resolveTemplate()` — legacy 제외 전 템플릿 `questionBot: true` (PRD v1.0은 see-think-wonder 등 3종 명시, v2.0 구현은 전체 학습지 반영).
 
-**슬롯 3칸** (`qbObserved`, `qbChange`, `qbMeasure`):
+**슬롯 3칸** (`qbObserved`, `qbChange`, `qbMeasure`) — **챗 대화 UI**로 순차 수집 (그리드 폼 아님):
 
-| 슬롯 | 의미 | 상한 |
-|------|------|------|
-| ① | 관찰 사실 | 60자 |
-| ② | 조작 변인 | 20자 |
-| ③ | 종속 변인 | 20자 |
+| 슬롯 | 의미 | 봇 질문(예) | 상한 |
+|------|------|-------------|------|
+| ① | 관찰 사실 | 무엇을 관찰했나요? | 60자 |
+| ② | 조작 변인 | 무엇을 바꿔볼까요? | 20자 |
+| ③ | 종속 변인 | 무엇을 확인할까요? | 20자 |
 
-**흐름**: 슬롯 ②③ 충족 → 클라이언트 `assembleQuestion()` (네트워크 0) → 체크 3항 → 「이 질문으로」 확정 → `meta.inquiryQuestion`·제출 values 저장.
+**UI**: `InquiryQuestionBotPanel` — 말풍선 대화창, 현재 단계만 입력 활성, 「막혔어요」 AI 폴백, review 단계에서 조립·체크리스트·「이 질문으로」.
+
+**흐름**: 1단계 챗봇 대화(관찰→바꿀 것→볼 것 순 차례 질문) → 「이 질문으로」 확정 → 2단계 사고 활동지 잠금 해제 → `meta.inquiryQuestion` 저장.
 
 **AI 폴백**: 「막혔어요」 클릭 시 `POST /api/inquiry-question-bot` (`mode: refine`) — 되묻기 1문장 + 후보 2개, `maxOutputTokens: 200`, JSON 스키마 강제.
 
@@ -283,7 +287,7 @@
 
 **쿼터**: 차시당 3턴·1일 5턴(환경 변수·교사 `turnLimit` 설정).
 
-**컴포넌트**: `InquiryQuestionBotPanel`, `QuestionSlotFields` — `WorksheetViewer` 내 GuidedQuestionsPanel 아래.
+**컴포넌트**: `InquiryQuestionBotPanel`, `QuestionSlotFields` (`QB_CHAT_STEPS`) — `WorksheetViewer` **헤더 직후 최상단** (1단계).
 
 **API**: `POST /api/inquiry-question-bot`, `GET /api/ai-status` (`questionBot` 필드).
 

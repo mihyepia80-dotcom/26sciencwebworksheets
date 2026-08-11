@@ -136,6 +136,8 @@ export function WorksheetViewer({
   });
 
   const activePeriod = meta.period?.trim() || urlPeriod || undefined;
+  const inquiryReady =
+    !template?.questionBot || Boolean(meta.inquiryQuestion?.trim()) || submitted;
 
   useEffect(() => {
     if (editSubmissionId || !urlPeriod) return;
@@ -361,13 +363,50 @@ export function WorksheetViewer({
           readOnly={submitted}
         />
 
-        {!isStudent && role === "teacher" && template.aiFeature && (
+        {template.questionBot && (
+          <InquiryQuestionBotPanel
+            templateId={templateId}
+            meta={meta}
+            values={values}
+            onChange={onChange}
+            onMetaChange={onMetaChange}
+            readOnly={submitted}
+            studentUid={user?.uid}
+            period={activePeriod}
+            isGuest={guestMode || !canPersist}
+          />
+        )}
+
+        {template.questionBot && inquiryReady && (
+          <div className="print:hidden flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-sm font-bold text-white">
+              2
+            </span>
+            <div>
+              <p className="text-sm font-bold text-slate-900">사고 활동지 작성</p>
+              <p className="text-xs text-slate-600">
+                {meta.inquiryQuestion?.trim()
+                  ? `탐구 질문: ${meta.inquiryQuestion.trim()}`
+                  : "탐구 질문을 바탕으로 사고도구 활동을 이어갑니다."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {template.questionBot && !inquiryReady && !submitted && (
+          <div className="print:hidden rounded-xl border border-dashed border-violet-200 bg-violet-50/50 px-5 py-8 text-center">
+            <p className="text-sm font-medium text-violet-900">위 챗봇에서 탐구 질문을 먼저 만들어 주세요.</p>
+            <p className="mt-1 text-xs text-violet-700">질문을 확정하면 사고 활동지가 열립니다.</p>
+          </div>
+        )}
+
+        {!isStudent && role === "teacher" && template.aiFeature && inquiryReady && (
           <div className="print:hidden">
             <AiFeaturePanel template={template} />
           </div>
         )}
 
-        {!isStudent && role === "teacher" && guided.visible && (
+        {!isStudent && role === "teacher" && guided.visible && inquiryReady && (
           <div className="print:hidden">
             <GuidedQuestionsPanel
               topic={meta.topic}
@@ -383,20 +422,8 @@ export function WorksheetViewer({
           </div>
         )}
 
-        {template.questionBot && (
-          <InquiryQuestionBotPanel
-            templateId={templateId}
-            meta={meta}
-            values={values}
-            onChange={onChange}
-            onMetaChange={onMetaChange}
-            readOnly={submitted}
-            studentUid={user?.uid}
-            period={activePeriod}
-            isGuest={guestMode || !canPersist}
-          />
-        )}
-
+        {inquiryReady && (
+          <>
         {worksheetEditorMode ? (
           embedded || guestMode ? (
             <TemplateRenderer templateId={templateId} period={activePeriod} values={values} onChange={onChange} readOnly={submitted} />
@@ -429,6 +456,8 @@ export function WorksheetViewer({
             }
           }}
         />
+          </>
+        )}
       </div>
 
       {submitted && aiRating && aiFeedback && (
