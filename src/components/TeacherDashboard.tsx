@@ -188,6 +188,12 @@ export function TeacherDashboard() {
             유도 질문 관리
           </Link>
           <Link
+            href="/teacher/question-bot"
+            className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-900 hover:bg-violet-100"
+          >
+            탐구질문 챗봇
+          </Link>
+          <Link
             href="/teacher/padlet"
             className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
           >

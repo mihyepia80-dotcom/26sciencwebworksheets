@@ -446,5 +446,20 @@ service cloud.firestore {
       allow delete: if isTeacher();
       allow update: if false;
     }
+
+    match /inquiryQuestionSessions/{sessionId} {
+      allow create: if request.auth != null
+                    && request.resource.data.studentUid == request.auth.uid;
+      allow update: if request.auth != null
+                    && resource.data.studentUid == request.auth.uid;
+      allow read: if request.auth != null
+                    && (resource.data.studentUid == request.auth.uid
+                        || isTeacher());
+      allow delete: if isTeacher();
+    }
+
+    match /questionBotCache/{hash} {
+      allow read, write: if false;
+    }
   }
 }

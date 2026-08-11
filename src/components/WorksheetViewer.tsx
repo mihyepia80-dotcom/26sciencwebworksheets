@@ -29,6 +29,7 @@ import { useWorksheetState } from "@/lib/useWorksheetState";
 import { getMinFieldChars } from "@/lib/worksheet-validation";
 import { canPersistStudentWork, isGuest, isLoggedInStudent, isWorksheetEditorMode } from "@/lib/auth/access";
 import { GuestNotice } from "@/components/common/GuestNotice";
+import { InquiryQuestionBotPanel } from "@/components/worksheet/InquiryQuestionBotPanel";
 import { getDissolutionWorksheetDefaults } from "@/lib/worksheet-content/build-schemas";
 import { getDissolutionLesson } from "@/lib/worksheet-content/dissolution-lessons";
 
@@ -375,6 +376,20 @@ export function WorksheetViewer({
               onRegenerate={guided.studentMode ? undefined : guided.regenerate}
             />
           </div>
+        )}
+
+        {template.questionBot && (
+          <InquiryQuestionBotPanel
+            templateId={templateId}
+            meta={meta}
+            values={values}
+            onChange={onChange}
+            onMetaChange={onMetaChange}
+            readOnly={submitted}
+            studentUid={user?.uid}
+            period={activePeriod}
+            isGuest={guestMode || !canPersist}
+          />
         )}
 
         {worksheetEditorMode ? (

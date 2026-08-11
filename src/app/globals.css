@@ -332,7 +332,12 @@ body {
     page-break-inside: avoid;
   }
 
-  .worksheet-print-area button {
+  .worksheet-print-area button,
+  .worksheet-print-area .no-print {
+    display: none !important;
+  }
+
+  .inquiry-question-bot .no-print {
     display: none !important;
   }
 

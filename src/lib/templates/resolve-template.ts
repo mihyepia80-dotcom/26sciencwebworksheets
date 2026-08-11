@@ -9,6 +9,7 @@ export function resolveTemplate(def: TemplateDefinition | undefined): TemplateDe
   return {
     ...withCurriculum,
     fields: withCurriculum.fields ?? getFieldKeysForTemplate(withCurriculum.id),
+    questionBot: withCurriculum.legacy ? false : (withCurriculum.questionBot ?? true),
   };
 }
 

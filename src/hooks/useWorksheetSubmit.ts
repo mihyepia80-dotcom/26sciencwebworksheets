@@ -10,6 +10,7 @@ import {
   updateSubmission,
 } from "@/lib/firebase";
 import { validateWorksheetValues } from "@/lib/worksheet-validation";
+import { validateInquiryQuestion } from "@/lib/inquiry-question-bot/validation";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 
 interface SubmitPayload {
@@ -42,6 +43,12 @@ export function useWorksheetSubmit({ aiQuota, setAiQuota, onSuccess }: UseWorksh
       const validation = validateWorksheetValues(payload.templateId, payload.values);
       if (!validation.ok) {
         setSubmitError(validation.errors.slice(0, 5).join("\n"));
+        return;
+      }
+
+      const inquiryError = validateInquiryQuestion(payload.templateId, payload.meta, payload.values);
+      if (inquiryError) {
+        setSubmitError(inquiryError);
         return;
       }
 

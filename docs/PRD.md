@@ -60,7 +60,7 @@
 3. **학생 주도성**: 임시 저장, 재편집, `/my` 기록 조회
 4. **교사 통제**: Google 교사 + 6자리 암호, 전체 제출·설계·모둠 관리
 5. **반응형·인쇄**: 모바일·태블릿·데스크톱, A4 PDF
-6. **최소 침습 AI**: 학생 화면 AI 질문 생성 숨김, 제출 후 피드백만
+6. **최소 침습 AI**: 유도 질문 AI 생성은 교사 화면만; 학생 화면은 F-24 탐구질문 챗봇(규칙 우선·턴 제한)과 F-07 제출 후 피드백만
 7. **서버 비밀 관리**: API 키·Admin SDK는 Vercel 환경 변수만 사용 (`.env` 미사용)
 
 ---
@@ -178,6 +178,8 @@
 | F-21 | **통합 작업공간** (`/workspace`) | 중간 | ✅ | 학생 |
 | F-22 | **Padlet 생성** (샌드박스·게시판) | 중간 | ✅ | 교사 |
 | F-23 | 법적 고지 (개인정보·약관·AI 윤리) | 필수 | ✅ | 전체 |
+| F-24 | **탐구질문 챗봇** (학생 슬롯 조립 + AI 폴백) | 높음 | ✅ | 학생 |
+| F-24b | **탐구질문 챗봇 설정·로그** | 높음 | ✅ | 교사 |
 
 ---
 
@@ -187,10 +189,11 @@
 
 1. **WorksheetHeader**: 단원·주제·글쓰기 상황 (전 템플릿 공통)
 2. **GuidedQuestionsPanel**: 교사 고정 유도 질문 (학생 직접 작성·수정 가능, **AI 자동 생성 UI 없음**)
-3. **TemplateRenderer**: 루틴별 React 컴포넌트
-4. **WorksheetClosingSection**: 한 줄 결론 + 셀프 체크 3항
-5. **PeerFeedbackSection**: 조건부 동료 피드백
-6. **액션**: 임시 저장, 제출, PDF
+3. **InquiryQuestionBotPanel** (`questionBot: true`, F-24): 탐구 질문 슬롯 3칸·규칙 조립·AI 도움받기
+4. **TemplateRenderer**: 루틴별 React 컴포넌트
+5. **WorksheetClosingSection**: 한 줄 결론 + 셀프 체크 3항
+6. **PeerFeedbackSection**: 조건부 동료 피드백
+7. **액션**: 임시 저장, 제출, PDF
 
 **교사 설정 반영**
 
@@ -209,6 +212,7 @@
 | 한글 | `hasKorean()` 1자 이상 |
 | 예시 방지 | `example-texts.ts` 등록 문구 거부 |
 | 마무리 | `closingHeadline` 40자+ (Headline 템플릿 예외) |
+| 탐구 질문 (F-24) | `inquiryQuestion` 15자+, 물음표 종결, 예시 문구 거부 |
 | 셀프 체크 | 3항 필수 |
 | 동료 피드백 | 항목당 40자+ 한글 |
 
@@ -252,6 +256,44 @@
 - **「학생에게 제공」** (`pinned: true`) → 학생 활동지에 자동 반영
 - 학생 답변: `guided_q_0` … 필드
 - **Firestore**: `guidedQuestionSets/{id}`
+
+---
+
+### 6.6a F-24 탐구질문 챗봇 (학생)
+
+**목적**: Wonder·Puzzle 등 질문 단계에서 검증 가능한 탐구 질문 형성 — **규칙 우선, AI 폴백**, 무상태(히스토리 미전송).
+
+**적용 범위**: `resolveTemplate()` — legacy 제외 전 템플릿 `questionBot: true` (PRD v1.0은 see-think-wonder 등 3종 명시, v2.0 구현은 전체 학습지 반영).
+
+**슬롯 3칸** (`qbObserved`, `qbChange`, `qbMeasure`):
+
+| 슬롯 | 의미 | 상한 |
+|------|------|------|
+| ① | 관찰 사실 | 60자 |
+| ② | 조작 변인 | 20자 |
+| ③ | 종속 변인 | 20자 |
+
+**흐름**: 슬롯 ②③ 충족 → 클라이언트 `assembleQuestion()` (네트워크 0) → 체크 3항 → 「이 질문으로」 확정 → `meta.inquiryQuestion`·제출 values 저장.
+
+**AI 폴백**: 「막혔어요」 클릭 시 `POST /api/inquiry-question-bot` (`mode: refine`) — 되묻기 1문장 + 후보 2개, `maxOutputTokens: 200`, JSON 스키마 강제.
+
+**토큰 절감**: T1 규칙 조립, T2 히스토리 미전송, T3 입력 절단, T4 출력 상한, T5 `questionBotCache`, T6 `questionBotTurns`/`questionBotPeriods` (F-07과 분리).
+
+**쿼터**: 차시당 3턴·1일 5턴(환경 변수·교사 `turnLimit` 설정).
+
+**컴포넌트**: `InquiryQuestionBotPanel`, `QuestionSlotFields` — `WorksheetViewer` 내 GuidedQuestionsPanel 아래.
+
+**API**: `POST /api/inquiry-question-bot`, `GET /api/ai-status` (`questionBot` 필드).
+
+**Firestore**: `inquiryQuestionSessions/{id}`, `questionBotCache/{hash}` (Admin 전용).
+
+---
+
+### 6.6b F-24b 탐구질문 챗봇 설정·로그 (교사)
+
+- **설정**: `/teacher/question-bot` — `teachers/{uid}.questionBotConfig` (`enabled`, `turnLimit`, `unitHints`)
+- **로그**: `/teacher/question-bot/logs` — 초기→최종 질문, 질 점수(0~3), `GET /api/inquiry-question-bot/sessions` (교사 Bearer)
+- **연동**: 확정 질문 → F-11 탐구보고서 `inquiryProblem` 프리필 (`prefillConsolidatedFromWorksheet`)
 
 ---
 

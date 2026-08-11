@@ -52,6 +52,8 @@ export interface TemplateDefinition {
   /** 홈 목록에서 숨김(기존 제출 호환) */
   legacy?: boolean;
   headerFields?: ("unit" | "period" | "inquiryQuestion" | "writingContext" | "description")[];
+  /** F-24 탐구질문 챗봇 노출 */
+  questionBot?: boolean;
 }
 
 export type Answers = Record<string, string>;
