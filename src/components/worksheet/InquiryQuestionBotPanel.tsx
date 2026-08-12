@@ -17,6 +17,7 @@ import {
 import { fetchQuestionBotStatus, requestQuestionBot } from "@/lib/inquiry-question-bot/client";
 import {
   assembleQuestion,
+  buildRuleCandidates,
   computeQuality,
   evaluateChecklist,
   isStuckEligible,
@@ -90,8 +91,13 @@ export function InquiryQuestionBotPanel({
     const cl = evaluateChecklist(slots);
     setChecklist(cl);
     setQuality(computeQuality(cl));
-    setDraft(slotsAreComplete(slots) ? assembleQuestion(slots) : "");
-  }, [slots]);
+    const nextDraft = slotsAreComplete(slots) ? assembleQuestion(slots) : "";
+    setDraft(nextDraft);
+    if (slotsAreComplete(slots) && !confirmed) {
+      const rules = buildRuleCandidates(slots);
+      if (rules.length === 2) setCandidates(rules);
+    }
+  }, [slots, confirmed]);
 
   useEffect(() => {
     onConfirmedChange?.(confirmed);

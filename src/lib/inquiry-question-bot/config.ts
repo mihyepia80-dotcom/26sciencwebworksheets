@@ -3,7 +3,7 @@ export const QB_MODEL = process.env.GEMINI_QUESTION_BOT_MODEL ?? "gemini-2.5-fla
 export const QB_GEN_CONFIG = {
   temperature: 0.4,
   topP: 0.9,
-  maxOutputTokens: 200,
+  maxOutputTokens: 128,
   responseMimeType: "application/json",
 } as const;
 

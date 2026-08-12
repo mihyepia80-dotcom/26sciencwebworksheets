@@ -4,7 +4,10 @@ import {
   getActiveStructuredQuestion,
 } from "./chat-flow";
 import { containsUnsafeInput } from "./unsafe-terms";
+import { assembleInquiryQuestion, buildRuleCandidates } from "./question-assembler";
 import type { QbChecklist, QbSlots } from "./types";
+
+export { buildRuleCandidates };
 
 const MEASURABLE_HINTS = [
   "빠르",
@@ -35,18 +38,7 @@ const MEASURABLE_HINTS = [
 const VAGUE_MEASURES = ["신기", "재미", "느낌", "기분", "좋", "나쁘", "이상"];
 
 export function assembleQuestion(slots: QbSlots): string {
-  const change = slots.change.trim();
-  const measure = slots.measure.trim();
-  if (!change || !measure) return "";
-
-  if (/일\s*때와|과\s*.*과|A.*B|두\s*가지|비교/.test(change)) {
-    return `${change}일 때 ${measure}은(는) 어떻게 다를까?`;
-  }
-  if (/늘리|줄이|많|적|크|작|높|낮/.test(change)) {
-    return `${change}면 ${measure}도 달라질까?`;
-  }
-  const changePhrase = change.endsWith("를") || change.endsWith("을") ? change : `${change}를`;
-  return `${changePhrase} 바꾸면 ${measure}은(는) 어떻게 될까?`;
+  return assembleInquiryQuestion(slots);
 }
 
 export function parseQuestionToSlots(text: string): Partial<QbSlots> {

@@ -7,18 +7,13 @@ import {
   setQuestionBotCache,
 } from "@/lib/inquiry-question-bot/cache";
 import { QB_GEN_CONFIG, QB_MODEL } from "@/lib/inquiry-question-bot/config";
-import { filterAiResponse } from "@/lib/inquiry-question-bot/post-filter";
+import { filterAiResponseWithSlots } from "@/lib/inquiry-question-bot/post-filter";
 import { buildQbPrompt } from "@/lib/inquiry-question-bot/prompt";
 import { consumeQuestionBotQuota, getQuestionBotQuotaStatus } from "@/lib/inquiry-question-bot/quota";
 import { QB_RESPONSE_SCHEMA } from "@/lib/inquiry-question-bot/schema";
 import { sanitizeFreeText, sanitizeSlots } from "@/lib/inquiry-question-bot/sanitize";
 import { appendQuestionBotTurn, confirmQuestionBotSession } from "@/lib/inquiry-question-bot/session";
-import {
-  assembleQuestion,
-  buildRuleProbe,
-  computeQuality,
-  evaluateChecklist,
-} from "@/lib/inquiry-question-bot/slot-rules";
+import { assembleQuestion, buildRuleCandidates, buildRuleProbe, computeQuality, evaluateChecklist } from "@/lib/inquiry-question-bot/slot-rules";
 import type { QbAiPayload, QbRequest, QbResponse } from "@/lib/inquiry-question-bot/types";
 import { getQuestionBotTeacherConfig, getStudentTeacherUid, resolveUnitHint } from "@/lib/inquiry-question-bot/teacher-config";
 import { resolveGeminiApiKeyForStudent } from "@/lib/teacher/api-config";
@@ -169,7 +164,7 @@ export async function POST(request: Request) {
 
   if (geminiApiKey) {
     try {
-      const prompt = buildQbPrompt({ ...body, slots, freeText, unitId, period }, unitHint);
+      const prompt = buildQbPrompt({ ...body, slots, freeText, unitId, period }, unitHint, draft);
       const { data, usage: u } = await callGeminiJson<unknown>(prompt, {
         model: QB_MODEL,
         temperature: QB_GEN_CONFIG.temperature,
@@ -178,7 +173,7 @@ export async function POST(request: Request) {
         responseSchema: QB_RESPONSE_SCHEMA,
         apiKey: geminiApiKey,
       });
-      aiPayload = filterAiResponse(data);
+      aiPayload = filterAiResponseWithSlots(data, slots);
       usage = u;
     } catch {
       aiPayload = null;
@@ -186,7 +181,8 @@ export async function POST(request: Request) {
   }
 
   const probe = contextualizeProbe(aiPayload?.probe ?? buildRuleProbe(slots, checklist), slots);
-  const candidates = aiPayload?.candidates ?? [];
+  const ruleCandidates = buildRuleCandidates(slots);
+  const candidates = aiPayload?.candidates ?? (ruleCandidates.length === 2 ? ruleCandidates : []);
   const source = aiPayload ? "ai" : "rule";
 
   if (aiPayload) {
