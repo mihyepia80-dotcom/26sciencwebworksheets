@@ -9,6 +9,11 @@ import {
   slotsFromValues,
   type QbChatStepKey,
 } from "@/components/worksheet/QuestionSlotFields";
+import {
+  buildComposerPlaceholder,
+  buildConversationalChatLines,
+  getActiveStructuredQuestion,
+} from "@/lib/inquiry-question-bot/chat-flow";
 import { fetchQuestionBotStatus, requestQuestionBot } from "@/lib/inquiry-question-bot/client";
 import {
   assembleQuestion,
@@ -21,12 +26,6 @@ import {
 import type { QbChecklist } from "@/lib/inquiry-question-bot/types";
 
 const DEFAULT_UNIT_ID = "dissolution-solution";
-
-interface ChatLine {
-  id: string;
-  role: "bot" | "user" | "system";
-  text: string;
-}
 
 interface InquiryQuestionBotPanelProps {
   templateId: string;
@@ -112,50 +111,26 @@ export function InquiryQuestionBotPanel({
     });
   }, [studentUid, isGuest, unitId, activePeriod]);
 
-  const chatLines = useMemo((): ChatLine[] => {
-    const lines: ChatLine[] = [
-      {
-        id: "intro",
-        role: "bot",
-        text: "안녕! 나는 탐구질문 도우미 톡톡이야. 세 가지 질문에 답하면 네 탐구 질문을 함께 만들 수 있어. 정답을 알려주지는 않아 — 네 말로 질문을 완성하는 거야!",
-      },
-    ];
+  const chatLines = useMemo(
+    () =>
+      buildConversationalChatLines({
+        slots,
+        confirmed,
+        inquiryQuestion: meta.inquiryQuestion,
+        probe,
+      }),
+    [slots, confirmed, meta.inquiryQuestion, probe],
+  );
 
-    for (let i = 0; i < QB_CHAT_STEPS.length; i++) {
-      const step = QB_CHAT_STEPS[i];
-      const prevOk = i === 0 || slots[QB_CHAT_STEPS[i - 1].key].trim();
-      if (!prevOk) break;
-      lines.push({ id: `ask-${step.key}`, role: "bot", text: step.prompt });
-      const answer = slots[step.key].trim();
-      if (answer) {
-        lines.push({ id: `ans-${step.key}`, role: "user", text: answer });
-      } else {
-        break;
-      }
-    }
+  const composerPlaceholder = useMemo(() => {
+    if (!currentField) return "답변을 입력하세요";
+    return buildComposerPlaceholder(currentField.key, slots);
+  }, [currentField, slots]);
 
-    if (slotsAreComplete(slots) && !confirmed) {
-      lines.push({
-        id: "draft",
-        role: "bot",
-        text: `이렇게 질문을 만들었어: 「${assembleQuestion(slots)}」\n마음에 들면 「이 질문으로」를 눌러 줘.`,
-      });
-    }
-
-    if (probe) {
-      lines.push({ id: "probe", role: "bot", text: probe });
-    }
-
-    if (confirmed && meta.inquiryQuestion?.trim()) {
-      lines.push({
-        id: "confirmed",
-        role: "system",
-        text: `✓ 탐구 질문 확정: 「${meta.inquiryQuestion.trim()}」\n이제 아래 사고 활동지를 작성해 보자!`,
-      });
-    }
-
-    return lines;
-  }, [slots, confirmed, meta.inquiryQuestion, probe]);
+  const activeStructuredQuestion = useMemo(() => {
+    if (!currentField) return null;
+    return getActiveStructuredQuestion(currentField.key, slots);
+  }, [currentField, slots]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -175,6 +150,8 @@ export function InquiryQuestionBotPanel({
     if (!text) return;
     handleSlotChange(currentField.key, text.slice(0, currentField.limit));
     setInput("");
+    setProbe(null);
+    setCandidates([]);
   }, [readOnly, currentField, input, handleSlotChange]);
 
   const handleConfirm = useCallback(async () => {
@@ -330,9 +307,15 @@ export function InquiryQuestionBotPanel({
 
       {showComposer && (
         <div className="no-print shrink-0 border-t border-slate-200 bg-white p-3">
+          {currentField && activeStructuredQuestion && (
+            <div className="mb-3 rounded-xl border border-violet-100 bg-violet-50/60 px-3 py-2.5">
+              <p className="text-xs font-semibold text-violet-800">{currentField.label}</p>
+              <p className="mt-1 text-sm leading-snug text-slate-800">{activeStructuredQuestion}</p>
+            </div>
+          )}
           {currentField && (
-            <p className="mb-2 text-xs font-medium text-violet-700">
-              {currentField.label} · {input.length}/{currentField.limit}자
+            <p className="mb-2 text-xs text-slate-500">
+              {input.length}/{currentField.limit}자
             </p>
           )}
           <div className="flex gap-2">
@@ -341,7 +324,7 @@ export function InquiryQuestionBotPanel({
               className="ui-input-compact min-w-0 flex-1"
               value={input}
               maxLength={currentField?.limit ?? 120}
-              placeholder={currentField?.placeholder ?? "답변을 입력하세요"}
+              placeholder={composerPlaceholder}
               disabled={loading}
               onChange={(e) => setInput(e.target.value.slice(0, currentField?.limit ?? 120))}
               onKeyDown={(e) => {

@@ -1,6 +1,7 @@
 "use client";
 
 import type { WorksheetMeta } from "@/lib/types";
+import { MemoPad } from "@/components/common/MemoPad";
 import { getMetaFieldLabel, getMetaFieldPlaceholder } from "@/lib/meta-labels";
 
 interface WorksheetHeaderProps {
@@ -51,14 +52,16 @@ export function WorksheetHeader({
 
       <div className="grid grid-cols-1 border-b border-slate-100 md:grid-cols-[6.5rem_1fr]">
         <div className="meta-label leading-snug">{getMetaFieldLabel("unit")}</div>
-        <textarea
-          className="ui-textarea min-h-[4.5rem] !rounded-none border-0 px-4 !text-base focus:ring-0"
-          placeholder={`${getMetaFieldLabel("unit")}을(를) 입력하세요`}
-          rows={2}
-          value={meta.unit ?? ""}
-          disabled={readOnly}
-          onChange={(e) => onMetaChange("unit", e.target.value)}
-        />
+        <MemoPad inline>
+          <textarea
+            className="ui-textarea ui-memo-pad min-h-[4.5rem] !rounded-none border-0 px-4 !text-base focus:ring-0"
+            placeholder={`${getMetaFieldLabel("unit")}을(를) 입력하세요`}
+            rows={2}
+            value={meta.unit ?? ""}
+            disabled={readOnly}
+            onChange={(e) => onMetaChange("unit", e.target.value)}
+          />
+        </MemoPad>
       </div>
 
       <div className="grid grid-cols-1 border-b border-slate-100 md:grid-cols-[6.5rem_1fr]">
@@ -74,14 +77,16 @@ export function WorksheetHeader({
 
       <div className="grid grid-cols-1 md:grid-cols-[6.5rem_1fr]">
         <div className="meta-label leading-snug">{getMetaFieldLabel("writingContext")}</div>
-        <textarea
-          className="ui-textarea min-h-[5.5rem] !rounded-none border-0 px-4 !text-base focus:ring-0"
-          placeholder={getMetaFieldPlaceholder("writingContext")}
-          rows={3}
-          value={meta.writingContext ?? ""}
-          disabled={readOnly}
-          onChange={(e) => onMetaChange("writingContext", e.target.value)}
-        />
+        <MemoPad inline>
+          <textarea
+            className="ui-textarea ui-memo-pad min-h-[5.5rem] !rounded-none border-0 px-4 !text-base focus:ring-0"
+            placeholder={getMetaFieldPlaceholder("writingContext")}
+            rows={3}
+            value={meta.writingContext ?? ""}
+            disabled={readOnly}
+            onChange={(e) => onMetaChange("writingContext", e.target.value)}
+          />
+        </MemoPad>
       </div>
     </header>
   );

@@ -2,6 +2,7 @@
 
 import type { TemplateProps } from "@/lib/types";
 import { FieldBlock, WorksheetCallout } from "@/components/common/WorksheetUi";
+import { MemoTextArea } from "@/components/common/Fields";
 import { fieldValue as v } from "@/components/templates/utils";
 import { CSQ_SECTIONS } from "@/lib/templates/csq";
 import { useLessonWorksheetContent } from "@/hooks/useDissolutionLessonForm";
@@ -37,13 +38,13 @@ export function ClaimSupportQuestionTemplate({ values, onChange, readOnly, perio
             key === "claim" ? "Claim (주장)" : key === "support" ? "Support (근거)" : "Question (질문)";
           return (
             <FieldBlock key={key} badge={badgeMeta.badge} badgeClass={badgeMeta.badgeClass} title={displayTitle} guide={guideText}>
-              <textarea
-                className={`ui-textarea ${focusClass}`}
+              <MemoTextArea
+                className={focusClass}
                 rows={rows}
                 value={v(values, key)}
-                disabled={readOnly}
+                readOnly={readOnly}
                 placeholder={placeholderText}
-                onChange={(e) => onChange(key, e.target.value)}
+                onChange={(val) => onChange(key, val)}
               />
             </FieldBlock>
           );

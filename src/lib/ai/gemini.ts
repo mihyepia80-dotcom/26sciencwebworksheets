@@ -10,6 +10,8 @@ export interface GeminiCallOptions {
   retryOnQuota?: boolean;
   responseMimeType?: string;
   responseSchema?: object;
+  /** 호출자별 API 키 (관리자 공용 또는 교사 개인) */
+  apiKey?: string;
 }
 
 export interface GeminiCallResult {
@@ -21,9 +23,9 @@ async function requestGeminiText(
   prompt: string,
   options?: GeminiCallOptions,
 ): Promise<GeminiCallResult> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = options?.apiKey?.trim();
   if (!apiKey) {
-    throw new Error("AI 서비스가 설정되지 않았습니다.");
+    throw new Error("AI 서비스 API 키가 설정되지 않았습니다.");
   }
 
   const model = options?.model ?? DEFAULT_MODEL;

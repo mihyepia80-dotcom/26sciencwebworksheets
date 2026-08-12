@@ -54,7 +54,7 @@ export function StudentGroupRoleCard() {
 
   if (loading) {
     return (
-      <section className="ui-card mb-8 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6">
+      <section className="ui-card mb-0 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6">
         <p className="text-base text-slate-500">모둠 활동 정보를 불러오는 중...</p>
       </section>
     );
@@ -62,7 +62,7 @@ export function StudentGroupRoleCard() {
 
   if (error) {
     return (
-      <section className="ui-card mb-8 border-red-200 bg-red-50/60 p-6">
+      <section className="ui-card mb-0 border-red-200 bg-red-50/60 p-6">
         <p className="text-base text-red-700">{error}</p>
       </section>
     );
@@ -70,7 +70,7 @@ export function StudentGroupRoleCard() {
 
   if (!view || (!view.hasGroups && !view.hasRoles && view.myPraises.length === 0)) {
     return (
-      <section className="ui-card mb-8 border-slate-200 bg-slate-50/80 p-6">
+      <section className="ui-card mb-0 border-slate-200 bg-slate-50/80 p-6">
         <h2 className="ui-section-title text-slate-800">내 모둠 활동</h2>
         <p className="mt-3 text-base text-slate-600">
           아직 공개된 모둠 편성·역할·칭찬이 없습니다. 선생님이 편성을 저장하면 여기에 표시됩니다.
@@ -83,7 +83,7 @@ export function StudentGroupRoleCard() {
     view.weekStart && view.weekEnd ? formatWeekRange(view.weekStart, view.weekEnd) : "";
 
   return (
-    <section className="ui-card mb-8 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6">
+    <section className="ui-card mb-0 border-violet-200 bg-gradient-to-br from-violet-50 to-white p-6">
       <h2 className="ui-section-title text-violet-900">내 모둠 활동</h2>
 
       {view.groupNo !== null ? (

@@ -12,10 +12,10 @@ import { DEFAULT_UNIT_ID } from "@/lib/padlet/padlet-fields";
 import {
   createAiRecipeBoard,
   getAiRecipeBoardStatus,
-  isPadletConfigured,
   seedBulletinColumnPosts,
   waitForAiRecipeBoard,
 } from "@/lib/padlet/server";
+import { requireTeacherPadletKey } from "@/lib/teacher/resolve-api-http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,12 +24,9 @@ export async function POST(request: Request) {
   const teacher = await requireTeacherRequest(request);
   if (isTeacherAuthResponse(teacher)) return teacher;
 
-  if (!isPadletConfigured()) {
-    return NextResponse.json(
-      { error: "Padlet API 키가 설정되지 않았습니다. Vercel 환경 변수 PADLET_API_KEY를 확인해 주세요." },
-      { status: 503 },
-    );
-  }
+  const padletKey = await requireTeacherPadletKey(teacher.uid, teacher.email);
+  if ("error" in padletKey) return padletKey.error;
+  const apiKey = padletKey.apiKey;
 
   let body: PadletCreateBoardRequest;
   try {
@@ -55,19 +52,22 @@ export async function POST(request: Request) {
       columnMode,
     });
 
-    const created = await createAiRecipeBoard({
-      instructions,
-      role: body.role,
-      workspaceId: body.workspaceId,
-    });
+    const created = await createAiRecipeBoard(
+      {
+        instructions,
+        role: body.role,
+        workspaceId: body.workspaceId,
+      },
+      apiKey,
+    );
 
     if (body.wait !== false) {
-      const board = await waitForAiRecipeBoard(created.statusKey);
+      const board = await waitForAiRecipeBoard(created.statusKey, apiKey);
       let columnsApplied: number | undefined;
       let columnLabels: string[] | undefined;
 
       if (seedColumns) {
-        const seeded = await seedBulletinColumnPosts(board.id, columnMode, body.topic ?? "");
+        const seeded = await seedBulletinColumnPosts(board.id, columnMode, body.topic ?? "", apiKey);
         columnsApplied = seeded.columnsApplied;
         columnLabels = seeded.columnLabels;
       }
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
 
       if (shouldRegister && body.scope) {
         try {
-          const columnMap = await buildAndValidateColumnMap(board.id, columnMode);
+          const columnMap = await buildAndValidateColumnMap(board.id, columnMode, apiKey);
           boardDocId = await savePadletBoard({
             teacherUid: teacher.uid,
             boardId: board.id,
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const status = await getAiRecipeBoardStatus(created.statusKey);
+    const status = await getAiRecipeBoardStatus(created.statusKey, apiKey);
     return NextResponse.json(
       {
         statusKey: created.statusKey,

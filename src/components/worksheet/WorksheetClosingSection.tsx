@@ -1,6 +1,7 @@
 "use client";
 
 import type { TemplateProps } from "@/lib/types";
+import { MemoPad } from "@/components/common/MemoPad";
 import { fieldValue as v } from "@/components/templates/utils";
 import {
   CLOSING_CHECKLIST,
@@ -39,14 +40,16 @@ export function WorksheetClosingSection({
             <p className="mb-3 mt-1 text-sm text-slate-600">
               오늘 탐구·글쓰기에서 발견한 핵심을 한 문장으로 정리하세요.
             </p>
-            <input
-              type="text"
-              className="ui-input !text-base"
-              value={v(values, CLOSING_HEADLINE_KEY)}
-              disabled={readOnly}
-              placeholder="예: 용액은 일정한 성질을 유지하므로 우리 생활에서 믿고 쓸 수 있다."
-              onChange={(e) => onChange(CLOSING_HEADLINE_KEY, e.target.value)}
-            />
+            <MemoPad inline>
+              <input
+                type="text"
+                className="ui-input ui-memo-pad ui-memo-pad--input !text-base"
+                value={v(values, CLOSING_HEADLINE_KEY)}
+                disabled={readOnly}
+                placeholder="예: 용액은 일정한 성질을 유지하므로 우리 생활에서 믿고 쓸 수 있다."
+                onChange={(e) => onChange(CLOSING_HEADLINE_KEY, e.target.value)}
+              />
+            </MemoPad>
           </div>
         )}
 

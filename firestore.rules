@@ -217,6 +217,10 @@ service cloud.firestore {
       allow delete: if isTeacher();
     }
 
+    match /teacherApiSecrets/{teacherUid} {
+      allow read, write: if false;
+    }
+
     match /apiQuota/{docId} {
       allow read, write: if false;
 

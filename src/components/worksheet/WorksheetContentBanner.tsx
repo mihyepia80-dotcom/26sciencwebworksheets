@@ -1,7 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
+import type { AchievementLevelDescriptor } from "@/lib/curriculum/science-2022-dissolution";
 import { useLessonWorksheetContent } from "@/hooks/useDissolutionLessonForm";
 import { WorksheetCallout } from "@/components/common/WorksheetUi";
+import { CurriculumBanner } from "@/components/worksheet/CurriculumBanner";
 
 export function WorksheetContentBanner({
   templateId,
@@ -24,6 +27,23 @@ export function WorksheetContentBanner({
   const reminder2 = get("reminder2");
   const usageTips = get("usageTips");
   const periodLabel = get("periodLabel");
+  const coreIdea = get("coreIdea");
+  const achievementStandardId = get("achievementStandardId");
+  const achievementStandardText = get("achievementStandardText");
+  const achievementNotes = get("achievementNotes");
+  const inquiryActivity = get("inquiryActivity");
+  const inquiryStage = get("inquiryStage");
+  const targetAchievementLevel = get("targetAchievementLevel");
+  const achievementLevelFocusRaw = get("achievementLevelFocus");
+  const levelFocus = useMemo((): AchievementLevelDescriptor[] => {
+    if (!achievementLevelFocusRaw?.trim()) return [];
+    try {
+      const parsed = JSON.parse(achievementLevelFocusRaw) as AchievementLevelDescriptor[];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, [achievementLevelFocusRaw]);
   const hasReminders = Boolean(reminder1 || reminder2);
 
   if (
@@ -41,6 +61,17 @@ export function WorksheetContentBanner({
 
   return (
     <div className="worksheet-content-banner space-y-4">
+      <CurriculumBanner
+        coreIdea={coreIdea}
+        achievementStandardId={achievementStandardId}
+        achievementStandardText={achievementStandardText}
+        achievementNotes={achievementNotes}
+        inquiryActivity={inquiryActivity}
+        inquiryStage={inquiryStage}
+        targetLevel={targetAchievementLevel}
+        levelFocus={levelFocus}
+      />
+
       {(unit || topic || periodLabel) && (
         <div className="rounded-xl border border-slate-200/90 bg-white px-5 py-4 text-center shadow-sm">
           {unit && (

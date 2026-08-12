@@ -76,7 +76,7 @@ export function ThreeTwoOneReflectionTemplate({ values, onChange, readOnly }: Te
                       placeholder={placeholder}
                       rows={4}
                       readOnly={readOnly}
-                      className="flex-1 bg-white"
+                      className="flex-1"
                     />
                   </label>
                 );
@@ -94,7 +94,6 @@ export function ThreeTwoOneReflectionTemplate({ values, onChange, readOnly }: Te
             placeholder="수업 전 생각과 수업 후 생각을 비교해 연결해 보세요"
             rows={6}
             readOnly={readOnly}
-            className="bg-[linear-gradient(transparent_1.4rem,#fde68a_1.45rem)] bg-[length:100%_1.5rem]"
           />
         </div>
       </div>

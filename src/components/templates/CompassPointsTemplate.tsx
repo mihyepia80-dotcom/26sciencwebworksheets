@@ -47,7 +47,7 @@ function CompassTriangle({
         {labelKo}
       </span>
       <textarea
-        className={`ui-textarea absolute inset-0 h-full w-full resize-none border-0 bg-transparent text-base leading-relaxed focus:bg-pink-50/40 ${inputClass}`}
+        className={`ui-textarea no-memo absolute inset-0 h-full w-full resize-none border-0 bg-transparent text-base leading-relaxed focus:bg-pink-50/40 ${inputClass}`}
         value={v(values, fieldKey)}
         disabled={readOnly}
         placeholder=""

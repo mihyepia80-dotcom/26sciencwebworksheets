@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { Answers, WorksheetMeta } from "@/lib/types";
 import { GeminiApiError, callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
 import { consumeAiQuota, getAiQuotaStatus } from "@/lib/ai/quota";
+import { resolveGeminiApiKeyForStudent } from "@/lib/teacher/api-config";
+import { STUDENT_TEACHER_GEMINI_MISSING_MESSAGE } from "@/lib/teacher/api-config-messages";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,11 +40,6 @@ function parseGeminiJson(text: string): { rating: AiRating; feedback: string } {
 }
 
 export async function POST(request: Request) {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json({ error: "AI 서비스가 설정되지 않았습니다." }, { status: 503 });
-  }
-
   let body: FeedbackRequest;
   try {
     body = (await request.json()) as FeedbackRequest;
@@ -52,6 +49,11 @@ export async function POST(request: Request) {
 
   if (!body.studentUid?.trim()) {
     return NextResponse.json({ error: "학생 정보가 없습니다." }, { status: 400 });
+  }
+
+  const geminiApiKey = await resolveGeminiApiKeyForStudent(body.studentUid.trim());
+  if (!geminiApiKey) {
+    return NextResponse.json({ error: STUDENT_TEACHER_GEMINI_MISSING_MESSAGE }, { status: 503 });
   }
 
   const quotaBefore = await getAiQuotaStatus(body.studentUid);
@@ -90,6 +92,7 @@ feedback는 공백 포함 200자 이내로 작성하세요.`;
     const rawText = await callGeminiText(prompt, {
       temperature: 0.3,
       maxOutputTokens: 300,
+      apiKey: geminiApiKey,
     });
 
     const result = parseGeminiJson(rawText);

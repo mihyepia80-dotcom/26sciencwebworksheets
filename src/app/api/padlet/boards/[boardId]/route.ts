@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { isTeacherAuthResponse, requireTeacherRequest } from "@/lib/auth/verify-teacher-request";
 import { PadletApiError } from "@/lib/padlet/errors";
-import { getBoardById, isPadletConfigured } from "@/lib/padlet/server";
+import { getBoardById } from "@/lib/padlet/server";
+import { requireTeacherPadletKey } from "@/lib/teacher/resolve-api-http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,12 +15,8 @@ export async function GET(request: Request, context: RouteContext) {
   const teacher = await requireTeacherRequest(request);
   if (isTeacherAuthResponse(teacher)) return teacher;
 
-  if (!isPadletConfigured()) {
-    return NextResponse.json(
-      { error: "Padlet API 키가 설정되지 않았습니다. Vercel 환경 변수 PADLET_API_KEY를 확인해 주세요." },
-      { status: 503 },
-    );
-  }
+  const padletKey = await requireTeacherPadletKey(teacher.uid, teacher.email);
+  if ("error" in padletKey) return padletKey.error;
 
   const { boardId } = await context.params;
   if (!boardId?.trim()) {
@@ -27,7 +24,7 @@ export async function GET(request: Request, context: RouteContext) {
   }
 
   try {
-    const board = await getBoardById(boardId.trim());
+    const board = await getBoardById(boardId.trim(), padletKey.apiKey);
     return NextResponse.json({ board });
   } catch (error: unknown) {
     if (error instanceof PadletApiError) {

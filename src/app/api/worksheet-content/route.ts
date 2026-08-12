@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { GeminiApiError, callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
+import { isTeacherAuthResponse, requireTeacherRequest } from "@/lib/auth/verify-teacher-request";
 import { getWorksheetContentSchema } from "@/lib/worksheet-content/registry";
+import { requireTeacherGeminiKey } from "@/lib/teacher/resolve-api-http";
 
 interface ReviseRequest {
   templateId: string;
@@ -54,9 +56,11 @@ ${fieldLines}
 }
 
 export async function POST(request: Request) {
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: "AI 서비스가 설정되지 않았습니다." }, { status: 503 });
-  }
+  const teacher = await requireTeacherRequest(request);
+  if (isTeacherAuthResponse(teacher)) return teacher;
+
+  const gemini = await requireTeacherGeminiKey(teacher.uid, teacher.email);
+  if ("error" in gemini) return gemini.error;
 
   let body: ReviseRequest;
   try {
@@ -89,6 +93,7 @@ export async function POST(request: Request) {
     const raw = await callGeminiText(buildPrompt(body), {
       temperature: 0.45,
       maxOutputTokens: 2048,
+      apiKey: gemini.apiKey,
     });
     const parsed = parseGeminiJsonObject<{ fields?: Record<string, string> }>(raw);
     const revised = parsed.fields ?? {};

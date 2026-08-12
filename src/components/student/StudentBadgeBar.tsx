@@ -38,7 +38,7 @@ export function StudentBadgeBar() {
   if (role !== "student") return null;
 
   return (
-    <section className="ui-card mb-8 border-amber-100 bg-amber-50/40 p-5">
+    <section className="ui-card mb-0 border-amber-100 bg-amber-50/40 p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <h2 className="text-lg font-bold text-amber-950">나의 칭찬 배지</h2>
         {!loading && <span className="text-sm text-amber-900/70">누적 {badges.length}개</span>}

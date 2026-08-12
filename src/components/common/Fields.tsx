@@ -1,6 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { ReactNode, TextareaHTMLAttributes } from "react";
+import { MemoPad } from "@/components/common/MemoPad";
 
 interface FieldProps {
   label?: string;
@@ -10,6 +11,8 @@ interface FieldProps {
   rows?: number;
   readOnly?: boolean;
   className?: string;
+  /** 메모지 글틀 스타일 (기본 true — 학습지 답안) */
+  memo?: boolean;
 }
 
 export type SectionColor =
@@ -41,36 +44,92 @@ const SECTION_STYLES: Record<SectionColor, { shell: string; header: string }> = 
   slate: { shell: "border-slate-200/90 bg-slate-50/50", header: "border-slate-100 bg-slate-50/80" },
 };
 
-export function TextField({ label, value, onChange, placeholder, readOnly, className = "" }: FieldProps) {
+export function TextField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  readOnly,
+  className = "",
+  memo = true,
+}: FieldProps) {
+  const input = (
+    <input
+      type="text"
+      className={`ui-input disabled:bg-slate-50 ${memo ? "ui-memo-pad ui-memo-pad--input" : ""}`}
+      value={value}
+      placeholder={placeholder}
+      disabled={readOnly}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+
   return (
     <div className={className}>
       {label && <label className="ui-label">{label}</label>}
-      <input
-        type="text"
-        className="ui-input disabled:bg-slate-50"
-        value={value}
-        placeholder={placeholder}
-        disabled={readOnly}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      {memo ? <MemoPad inline>{input}</MemoPad> : input}
     </div>
   );
 }
 
-export function TextAreaField({ label, value, onChange, placeholder, rows = 6, readOnly, className = "" }: FieldProps) {
+export function TextAreaField({
+  label,
+  value,
+  onChange,
+  placeholder,
+  rows = 6,
+  readOnly,
+  className = "",
+  memo = true,
+}: FieldProps) {
+  const textarea = (
+    <textarea
+      className={`ui-textarea disabled:bg-slate-50 ${memo ? "ui-memo-pad" : ""}`}
+      value={value}
+      placeholder={placeholder}
+      rows={rows}
+      disabled={readOnly}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+
   return (
     <div className={`flex flex-col ${className}`}>
       {label && <label className="ui-label">{label}</label>}
-      <textarea
-        className="ui-textarea disabled:bg-slate-50"
-        value={value}
-        placeholder={placeholder}
-        rows={rows}
-        disabled={readOnly}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      {memo ? <MemoPad inline={rows <= 2}>{textarea}</MemoPad> : textarea}
     </div>
   );
+}
+
+/** FieldBlock 등에서 직접 textarea를 쓸 때 메모지 글틀 래퍼 */
+export function MemoTextArea({
+  className = "",
+  memo = true,
+  rows = 6,
+  readOnly,
+  value,
+  onChange,
+  placeholder,
+  ...rest
+}: Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, "onChange" | "value"> & {
+  value: string;
+  onChange: (value: string) => void;
+  memo?: boolean;
+}) {
+  const textarea = (
+    <textarea
+      {...rest}
+      rows={rows}
+      className={`ui-textarea disabled:bg-slate-50 ${memo ? "ui-memo-pad" : ""} ${className}`.trim()}
+      value={value}
+      placeholder={placeholder}
+      disabled={readOnly}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+
+  if (!memo) return textarea;
+  return <MemoPad inline={(rows ?? 6) <= 2}>{textarea}</MemoPad>;
 }
 
 export function SectionBox({
@@ -147,13 +206,14 @@ export function GridInput({
   return (
     <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
       {keys.map((key) => (
-        <textarea
-          key={key}
-          className={`ui-textarea min-h-[9rem] ${cellClass}`}
-          value={values[key] ?? ""}
-          disabled={readOnly}
-          onChange={(e) => onChange(key, e.target.value)}
-        />
+        <MemoPad key={key}>
+          <textarea
+            className={`ui-textarea ui-memo-pad min-h-[9rem] ${cellClass}`}
+            value={values[key] ?? ""}
+            disabled={readOnly}
+            onChange={(e) => onChange(key, e.target.value)}
+          />
+        </MemoPad>
       ))}
     </div>
   );

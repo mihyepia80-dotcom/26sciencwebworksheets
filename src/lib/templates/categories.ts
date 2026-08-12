@@ -11,13 +11,24 @@ export const CATEGORY_ORDER: ToolCategory[] = [
 ];
 
 export const CATEGORY_LABELS: Record<ToolCategory, string> = {
-  "concept-exploration": "󰊱 개념 소개 및 탐색 방법",
-  "concept-formation": "󰊲 개념 형성 방법",
-  "concept-synthesis": "󰊳 개념 종합 및 정리 방법",
-  "concept-deepening": "󰊴 개념 심화 방법",
-  "feedback-support": "󰊵 피드백 지원 방법",
-  "self-reflection": "󰊶 자기성찰 방법",
-  "student-exchange": "󰊷 학생교류 방법",
+  "concept-exploration": "① 개념 소개 및 탐색",
+  "concept-formation": "② 개념 형성",
+  "concept-synthesis": "③ 개념 종합 및 정리",
+  "concept-deepening": "④ 개념 심화",
+  "feedback-support": "⑤ 피드백 지원",
+  "self-reflection": "⑥ 자기성찰",
+  "student-exchange": "⑦ 학생교류",
+};
+
+/** 카테고리 빠른 이동·칩용 짧은 라벨 */
+export const CATEGORY_SHORT_LABELS: Record<ToolCategory, string> = {
+  "concept-exploration": "탐색",
+  "concept-formation": "형성",
+  "concept-synthesis": "종합",
+  "concept-deepening": "심화",
+  "feedback-support": "피드백",
+  "self-reflection": "성찰",
+  "student-exchange": "교류",
 };
 
 export const CATEGORY_SUBTITLES: Partial<Record<ToolCategory, string>> = {

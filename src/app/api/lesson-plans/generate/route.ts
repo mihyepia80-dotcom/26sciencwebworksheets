@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { GeminiApiError, callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
+import { isTeacherAuthResponse, requireTeacherRequest } from "@/lib/auth/verify-teacher-request";
 import {
   CURRENT_UNIT_LABEL,
   EXPERIMENT_LESSON_SAMPLE,
@@ -13,6 +14,7 @@ import {
   resolveUnitLabel,
 } from "@/lib/lesson-plan/unit-curriculum";
 import type { InquiryStages, LessonPlanForm, LessonProcessRow } from "@/lib/lesson-plan/types";
+import { requireTeacherGeminiKey } from "@/lib/teacher/resolve-api-http";
 
 interface GenerateRequest {
   unitId?: string;
@@ -135,10 +137,6 @@ ${extra}
 }
 
 export async function POST(request: Request) {
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: "AI 서비스가 설정되지 않았습니다." }, { status: 503 });
-  }
-
   let body: GenerateRequest;
   try {
     body = (await request.json()) as GenerateRequest;
@@ -154,10 +152,17 @@ export async function POST(request: Request) {
     });
   }
 
+  const teacher = await requireTeacherRequest(request);
+  if (isTeacherAuthResponse(teacher)) return teacher;
+
+  const gemini = await requireTeacherGeminiKey(teacher.uid, teacher.email);
+  if ("error" in gemini) return gemini.error;
+
   try {
     const raw = await callGeminiText(buildPrompt(body), {
       temperature: 0.5,
       maxOutputTokens: 4096,
+      apiKey: gemini.apiKey,
     });
     const parsed = parseGeminiJsonObject<Partial<LessonPlanForm> & { inquiryStages?: InquiryStages; processRows?: LessonProcessRow[] }>(raw);
     const plan = mergeGeneratedLessonPlan(parsed);

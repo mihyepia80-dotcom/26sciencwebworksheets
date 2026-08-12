@@ -1,3 +1,8 @@
+import {
+  buildObservedQuestion,
+  contextualizeProbe,
+  getActiveStructuredQuestion,
+} from "./chat-flow";
 import { containsUnsafeInput } from "./unsafe-terms";
 import type { QbChecklist, QbSlots } from "./types";
 
@@ -87,12 +92,22 @@ export function computeQuality(checklist: QbChecklist): 0 | 1 | 2 | 3 {
 }
 
 export function buildRuleProbe(slots: QbSlots, checklist: QbChecklist): string {
-  if (!slots.observed.trim()) return "무엇을 관찰했는지 적어 볼까요?";
-  if (!slots.change.trim()) return "무엇을 바꿔 볼 수 있을까요?";
-  if (!slots.measure.trim()) return "무엇이 달라지는지 볼까요?";
-  if (!checklist.hasVariable) return "바꿀 것과 볼 것을 다르게 적어 볼까요?";
-  if (!checklist.isMeasurable) return "볼 것을 측정·관찰할 수 있게 적어 볼까요?";
-  return "조건을 더 구체적으로 적어 볼까요?";
+  if (!slots.observed.trim()) {
+    return buildObservedQuestion();
+  }
+  if (!slots.change.trim()) {
+    return getActiveStructuredQuestion("change", slots);
+  }
+  if (!slots.measure.trim()) {
+    return getActiveStructuredQuestion("measure", slots);
+  }
+  if (!checklist.hasVariable) {
+    return contextualizeProbe("바꿀 것과 볼 것을 다르게 적어 볼까요?", slots);
+  }
+  if (!checklist.isMeasurable) {
+    return contextualizeProbe("볼 것을 측정·관찰할 수 있게 적어 볼까요?", slots);
+  }
+  return contextualizeProbe("조건을 더 구체적으로 적어 볼까요?", slots);
 }
 
 export function slotsAreComplete(slots: QbSlots): boolean {

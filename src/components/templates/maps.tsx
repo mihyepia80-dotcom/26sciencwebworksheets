@@ -2,7 +2,7 @@
 
 import type { TemplateProps } from "@/lib/types";
 import { FRAYER_FIELD_GUIDES, FRAYER_NONEXAMPLE_CHIPS } from "@/lib/templates/ai-guides";
-import { GuideChips, SectionBox, TextAreaField, TextField } from "@/components/common/Fields";
+import { GuideChips, MemoTextArea, SectionBox, TextAreaField, TextField } from "@/components/common/Fields";
 import { fieldValue as v } from "@/components/templates/utils";
 
 /* ── Circle & Tree Map ── */
@@ -54,11 +54,11 @@ export function CircleTreeMapTemplate({ values, onChange, readOnly }: TemplatePr
 /* ── Multi Flow Map ── */
 export function MultiFlowMapTemplate({ values, onChange, readOnly }: TemplateProps) {
   const box = (key: string) => (
-    <textarea
-      className="ui-textarea min-h-[9rem] w-full resize-y rounded border-2 border-pink-200 bg-pink-50 focus:outline-none"
+    <MemoTextArea
       value={v(values, key)}
-      disabled={readOnly}
-      onChange={(e) => onChange(key, e.target.value)}
+      onChange={(val) => onChange(key, val)}
+      readOnly={readOnly}
+      rows={5}
     />
   );
   return (
@@ -99,7 +99,7 @@ export function BridgeMapTemplate({ values, onChange, readOnly }: TemplateProps)
 /* ── Window Map ── */
 export function WindowMapTemplate({ values, onChange, readOnly }: TemplateProps) {
   const cell = (key: string) => (
-    <textarea className="ui-textarea min-h-[9rem] w-full resize-y border border-slate-300 bg-white focus:outline-none" value={v(values, key)} disabled={readOnly} onChange={(e) => onChange(key, e.target.value)} />
+    <MemoTextArea value={v(values, key)} onChange={(val) => onChange(key, val)} readOnly={readOnly} rows={5} />
   );
   return (
     <SectionBox title="윈도우맵" color="pink">

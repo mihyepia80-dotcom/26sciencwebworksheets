@@ -99,7 +99,7 @@ export function FieldBlock({
   children: ReactNode;
 }) {
   return (
-    <div className="ws-field-block rounded-xl border border-slate-200/90 bg-white p-5 shadow-sm">
+    <div className="ws-field-block rounded-xl border border-slate-200/90 bg-gradient-to-br from-slate-50/40 to-white p-5 shadow-sm">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         {badge && <WorksheetBadge className={badgeClass}>{badge}</WorksheetBadge>}
         <h3 className="text-base font-bold text-slate-900">{title}</h3>

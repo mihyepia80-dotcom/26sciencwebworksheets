@@ -21,6 +21,8 @@ import {
 } from "@/lib/inquiry-question-bot/slot-rules";
 import type { QbAiPayload, QbRequest, QbResponse } from "@/lib/inquiry-question-bot/types";
 import { getQuestionBotTeacherConfig, getStudentTeacherUid, resolveUnitHint } from "@/lib/inquiry-question-bot/teacher-config";
+import { resolveGeminiApiKeyForStudent } from "@/lib/teacher/api-config";
+import { contextualizeProbe } from "@/lib/inquiry-question-bot/chat-flow";
 import { containsUnsafeInput, getBlockedMessage } from "@/lib/inquiry-question-bot/unsafe-terms";
 
 export const runtime = "nodejs";
@@ -115,7 +117,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       status: "quota_exceeded",
       draft,
-      probe: buildRuleProbe(slots, checklist),
+      probe: contextualizeProbe(buildRuleProbe(slots, checklist), slots),
       candidates: [],
       checklist,
       quality,
@@ -133,7 +135,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       buildOkResponse({
         draft,
-        probe: cached.probe,
+        probe: contextualizeProbe(cached.probe, slots),
         candidates: cached.candidates,
         checklist,
         quality,
@@ -145,7 +147,7 @@ export async function POST(request: Request) {
   }
 
   if (!quotaStatus.enabled) {
-    const probe = buildRuleProbe(slots, checklist);
+    const probe = contextualizeProbe(buildRuleProbe(slots, checklist), slots);
     return NextResponse.json({
       status: "quota_exceeded",
       draft,
@@ -163,7 +165,9 @@ export async function POST(request: Request) {
   let aiPayload: QbAiPayload | null = null;
   let usage: { promptTokens: number; outputTokens: number } | undefined;
 
-  if (process.env.GEMINI_API_KEY) {
+  const geminiApiKey = await resolveGeminiApiKeyForStudent(body.studentUid.trim());
+
+  if (geminiApiKey) {
     try {
       const prompt = buildQbPrompt({ ...body, slots, freeText, unitId, period }, unitHint);
       const { data, usage: u } = await callGeminiJson<unknown>(prompt, {
@@ -172,6 +176,7 @@ export async function POST(request: Request) {
         maxOutputTokens: QB_GEN_CONFIG.maxOutputTokens,
         responseMimeType: QB_GEN_CONFIG.responseMimeType,
         responseSchema: QB_RESPONSE_SCHEMA,
+        apiKey: geminiApiKey,
       });
       aiPayload = filterAiResponse(data);
       usage = u;
@@ -180,7 +185,7 @@ export async function POST(request: Request) {
     }
   }
 
-  const probe = aiPayload?.probe ?? buildRuleProbe(slots, checklist);
+  const probe = contextualizeProbe(aiPayload?.probe ?? buildRuleProbe(slots, checklist), slots);
   const candidates = aiPayload?.candidates ?? [];
   const source = aiPayload ? "ai" : "rule";
 

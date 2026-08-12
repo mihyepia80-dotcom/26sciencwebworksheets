@@ -10,24 +10,21 @@ import type {
 
 const PADLET_API_BASE = "https://api.padlet.dev/v1";
 
-function getPadletApiKey(): string | null {
+function getPlatformPadletApiKey(): string | null {
   const key = process.env.PADLET_API_KEY?.trim();
   return key || null;
 }
 
+/** @deprecated 교사별 resolvePadletApiKeyForTeacher 사용 */
 export function isPadletConfigured(): boolean {
-  return getPadletApiKey() !== null;
+  return getPlatformPadletApiKey() !== null;
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function padletRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const apiKey = getPadletApiKey();
-  if (!apiKey) {
+async function padletRequest<T>(path: string, apiKey: string, init?: RequestInit): Promise<T> {
+  const key = apiKey.trim();
+  if (!key) {
     throw new PadletApiError(
-      "Padlet API 키가 설정되지 않았습니다. Vercel 환경 변수 PADLET_API_KEY를 확인해 주세요.",
+      "Padlet API 키가 설정되지 않았습니다. 교사 설정 → API 연동에서 본인 Padlet API 키를 등록해 주세요.",
       503,
     );
   }
@@ -58,6 +55,10 @@ async function padletRequest<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return payload as T;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function mapBoard(raw: Record<string, unknown>): PadletBoardSummary {
@@ -108,11 +109,14 @@ interface PostResponse {
   data?: Record<string, unknown>;
 }
 
-export async function createAiRecipeBoard(input: {
-  instructions: string;
-  role?: string;
-  workspaceId?: string;
-}): Promise<{ statusKey: string; statusUrl: string }> {
+export async function createAiRecipeBoard(
+  input: {
+    instructions: string;
+    role?: string;
+    workspaceId?: string;
+  },
+  apiKey: string,
+): Promise<{ statusKey: string; statusUrl: string }> {
   const attributes: Record<string, string> = {
     boardCreationInstructions: input.instructions,
     role: input.role?.trim() || process.env.PADLET_DEFAULT_ROLE?.trim() || PADLET_DEFAULT_ROLE,
@@ -120,7 +124,7 @@ export async function createAiRecipeBoard(input: {
   const workspaceId = input.workspaceId?.trim() || process.env.PADLET_DEFAULT_WORKSPACE_ID?.trim();
   if (workspaceId) attributes.workspaceId = workspaceId;
 
-  const payload = await padletRequest<AiRecipeBoardCreationResponse>("/ai-recipe-boards", {
+  const payload = await padletRequest<AiRecipeBoardCreationResponse>("/ai-recipe-boards", apiKey, {
     method: "POST",
     body: JSON.stringify({
       data: {
@@ -138,12 +142,16 @@ export async function createAiRecipeBoard(input: {
   return { statusKey, statusUrl };
 }
 
-export async function getAiRecipeBoardStatus(statusKey: string): Promise<{
+export async function getAiRecipeBoardStatus(
+  statusKey: string,
+  apiKey: string,
+): Promise<{
   status: PadletRecipeBoardStatus;
   board?: PadletBoardSummary;
 }> {
   const payload = await padletRequest<AiRecipeBoardStatusResponse>(
     `/ai-recipe-boards/status/${encodeURIComponent(statusKey)}`,
+    apiKey,
   );
   const attributes = payload.data?.attributes;
   const status = attributes?.status ?? "in_progress";
@@ -156,12 +164,13 @@ export async function getAiRecipeBoardStatus(statusKey: string): Promise<{
 
 export async function waitForAiRecipeBoard(
   statusKey: string,
+  apiKey: string,
   timeoutMs = 120_000,
   intervalMs = 3_000,
 ): Promise<PadletBoardSummary> {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
-    const result = await getAiRecipeBoardStatus(statusKey);
+    const result = await getAiRecipeBoardStatus(statusKey, apiKey);
     if (result.status === "success" && result.board) return result.board;
     if (result.status === "failed") {
       throw new PadletApiError("패들렛 AI 생성에 실패했습니다.", 502);
@@ -180,9 +189,10 @@ interface GetBoardResponse {
   }>;
 }
 
-export async function getBoardSections(boardId: string): Promise<Array<{ id: string; title: string }>> {
+export async function getBoardSections(boardId: string, apiKey: string): Promise<Array<{ id: string; title: string }>> {
   const payload = await padletRequest<GetBoardResponse>(
     `/boards/${encodeURIComponent(boardId)}?include=sections`,
+    apiKey,
   );
   const included = payload.included ?? [];
   return included
@@ -198,9 +208,10 @@ export async function seedBulletinColumnPosts(
   boardId: string,
   columnMode: PadletBulletinColumnMode,
   topic: string,
+  apiKey: string,
 ): Promise<{ columnsApplied: number; columnLabels: string[] }> {
   const labels = buildColumnLabels(columnMode);
-  const sections = await getBoardSections(boardId);
+  const sections = await getBoardSections(boardId, apiKey);
   let applied = 0;
 
   for (let i = 0; i < labels.length; i++) {
@@ -211,12 +222,16 @@ export async function seedBulletinColumnPosts(
     const color = PADLET_PASTEL_POST_COLORS[i % PADLET_PASTEL_POST_COLORS.length] as PadletPostColor;
 
     try {
-      await createBoardPost(boardId, {
-        subject: label,
-        body: `${label} · "${topic.trim() || "자유 주제"}" 활동 공간입니다.\n여기에 모둠(번호) 아이디어를 올려 주세요.`,
-        color,
-        sectionId: matched?.id,
-      });
+      await createBoardPost(
+        boardId,
+        {
+          subject: label,
+          body: `${label} · "${topic.trim() || "자유 주제"}" 활동 공간입니다.\n여기에 모둠(번호) 아이디어를 올려 주세요.`,
+          color,
+          sectionId: matched?.id,
+        },
+        apiKey,
+      );
       applied += 1;
     } catch (error) {
       console.error(`padlet column seed failed (${label})`, error);
@@ -226,7 +241,11 @@ export async function seedBulletinColumnPosts(
   return { columnsApplied: applied, columnLabels: labels };
 }
 
-export async function createBoardPost(boardId: string, input: PadletPostInput): Promise<PadletPostSummary> {
+export async function createBoardPost(
+  boardId: string,
+  input: PadletPostInput,
+  apiKey: string,
+): Promise<PadletPostSummary> {
   const subject = String(input.subject ?? "").trim();
   const postBody = String(input.body ?? "").trim();
   const attachmentUrl = String(input.attachmentUrl ?? "").trim();
@@ -265,7 +284,7 @@ export async function createBoardPost(boardId: string, input: PadletPostInput): 
     };
   }
 
-  const payload = await padletRequest<PostResponse>(`/boards/${encodeURIComponent(boardId)}/posts`, {
+  const payload = await padletRequest<PostResponse>(`/boards/${encodeURIComponent(boardId)}/posts`, apiKey, {
     method: "POST",
     body: JSON.stringify(requestBody),
   });
@@ -283,8 +302,8 @@ export async function createBoardPost(boardId: string, input: PadletPostInput): 
   };
 }
 
-export async function getBoardById(boardId: string): Promise<PadletBoardSummary> {
-  const payload = await padletRequest<BoardResponse>(`/boards/${encodeURIComponent(boardId)}`);
+export async function getBoardById(boardId: string, apiKey: string): Promise<PadletBoardSummary> {
+  const payload = await padletRequest<BoardResponse>(`/boards/${encodeURIComponent(boardId)}`, apiKey);
   if (!payload.data) {
     throw new PadletApiError("패들렛 게시판을 찾을 수 없습니다.", 404);
   }
@@ -295,6 +314,7 @@ export async function updateBoardPost(
   boardId: string,
   postId: string,
   input: PadletPostInput,
+  apiKey: string,
 ): Promise<PadletPostSummary> {
   const subject = String(input.subject ?? "").trim();
   const postBody = String(input.body ?? "").trim();
@@ -307,6 +327,7 @@ export async function updateBoardPost(
 
   const payload = await padletRequest<PostResponse>(
     `/boards/${encodeURIComponent(boardId)}/posts/${encodeURIComponent(postId)}`,
+    apiKey,
     {
       method: "PATCH",
       body: JSON.stringify({

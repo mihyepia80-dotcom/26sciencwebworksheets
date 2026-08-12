@@ -2,6 +2,7 @@
 
 import type { TemplateProps } from "@/lib/types";
 import { FieldBlock } from "@/components/common/WorksheetUi";
+import { MemoTextArea } from "@/components/common/Fields";
 import { fieldValue as v } from "@/components/templates/utils";
 import { CSI_SECTIONS } from "@/lib/templates/csi";
 import { useLessonWorksheetContent } from "@/hooks/useDissolutionLessonForm";
@@ -30,13 +31,13 @@ export function ColorSymbolImageTemplate({ values, onChange, readOnly, period }:
           return (
             <FieldBlock key={badge} badge={badge} badgeClass={badgeClass} title={title} guide={guide}>
               {imageOnly ? (
-                <textarea
-                  className={`ui-textarea ${focusClass}`}
+                <MemoTextArea
+                  className={focusClass}
                   rows={5}
                   value={v(values, reasonKey)}
-                  disabled={readOnly}
+                  readOnly={readOnly}
                   placeholder={reasonPlaceholder}
-                  onChange={(e) => onChange(reasonKey, e.target.value)}
+                  onChange={(val) => onChange(reasonKey, val)}
                 />
               ) : (
                 <div className="flex flex-col gap-3 sm:flex-row">
@@ -53,20 +54,20 @@ export function ColorSymbolImageTemplate({ values, onChange, readOnly, period }:
                     )}
                     <input
                       type="text"
-                      className={`ui-input-compact ${focusClass}`}
+                      className={`ui-input-compact no-memo ${focusClass}`}
                       value={v(values, textKey)}
                       disabled={readOnly}
                       placeholder={textPlaceholder}
                       onChange={(e) => onChange(textKey, e.target.value)}
                     />
                   </div>
-                  <textarea
-                    className={`ui-textarea flex-1 ${focusClass}`}
+                  <MemoTextArea
+                    className={`flex-1 ${focusClass}`}
                     rows={5}
                     value={v(values, reasonKey)}
-                    disabled={readOnly}
+                    readOnly={readOnly}
                     placeholder={reasonPlaceholder}
-                    onChange={(e) => onChange(reasonKey, e.target.value)}
+                    onChange={(val) => onChange(reasonKey, val)}
                   />
                 </div>
               )}

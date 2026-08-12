@@ -46,8 +46,9 @@ function mapBoardDoc(id: string, data: Record<string, unknown>): PadletBoardDoc 
 export async function buildAndValidateColumnMap(
   boardId: string,
   columnMode: PadletBulletinColumnMode,
+  apiKey: string,
 ): Promise<Record<string, string>> {
-  const sections = await getBoardSections(boardId);
+  const sections = await getBoardSections(boardId, apiKey);
   const columnMap = buildColumnMapFromSections(sections, columnMode);
   const expected = columnMode === "numbers" ? 25 : 6;
   const count = Object.keys(columnMap).length;

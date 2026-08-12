@@ -71,7 +71,7 @@ export function MandalartTemplate({ values, onChange, readOnly }: TemplateProps)
         </h3>
         <label className="ui-label text-amber-800">세부내용</label>
         <textarea
-          className="mandalart-ruled ui-textarea min-h-[12rem] w-full resize-y rounded-lg border border-amber-200 bg-white/90 text-lg leading-8 text-slate-800 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-300"
+          className="mandalart-ruled no-memo ui-textarea min-h-[12rem] w-full resize-y rounded-lg border border-amber-200 bg-white/90 text-lg leading-8 text-slate-800 focus:border-amber-400 focus:outline-none focus:ring-1 focus:ring-amber-300"
           value={v(values, "details")}
           disabled={readOnly}
           placeholder="위 칸에 적은 내용을 예를 들어 자세히 설명하세요"

@@ -167,6 +167,89 @@
     @apply inline-flex items-center rounded-full px-4 py-1.5 text-base font-medium;
   }
 
+  /* 홈 — 사고기법 학습지 한눈에 보기 */
+  .home-worksheet-hub__header {
+    @apply mb-8 rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-sm sm:p-6;
+  }
+
+  .home-worksheet-hub__nav {
+    @apply flex gap-2 overflow-x-auto pb-1;
+    scrollbar-width: thin;
+  }
+
+  .home-worksheet-hub__nav-pill {
+    @apply inline-flex shrink-0 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-violet-300 hover:bg-violet-50 hover:text-violet-900;
+  }
+
+  .home-worksheet-hub__sections {
+    @apply space-y-10;
+  }
+
+  .home-worksheet-hub__section-head {
+    @apply mb-4 flex items-start gap-3 border-b border-slate-200 pb-3;
+  }
+
+  .home-worksheet-hub__stage-badge {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-sm font-bold text-white shadow-sm;
+  }
+
+  .home-worksheet-hub__grid {
+    @apply grid list-none gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  .home-worksheet-card {
+    @apply relative flex h-full flex-col rounded-xl border border-slate-200/90 bg-white transition hover:border-violet-200 hover:shadow-md;
+  }
+
+  .home-worksheet-card__link {
+    @apply flex flex-1 flex-col p-4 pr-11;
+  }
+
+  .home-worksheet-card__meta {
+    @apply mb-2 flex flex-wrap items-center gap-1.5;
+  }
+
+  .home-worksheet-card__no {
+    @apply rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-600;
+  }
+
+  .home-worksheet-card__stage {
+    @apply rounded-md bg-violet-50 px-1.5 py-0.5 text-xs font-semibold text-violet-700;
+  }
+
+  .home-worksheet-card__status {
+    @apply ml-auto inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium;
+  }
+
+  .home-worksheet-card__title {
+    @apply text-base font-bold leading-snug text-slate-900 group-hover:text-violet-900;
+  }
+
+  .home-worksheet-card__subtitle {
+    @apply mt-0.5 text-xs font-medium text-slate-500;
+  }
+
+  .home-worksheet-card__desc {
+    @apply mt-1.5 line-clamp-2 text-sm leading-snug text-slate-600;
+  }
+
+  .home-worksheet-card__add {
+    @apply absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-full border border-violet-200 bg-white text-lg font-bold leading-none text-violet-600 opacity-0 shadow-sm transition group-hover:opacity-100 hover:bg-violet-50;
+  }
+
+  .home-worksheet-card:focus-within .home-worksheet-card__add,
+  .home-worksheet-card:hover .home-worksheet-card__add {
+    @apply opacity-100;
+  }
+
+  .home-secondary-panel .ui-card {
+    @apply mb-0;
+  }
+
+  .home-secondary-panel {
+    @apply rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-5 sm:p-6;
+  }
+
   .ui-link {
     @apply text-lg font-medium text-violet-700 hover:text-violet-800 hover:underline;
   }
@@ -259,6 +342,111 @@
   .worksheet-meta-header .meta-value {
     @apply px-4 py-3 text-base text-slate-800;
   }
+
+  /* ── 메모지 글틀 (학습지 답안 작성 영역) ── */
+  .ui-memo-wrap {
+    position: relative;
+    margin-top: 0.35rem;
+  }
+
+  .ui-memo-tape {
+    position: absolute;
+    top: -0.4rem;
+    left: 50%;
+    z-index: 2;
+    height: 1.125rem;
+    width: 3.75rem;
+    transform: translateX(-50%) rotate(-2deg);
+    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(254, 240, 138, 0.9), rgba(253, 224, 71, 0.7));
+    border: 1px solid rgba(251, 191, 36, 0.5);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+    pointer-events: none;
+  }
+
+  .ui-memo-wrap--inline .ui-memo-tape {
+    width: 2.75rem;
+    height: 0.875rem;
+    top: -0.3rem;
+  }
+
+  .ui-memo-pad {
+    --memo-bg: #fffbeb;
+    --memo-line: rgba(253, 224, 71, 0.72);
+    --memo-border: #fde047;
+    --memo-shadow: rgba(251, 191, 36, 0.38);
+    background-color: var(--memo-bg) !important;
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent,
+      transparent calc(1.75rem - 1px),
+      var(--memo-line) calc(1.75rem - 1px),
+      var(--memo-line) 1.75rem
+    ) !important;
+    background-attachment: local;
+    line-height: 1.75rem !important;
+    border: 1px solid var(--memo-border) !important;
+    border-radius: 2px 12px 12px 2px !important;
+    box-shadow:
+      1px 2px 0 var(--memo-shadow),
+      2px 5px 14px rgba(15, 23, 42, 0.08) !important;
+    padding: 0.625rem 1rem 0.875rem !important;
+    color: #1e293b;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .ui-memo-pad:focus {
+    border-color: #f59e0b !important;
+    outline: none !important;
+    box-shadow:
+      1px 2px 0 rgba(251, 191, 36, 0.5),
+      0 0 0 3px rgba(251, 191, 36, 0.22),
+      2px 6px 16px rgba(15, 23, 42, 0.1) !important;
+  }
+
+  .ui-memo-pad:disabled {
+    opacity: 0.94;
+    background-color: #fef9c3 !important;
+  }
+
+  .ui-memo-pad::placeholder {
+    color: #a8a29e;
+    font-style: italic;
+  }
+
+  .ui-memo-pad--input {
+    background-image: none !important;
+    background: linear-gradient(to bottom, #fffbeb 0%, #fef3c7 100%) !important;
+    line-height: 1.6 !important;
+    border-bottom-width: 2px !important;
+    border-radius: 2px 10px 10px 2px !important;
+    padding: 0.75rem 1rem !important;
+    min-height: auto;
+  }
+
+  .worksheet-print-area .ui-memo-wrap {
+    margin-bottom: 0.25rem;
+  }
+
+  .worksheet-print-area .ui-label + .ui-memo-wrap {
+    margin-top: 0.5rem;
+  }
+
+  .worksheet-meta-header .ui-memo-pad {
+    border-radius: 0 !important;
+    border: 0 !important;
+    border-bottom: 1px dashed rgba(253, 224, 71, 0.85) !important;
+    box-shadow: none !important;
+    background-color: #fffef5 !important;
+  }
+
+  .worksheet-meta-header .ui-memo-wrap .ui-memo-tape {
+    display: none;
+  }
+
+  .ws-field-block .ui-memo-wrap {
+    margin-top: 0.15rem;
+  }
 }
 
 .hex-cell {
@@ -323,6 +511,14 @@ body {
   .worksheet-print-area textarea {
     overflow: visible !important;
     resize: none !important;
+  }
+
+  .worksheet-print-area .ui-memo-pad,
+  .worksheet-print-area .ui-memo-pad--input {
+    background-color: #fffbeb !important;
+    border-color: #fde047 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .worksheet-print-area section,

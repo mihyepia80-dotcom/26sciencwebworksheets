@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { TeacherLoginPanel } from "@/components/TeacherLoginPanel";
 import { isFirebaseConfigured } from "@/lib/firebase";
+import { TEACHER_API_SETTINGS_PATH } from "@/lib/teacher/api-config-messages";
 import {
   createPadletBoard,
   createPadletPost,
@@ -86,6 +87,8 @@ function BoardCard({
 export function PadletManager() {
   const { user, role, loading: authLoading } = useAuth();
   const [configured, setConfigured] = useState<boolean | null>(null);
+  const [padletSource, setPadletSource] = useState<string | null>(null);
+  const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
   const [mode, setMode] = useState<CreateMode>("sandbox");
   const [sandboxType, setSandboxType] = useState<PadletSandboxType>("wall");
   const [columnMode, setColumnMode] = useState<PadletBulletinColumnMode>("groups");
@@ -121,6 +124,8 @@ export function PadletManager() {
       const token = await user.getIdToken();
       const result = await fetchPadletStatus(token);
       setConfigured(result.configured);
+      setPadletSource(result.source ?? null);
+      setIsPlatformAdmin(Boolean(result.isPlatformAdmin));
     } catch (e: unknown) {
       setConfigured(false);
       setError(e instanceof Error ? e.message : "Padlet 상태 확인 실패");
@@ -304,8 +309,23 @@ export function PadletManager() {
             configured ? "bg-emerald-100 text-emerald-800" : configured === false ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600"
           }`}
         >
-          {configured === null ? "API 상태 확인 중…" : configured ? "Padlet API 연결됨" : "PADLET_API_KEY 미설정"}
+          {configured === null
+            ? "API 상태 확인 중…"
+            : configured
+              ? padletSource === "platform"
+                ? "Padlet API 연결됨 (플랫폼 관리자)"
+                : "Padlet API 연결됨 (내 API 키)"
+              : "Padlet API 미설정"}
         </span>
+        {configured === false && !isPlatformAdmin && (
+          <p className="mt-3 text-sm text-amber-900">
+            다른 Google 교사 계정은 Vercel 공용 키를 사용할 수 없습니다.{" "}
+            <Link href={TEACHER_API_SETTINGS_PATH} className="font-semibold underline-offset-2 hover:underline">
+              API 연동 설정
+            </Link>
+            에서 본인 Padlet API 키를 등록해 주세요.
+          </p>
+        )}
       </section>
 
       <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">

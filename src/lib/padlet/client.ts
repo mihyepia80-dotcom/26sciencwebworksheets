@@ -1,4 +1,5 @@
 import { parseApiJsonResponse } from "@/lib/api/parse-json-response";
+import { TEACHER_API_SETTINGS_PATH } from "@/lib/teacher/api-config-messages";
 import type {
   PadletBoardSummary,
   PadletCreateBoardRequest,
@@ -25,13 +26,19 @@ async function teacherPadletFetch<T extends Record<string, unknown>>(
 
   return parseApiJsonResponse<T>(
     response,
-    "Padlet API 연결에 문제가 있습니다. Vercel PADLET_API_KEY 설정과 배포 URL을 확인해 주세요.",
+    "Padlet API 연결에 문제가 있습니다. 교사 설정 → API 연동에서 본인 Padlet API 키를 확인해 주세요.",
   );
 }
 
-export async function fetchPadletStatus(idToken: string): Promise<{ configured: boolean }> {
+export async function fetchPadletStatus(
+  idToken: string,
+): Promise<{ configured: boolean; source?: string; isPlatformAdmin?: boolean }> {
   const payload = await teacherPadletFetch(idToken, "/api/padlet/status");
-  return { configured: Boolean(payload.configured) };
+  return {
+    configured: Boolean(payload.configured),
+    source: typeof payload.source === "string" ? payload.source : undefined,
+    isPlatformAdmin: Boolean(payload.isPlatformAdmin),
+  };
 }
 
 export async function createPadletBoard(
@@ -48,7 +55,7 @@ export async function createPadletBoard(
   });
   const payload = await parseApiJsonResponse(
     response,
-    "Padlet API 연결에 문제가 있습니다. Vercel PADLET_API_KEY 설정을 확인해 주세요.",
+    "Padlet API 연결에 문제가 있습니다. 교사 설정 → API 연동을 확인해 주세요.",
   );
   if (!response.ok) {
     const error = typeof payload.error === "string" ? payload.error : "패들렛 생성에 실패했습니다.";

@@ -15,7 +15,8 @@ import {
   savePadletPostDoc,
 } from "@/lib/padlet/board-registry";
 import { PadletApiError } from "@/lib/padlet/errors";
-import { resolvePadletFields } from "@/lib/padlet/padlet-fields";
+import { resolvePadletFields, DEFAULT_UNIT_ID } from "@/lib/padlet/padlet-fields";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { composePost } from "@/lib/padlet/post-composer";
 import {
   evaluatePublishGuard,
@@ -26,7 +27,8 @@ import {
 import { publishToPadletWithRetry } from "@/lib/padlet/publish-queue";
 import type { PublishRequest, PublishResponse } from "@/lib/padlet/publish-types";
 import { getTemplateById } from "@/lib/templates/registry";
-import { DEFAULT_UNIT_ID } from "@/lib/padlet/padlet-fields";
+import { resolvePadletApiKeyForTeacher } from "@/lib/teacher/api-config";
+import { TEACHER_PADLET_SETUP_MESSAGE } from "@/lib/teacher/api-config-messages";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -127,10 +129,38 @@ export async function POST(request: Request) {
 
   const sectionId = board!.columnMap[String(studentNo)];
 
+  const boardOwnerUid = board!.teacherUid?.trim();
+  if (!boardOwnerUid) {
+    return NextResponse.json({
+      status: "error",
+      postUrl: null,
+      boardUrl: board?.boardUrl ?? null,
+      sectionLabel: `${studentNo}번`,
+      subject: composed.subject,
+      message: "게시판 소유 교사 정보를 찾을 수 없습니다.",
+    } satisfies PublishResponse);
+  }
+
+  const db = await getAdminDb();
+  const ownerSnap = await db.collection("teachers").doc(boardOwnerUid).get();
+  const ownerEmail = typeof ownerSnap.data()?.email === "string" ? ownerSnap.data()!.email : undefined;
+  const padletResolved = await resolvePadletApiKeyForTeacher(boardOwnerUid, ownerEmail);
+  if (!padletResolved) {
+    return NextResponse.json({
+      status: "error",
+      postUrl: null,
+      boardUrl: board?.boardUrl ?? null,
+      sectionLabel: `${studentNo}번`,
+      subject: composed.subject,
+      message: TEACHER_PADLET_SETUP_MESSAGE,
+    } satisfies PublishResponse);
+  }
+
   try {
     const post = await publishToPadletWithRetry({
       boardId: board!.boardId,
       existingPostId: existingPost?.padletPostId,
+      apiKey: padletResolved.key,
       postInput: {
         subject: composed.subject,
         body: composed.body,

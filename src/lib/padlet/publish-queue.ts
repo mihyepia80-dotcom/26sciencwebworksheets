@@ -31,6 +31,7 @@ export async function publishToPadletWithRetry(input: {
   boardId: string;
   postInput: PadletPostInput;
   existingPostId?: string | null;
+  apiKey: string;
 }): Promise<PadletPostSummary> {
   await acquireSlot();
   try {
@@ -38,9 +39,9 @@ export async function publishToPadletWithRetry(input: {
     for (let attempt = 0; attempt < DEFAULT_MAX_RETRY; attempt++) {
       try {
         if (input.existingPostId) {
-          return await updateBoardPost(input.boardId, input.existingPostId, input.postInput);
+          return await updateBoardPost(input.boardId, input.existingPostId, input.postInput, input.apiKey);
         }
-        return await createBoardPost(input.boardId, input.postInput);
+        return await createBoardPost(input.boardId, input.postInput, input.apiKey);
       } catch (error) {
         lastError = error;
         if (error instanceof PadletApiError && error.status === 429) {

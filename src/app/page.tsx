@@ -1,11 +1,11 @@
-import Link from "next/link";
 import { AppHeader } from "@/components/AppHeader";
-import { HomeGuestNotice, HomeStudentBadgeBar } from "@/components/home/HomeGuestSections";
+import { HomeGuestNotice } from "@/components/home/HomeGuestSections";
 import { HomeConsentWrapper } from "@/components/legal/HomeConsentWrapper";
 import { HomeServiceConsentSection } from "@/components/legal/HomeServiceConsentSection";
 import { SitePolicyLinks } from "@/components/legal/SitePolicyLinks";
 import { SiteLegalFooter } from "@/components/legal/SiteLegalFooter";
 import { StudentGroupRoleCard } from "@/components/student/StudentGroupRoleCard";
+import { StudentBadgeBar } from "@/components/student/StudentBadgeBar";
 import { StudentTemplateGrid } from "@/components/student/StudentTemplateGrid";
 
 export default function HomePage() {
@@ -20,25 +20,13 @@ export default function HomePage() {
         <main className="page-main">
           <HomeServiceConsentSection />
           <HomeGuestNotice />
-          <HomeStudentBadgeBar />
-          <StudentGroupRoleCard />
-
-          <section className="mb-12">
-            <Link
-              href="/workspace"
-              className="ui-card flex items-center justify-between gap-6 p-6 transition hover:border-violet-200 hover:shadow-md"
-            >
-              <div>
-                <h2 className="ui-section-title text-violet-900">탐구 활동실</h2>
-                <p className="ui-section-desc">
-                  사고 활동지와 탐구보고서를 한 화면에서 작성하세요.
-                </p>
-              </div>
-              <span className="ui-btn-accent ui-btn-sm shrink-0">시작하기</span>
-            </Link>
-          </section>
 
           <StudentTemplateGrid />
+
+          <aside className="home-secondary-panel mt-12 space-y-6">
+            <StudentBadgeBar />
+            <StudentGroupRoleCard />
+          </aside>
 
           <SitePolicyLinks />
           <SiteLegalFooter className="mt-10" />

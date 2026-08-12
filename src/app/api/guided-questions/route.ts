@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { GeminiApiError, callGeminiText, parseGeminiJsonObject } from "@/lib/ai/gemini";
+import { isTeacherAuthResponse, requireTeacherRequest } from "@/lib/auth/verify-teacher-request";
 import { GUIDED_QUESTION_DEFAULT_COUNT } from "@/lib/guided-questions/types";
 import { getMetaFieldLabel } from "@/lib/meta-labels";
+import { requireTeacherGeminiKey } from "@/lib/teacher/resolve-api-http";
 
 interface GenerateRequest {
   templateId: string;
@@ -36,9 +38,11 @@ ${getMetaFieldLabel("writingContext")}: ${body.writingContext?.trim() || "없음
 }
 
 export async function POST(request: Request) {
-  if (!process.env.GEMINI_API_KEY) {
-    return NextResponse.json({ error: "AI 서비스가 설정되지 않았습니다." }, { status: 503 });
-  }
+  const teacher = await requireTeacherRequest(request);
+  if (isTeacherAuthResponse(teacher)) return teacher;
+
+  const gemini = await requireTeacherGeminiKey(teacher.uid, teacher.email);
+  if ("error" in gemini) return gemini.error;
 
   let body: GenerateRequest;
   try {
@@ -61,6 +65,7 @@ export async function POST(request: Request) {
     const raw = await callGeminiText(buildPrompt(body, count), {
       temperature: 0.5,
       maxOutputTokens: 400,
+      apiKey: gemini.apiKey,
     });
     const parsed = parseGeminiJsonObject<{ questions?: string[] }>(raw);
     const questions = (parsed.questions ?? [])

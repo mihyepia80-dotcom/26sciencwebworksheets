@@ -133,9 +133,24 @@
 
 ### 5.3 단원·차시 프리셋 (용해와 용액 등)
 
-- **커리큘럼**: `src/lib/curriculum/design-flow.ts`, `src/lib/lesson-plan/unit-curriculum.ts`
+- **2022 개정교육과정 (과학과)**: `src/lib/curriculum/science-2022-dissolution.ts`
+  - 단원: **3. 용해와 용액** · 핵심 아이디어 · 성취기준 `[6과03-01]`~`[6과03-03]` · 해설 · 탐구 활동
+  - **1~8차시 매핑**: 차시별 성취기준·목표 성취수준(A/B/C)·탐구 활동·탐구 단계
+- **커리큘럼 연동**: `src/lib/curriculum/design-flow.ts`, `src/lib/lesson-plan/unit-curriculum.ts`
+- **학습지 UI**: `WorksheetContentBanner` + `CurriculumBanner` — 반응형 성취기준·성취수준 배너
 - **단원 ID** 예: `dissolution-solution` — 차시별 학습 주제·연동 템플릿 ID
 - **교사 ①~③ 설계**와 학생 배포 텍스트에 동일 프리셋 연동
+
+| 차시 | 성취기준 | 목표 수준 | 탐구 활동 |
+|------|----------|-----------|-----------|
+| 1 | 6과03-01 | C | 용해 현상 관찰 |
+| 2 | 6과03-01 | B | 용해 전후 무게 측정 |
+| 3 | 6과03-01 | B | 용해 전후 무게 측정 |
+| 4 | 6과03-01 | A | 용해량 요인 탐구 |
+| 5 | 6과03-02 | A | 진하기·뜨는 정도 비교 |
+| 6 | 6과03-03 | B | 일상 용액 사례 조사 |
+| 7 | 6과03-03 | A | 디지털 자료 제작 |
+| 8 | 6과03-03 | A | 단원 종합·진로 연결 |
 
 ### 5.4 Standalone HTML (4종)
 

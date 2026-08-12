@@ -194,6 +194,12 @@ export function TeacherDashboard() {
             탐구질문 챗봇
           </Link>
           <Link
+            href="/teacher/settings/api"
+            className="rounded-lg border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-800 hover:bg-slate-100"
+          >
+            API 연동 설정
+          </Link>
+          <Link
             href="/teacher/padlet"
             className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
           >

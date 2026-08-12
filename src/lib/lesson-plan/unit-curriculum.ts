@@ -1,4 +1,11 @@
 import {
+  DISSOLUTION_2022_CORE_IDEA,
+  DISSOLUTION_2022_ACHIEVEMENT_STANDARDS,
+  getDissolutionAchievementTextByLesson,
+  getDissolutionLessonCurriculum,
+  formatAchievementStandard,
+} from "@/lib/curriculum/science-2022-dissolution";
+import {
   DISSOLUTION_LESSONS,
   type DissolutionLessonDefinition,
 } from "@/lib/worksheet-content/dissolution-lessons";
@@ -11,6 +18,10 @@ export interface LessonPeriodPreset {
   lessonLabel?: string;
   learningTopic: string;
   achievementStandards: string;
+  /** 2022 개정 성취기준 코드 (예: 6과03-01) */
+  achievementStandardId?: string;
+  /** 이 차시 목표 성취수준 (A·B·C) */
+  targetAchievementLevel?: string;
   inquiryQuestions?: string;
   thinkingTool?: string;
   teachingModel?: string;
@@ -21,6 +32,8 @@ export interface LessonPeriodPreset {
   /** Standalone HTML */
   htmlPath?: string;
   templateId?: string;
+  /** 연계 탐구 활동 */
+  inquiryActivity?: string;
 }
 
 export interface LessonUnitDefinition {
@@ -32,28 +45,11 @@ export interface LessonUnitDefinition {
   customLabel?: boolean;
 }
 
-const DISSOLUTION_CORE_IDEA =
-  "물질은 여러 가지 상태로 존재하며, 구성 입자의 운동에 따라 물질의 상태와 물리적 성질이 변한다.";
+const DISSOLUTION_CORE_IDEA = DISSOLUTION_2022_CORE_IDEA;
 
-const DISSOLUTION_ACHIEVEMENT_01 =
-  "[6과03-01] 용해 현상의 의미를 알고, 용질의 종류와 물의 온도에 따라 물에 녹는 용질의 양이 달라짐을 비교할 수 있다.";
-
-const DISSOLUTION_ACHIEVEMENT_02 =
-  "[6과03-02] 용질이나 용매의 양에 따라 용액의 진하기가 달라짐을 관찰하고, 용액의 상대적인 진하기를 비교할 수 있다.";
-
-const DISSOLUTION_ACHIEVEMENT_03 =
-  "[6과03-03] 일상생활에서 용액이 쓰이는 사례를 조사하여 용액의 필요성을 알리는 자료를 만들고 공유할 수 있다.";
-
-const DISSOLUTION_ACHIEVEMENT_BY_LESSON: Record<number, string> = {
-  1: DISSOLUTION_ACHIEVEMENT_01,
-  2: DISSOLUTION_ACHIEVEMENT_01,
-  3: DISSOLUTION_ACHIEVEMENT_01,
-  4: DISSOLUTION_ACHIEVEMENT_01,
-  5: DISSOLUTION_ACHIEVEMENT_02,
-  6: DISSOLUTION_ACHIEVEMENT_03,
-  7: DISSOLUTION_ACHIEVEMENT_03,
-  8: DISSOLUTION_ACHIEVEMENT_03,
-};
+const DISSOLUTION_ACHIEVEMENT_01 = formatAchievementStandard(DISSOLUTION_2022_ACHIEVEMENT_STANDARDS["6과03-01"]);
+const DISSOLUTION_ACHIEVEMENT_02 = formatAchievementStandard(DISSOLUTION_2022_ACHIEVEMENT_STANDARDS["6과03-02"]);
+const DISSOLUTION_ACHIEVEMENT_03 = formatAchievementStandard(DISSOLUTION_2022_ACHIEVEMENT_STANDARDS["6과03-03"]);
 
 const DISSOLUTION_TEACHING_MODEL_BY_LESSON: Record<number, string> = {
   6: "STS(과학·기술·사회) 융합 개념기반 탐구수업모형",
@@ -62,18 +58,25 @@ const DISSOLUTION_TEACHING_MODEL_BY_LESSON: Record<number, string> = {
 };
 
 function lessonToPeriodPreset(lesson: DissolutionLessonDefinition): LessonPeriodPreset {
+  const curriculum = getDissolutionLessonCurriculum(lesson.lessonNumber);
   return {
     period: lesson.period,
     lessonLabel: lesson.periodLabel,
     learningTopic: lesson.learningTopic,
-    achievementStandards: DISSOLUTION_ACHIEVEMENT_BY_LESSON[lesson.lessonNumber] ?? DISSOLUTION_ACHIEVEMENT_01,
+    achievementStandards: getDissolutionAchievementTextByLesson(lesson.lessonNumber),
+    achievementStandardId: curriculum?.achievementStandardId,
+    targetAchievementLevel: curriculum?.targetLevel,
     inquiryQuestions: lesson.keyQuestion,
     thinkingTool: lesson.thinkingTool,
-    teachingModel: DISSOLUTION_TEACHING_MODEL_BY_LESSON[lesson.lessonNumber] ?? "개념기반 탐구학습",
+    teachingModel:
+      curriculum?.inquiryStage ??
+      DISSOLUTION_TEACHING_MODEL_BY_LESSON[lesson.lessonNumber] ??
+      "개념기반 탐구학습",
     structureUnderstanding: lesson.structureUnderstanding,
     templatePrompt: lesson.templatePrompt,
     htmlPath: lesson.htmlPath,
     templateId: lesson.templateId,
+    inquiryActivity: curriculum?.inquiryActivity,
   };
 }
 

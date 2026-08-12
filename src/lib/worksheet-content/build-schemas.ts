@@ -14,6 +14,11 @@ import {
   HEADLINE_UNIT,
 } from "@/lib/templates/headlines";
 import { CSQ_INQUIRY_MEMO, CSQ_SECTIONS } from "@/lib/templates/csq";
+import {
+  DISSOLUTION_2022_CORE_IDEA,
+  getDissolutionAchievementStandard,
+  getDissolutionLessonCurriculum,
+} from "@/lib/curriculum/science-2022-dissolution";
 import { DISSOLUTION_LESSONS, getDissolutionLesson } from "@/lib/worksheet-content/dissolution-lessons";
 import { getDissolutionPresetByTemplate } from "@/lib/worksheet-content/dissolution-unit";
 import type { WorksheetContentFieldDef, WorksheetContentSchema } from "./registry";
@@ -27,6 +32,10 @@ const DISSOLUTION_LESSON_FIELD_OVERRIDES = Object.fromEntries(
 export function getDissolutionWorksheetDefaults(period: string): Record<string, string> {
   const lesson = getDissolutionLesson(period.trim());
   if (!lesson) return DISSOLUTION_LESSON_FIELD_OVERRIDES[period.trim()] ?? {};
+  const curriculum = getDissolutionLessonCurriculum(lesson.lessonNumber);
+  const standard = curriculum
+    ? getDissolutionAchievementStandard(curriculum.achievementStandardId)
+    : undefined;
   return {
     ...lesson.fields,
     structureUnderstanding: lesson.structureUnderstanding,
@@ -34,6 +43,16 @@ export function getDissolutionWorksheetDefaults(period: string): Record<string, 
     inquiryQuestion: lesson.keyQuestion,
     periodLabel: lesson.periodLabel,
     lessonNumber: String(lesson.lessonNumber),
+    coreIdea: DISSOLUTION_2022_CORE_IDEA,
+    achievementStandardId: curriculum?.achievementStandardId ?? "",
+    achievementStandardText: standard?.text ?? "",
+    achievementNotes: standard?.notes.join(" ") ?? "",
+    inquiryActivity: curriculum?.inquiryActivity ?? "",
+    inquiryStage: curriculum?.inquiryStage ?? "",
+    targetAchievementLevel: curriculum?.targetLevel ?? "",
+    achievementLevelFocus: curriculum?.levelFocus
+      ? JSON.stringify(curriculum.levelFocus)
+      : "",
   };
 }
 
