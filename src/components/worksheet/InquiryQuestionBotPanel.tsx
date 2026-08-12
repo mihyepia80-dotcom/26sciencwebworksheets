@@ -21,7 +21,6 @@ import {
   computeQuality,
   evaluateChecklist,
   isStuckEligible,
-  parseQuestionToSlots,
   slotsAreComplete,
 } from "@/lib/inquiry-question-bot/slot-rules";
 import type { QbChecklist } from "@/lib/inquiry-question-bot/types";
@@ -95,7 +94,9 @@ export function InquiryQuestionBotPanel({
     setDraft(nextDraft);
     if (slotsAreComplete(slots) && !confirmed) {
       const rules = buildRuleCandidates(slots);
-      if (rules.length === 2) setCandidates(rules);
+      if (rules.length === 2) {
+        setCandidates((prev) => (prev[0] === rules[0] && prev[1] === rules[1] ? prev : [...rules]));
+      }
     }
   }, [slots, confirmed]);
 
@@ -211,14 +212,10 @@ export function InquiryQuestionBotPanel({
   }, [readOnly, isGuest, studentUid, templateId, unitId, activePeriod, slots, values, input]);
 
   const pickCandidate = (text: string) => {
-    const parsed = parseQuestionToSlots(text);
-    if (parsed.observed) onChange(QB_VALUE_KEYS.observed, parsed.observed);
-    if (parsed.change) onChange(QB_VALUE_KEYS.change, parsed.change);
-    if (parsed.measure) onChange(QB_VALUE_KEYS.measure, parsed.measure);
     onMetaChange("inquiryQuestion", text);
     onChange(QB_VALUE_KEYS.confirmed, text);
     setDraft(text);
-    setConfirmed(false);
+    setConfirmed(true);
     setInput("");
   };
 

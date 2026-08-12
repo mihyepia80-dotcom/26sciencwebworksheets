@@ -7,12 +7,12 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(
   request: Request,
-  context: { params: Promise<{ boardDocId: string }> },
+  context: { params: Promise<{ boardId: string }> },
 ) {
   const teacher = await requireTeacherRequest(request);
   if (isTeacherAuthResponse(teacher)) return teacher;
 
-  const { boardDocId } = await context.params;
+  const { boardId } = await context.params;
   let body: { open?: boolean; allowRepublish?: boolean };
   try {
     body = (await request.json()) as { open?: boolean; allowRepublish?: boolean };
@@ -20,7 +20,7 @@ export async function PATCH(
     return NextResponse.json({ error: "요청 형식이 올바르지 않습니다." }, { status: 400 });
   }
 
-  await updateBoardPublishState(boardDocId, {
+  await updateBoardPublishState(boardId, {
     open: body.open !== false,
     allowRepublish: body.allowRepublish !== false,
   });

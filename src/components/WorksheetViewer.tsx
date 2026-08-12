@@ -79,6 +79,7 @@ export function WorksheetViewer({
   const [aiRating, setAiRating] = useState<AiRating | null>(null);
   const [linkedInstanceNo, setLinkedInstanceNo] = useState<number | undefined>();
   const [padletPost, setPadletPost] = useState<SubmissionPadletPost | undefined>();
+  const [inquiryBotConfirmed, setInquiryBotConfirmed] = useState(false);
 
   const { aiQuota, setAiQuota } = useAiQuota(user?.uid, isStudent);
   const { getProgress, loading: progressLoading } = useStudentTemplateProgress(isStudent);
@@ -137,7 +138,14 @@ export function WorksheetViewer({
 
   const activePeriod = meta.period?.trim() || urlPeriod || undefined;
   const inquiryReady =
-    !template?.questionBot || Boolean(meta.inquiryQuestion?.trim()) || submitted;
+    !template?.questionBot ||
+    Boolean(meta.inquiryQuestion?.trim()) ||
+    inquiryBotConfirmed ||
+    submitted;
+
+  useEffect(() => {
+    if (meta.inquiryQuestion?.trim()) setInquiryBotConfirmed(true);
+  }, [meta.inquiryQuestion]);
 
   useEffect(() => {
     if (editSubmissionId || !urlPeriod) return;
@@ -374,6 +382,7 @@ export function WorksheetViewer({
             studentUid={user?.uid}
             period={activePeriod}
             isGuest={guestMode || !canPersist}
+            onConfirmedChange={setInquiryBotConfirmed}
           />
         )}
 

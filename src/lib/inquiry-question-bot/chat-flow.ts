@@ -1,4 +1,4 @@
-import { QB_CHAT_STEPS } from "@/components/worksheet/QuestionSlotFields";
+import { QB_CHAT_STEPS } from "./steps";
 import { analyzeSlot, extractKeywords, mergeSlotContext } from "./keywords";
 import { assembleInquiryQuestion } from "./question-assembler";
 import type { QbSlots } from "./types";
